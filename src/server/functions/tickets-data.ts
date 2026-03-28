@@ -181,27 +181,45 @@ export async function syncViewerContext(
       .toUpperCase()
       .slice(0, 3) || "DEF"
 
-    await db.insert(schema.teams).values({
-      id: teamId,
-      workspaceId: input.organization.id,
-      name: teamName,
-      slug: teamSlug,
-      identifier: teamIdentifier,
-      color: "#6366f1",
-      nextIssueNumber: 1,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    })
-
-    await db
-      .insert(schema.teamMemberships)
-      .values({
-        teamId,
-        userId: input.clerkUser.id,
+    try {
+      await db.insert(schema.teams).values({
+        id: teamId,
+        workspaceId: input.organization.id,
+        name: teamName,
+        slug: teamSlug,
+        identifier: teamIdentifier,
+        color: "#6366f1",
+        nextIssueNumber: 1,
         createdAt: timestamp,
         updatedAt: timestamp,
       })
-      .onConflictDoNothing()
+
+      await db
+        .insert(schema.teamMemberships)
+        .values({
+          teamId,
+          userId: input.clerkUser.id,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        })
+        .onConflictDoNothing()
+    } catch {
+      // Race condition: another request already created the team — ensure membership
+      const existingTeam = await db.query.teams.findFirst({
+        where: eq(schema.teams.workspaceId, input.organization.id),
+      })
+      if (existingTeam) {
+        await db
+          .insert(schema.teamMemberships)
+          .values({
+            teamId: existingTeam.id,
+            userId: input.clerkUser.id,
+            createdAt: timestamp,
+            updatedAt: timestamp,
+          })
+          .onConflictDoNothing()
+      }
+    }
   } else {
     // Ensure the current user is a member of at least one team in this workspace
     const membershipRow = await db
@@ -516,6 +534,24 @@ export async function createIssueForViewer(
   const timestamp = nowIso()
   const issueId = crypto.randomUUID()
 
+  // Verify team membership before creating issue
+  const membershipCheck = await db
+    .select({ teamId: schema.teamMemberships.teamId })
+    .from(schema.teamMemberships)
+    .innerJoin(schema.teams, eq(schema.teamMemberships.teamId, schema.teams.id))
+    .where(
+      and(
+        eq(schema.teams.id, input.teamId),
+        eq(schema.teams.workspaceId, context.workspaceId),
+        eq(schema.teamMemberships.userId, context.userId),
+      )
+    )
+    .limit(1)
+
+  if (membershipCheck.length === 0) {
+    throw new Error("Team not found or not accessible")
+  }
+
   // Atomically read+increment nextIssueNumber and insert the issue
   const [teamRow] = await db
     .update(schema.teams)
@@ -627,6 +663,33 @@ export async function updateIssueDescriptionForViewer(
 ): Promise<void> {
   if (!context.workspaceId) {
     throw new Error("No active workspace")
+  }
+
+  // Verify the issue belongs to a team the user is a member of
+  const issue = await db.query.issues.findFirst({
+    where: and(
+      eq(schema.issues.id, issueId),
+      eq(schema.issues.workspaceId, context.workspaceId),
+    ),
+  })
+
+  if (!issue) {
+    throw new Error("Issue not found")
+  }
+
+  const membership = await db
+    .select({ teamId: schema.teamMemberships.teamId })
+    .from(schema.teamMemberships)
+    .where(
+      and(
+        eq(schema.teamMemberships.teamId, issue.teamId),
+        eq(schema.teamMemberships.userId, context.userId),
+      )
+    )
+    .limit(1)
+
+  if (membership.length === 0) {
+    throw new Error("Not authorized to update this issue")
   }
 
   await db

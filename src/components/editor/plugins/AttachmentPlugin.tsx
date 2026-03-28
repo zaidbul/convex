@@ -26,8 +26,8 @@ const SUPPORTED_IMAGE_TYPES = [
   "image/svg+xml",
 ];
 
-// 25 MB max file size
-const MAX_FILE_SIZE = 25 * 1024 * 1024;
+// 2 MB max file size (base64 encoding adds ~33% overhead, must fit in HTTP body limits)
+const MAX_FILE_SIZE = 2 * 1024 * 1024;
 
 function isSupportedImageType(type: string): boolean {
   return SUPPORTED_IMAGE_TYPES.includes(type);

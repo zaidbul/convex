@@ -21,14 +21,7 @@ import {
   SidebarMenuSubButton,
 } from "@/components/ui/sidebar"
 import type { Team } from "./types"
-
-const teamColorMap: Record<string, string> = {
-  purple: "bg-purple-500",
-  blue: "bg-blue-500",
-  green: "bg-green-500",
-  red: "bg-red-500",
-  orange: "bg-orange-500",
-}
+import { teamColorMap } from "./constants"
 
 const teamNavItems = [
   { label: "Triage", icon: TriangleAlert, path: "triage" as const },
@@ -96,7 +89,7 @@ function TeamItem({ team, isActive }: { team: Team; isActive: boolean }) {
                     <Link
                       to="/$slug/tickets/$teamSlug/issues"
                       params={{ slug: slug!, teamSlug: team.slug }}
-                      search={{ issueId: undefined }}
+                      search={{ issueId: undefined, filter: undefined }}
                     />
                   }
                 >

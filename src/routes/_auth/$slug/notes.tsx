@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { useSuspenseQuery, useQuery } from "@tanstack/react-query"
-import { useState } from "react"
+import { useState, useCallback, useRef } from "react"
 import { Plus, FileText, Trash2 } from "lucide-react"
 import {
   Sidebar,
@@ -18,10 +18,12 @@ import {
 import { TicketSidebar } from "@/components/tickets/ticket-sidebar"
 
 export const Route = createFileRoute("/_auth/$slug/notes")({
-  loader: ({ context }) => {
-    context.queryClient.ensureQueryData(workspaceQueryOptions())
-    context.queryClient.ensureQueryData(teamsQueryOptions())
-    context.queryClient.ensureQueryData(notesListQueryOptions())
+  loader: async ({ context }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(workspaceQueryOptions()),
+      context.queryClient.ensureQueryData(teamsQueryOptions()),
+      context.queryClient.ensureQueryData(notesListQueryOptions()),
+    ])
   },
   component: NotesPage,
 })
@@ -61,12 +63,17 @@ function NotesPage() {
     setNoteTitle(note?.title ?? "")
   }
 
-  const handleTitleChange = (title: string) => {
+  const titleDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleTitleChange = useCallback((title: string) => {
     setNoteTitle(title)
     if (selectedNoteId) {
-      updateNote.mutate({ noteId: selectedNoteId, title })
+      if (titleDebounceRef.current) clearTimeout(titleDebounceRef.current)
+      titleDebounceRef.current = setTimeout(() => {
+        updateNote.mutate({ noteId: selectedNoteId, title })
+      }, 400)
     }
-  }
+  }, [selectedNoteId, updateNote])
 
   const handleDeleteNote = async (noteId: string) => {
     await deleteNote.mutateAsync({ noteId })

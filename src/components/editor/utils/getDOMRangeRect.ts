@@ -1,4 +1,8 @@
 export function getDOMRangeRect(nativeSelection: Selection, rootElement: HTMLElement): DOMRect {
+  if (nativeSelection.rangeCount === 0) {
+    return rootElement.getBoundingClientRect();
+  }
+
   const domRange = nativeSelection.getRangeAt(0);
 
   let rect;

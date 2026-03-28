@@ -6,6 +6,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { CycleGroup } from "./cycle-group"
+import { IssueRow } from "./issue-row"
 import type { Cycle, Issue } from "./types"
 
 export function IssueList({
@@ -52,12 +53,14 @@ export function IssueList({
         ))}
 
         {uncycledIssues.length > 0 && (
-          <div className="px-4 py-2">
-            <span className="text-xs text-on-surface-variant font-medium">
-              No cycle
-            </span>
+          <div className="py-2">
+            <div className="px-4 py-1">
+              <span className="text-xs text-on-surface-variant font-medium">
+                No cycle
+              </span>
+            </div>
             {uncycledIssues.map((issue) => (
-              <div key={issue.id}>{issue.title}</div>
+              <IssueRow key={issue.id} issue={issue} />
             ))}
           </div>
         )}

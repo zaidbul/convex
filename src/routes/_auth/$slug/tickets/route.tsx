@@ -11,9 +11,11 @@ import {
 } from "@/query/options/tickets"
 
 export const Route = createFileRoute("/_auth/$slug/tickets")({
-  loader: ({ context }) => {
-    context.queryClient.ensureQueryData(workspaceQueryOptions())
-    context.queryClient.ensureQueryData(teamsQueryOptions())
+  loader: async ({ context }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(workspaceQueryOptions()),
+      context.queryClient.ensureQueryData(teamsQueryOptions()),
+    ])
   },
   component: TicketsLayout,
 })

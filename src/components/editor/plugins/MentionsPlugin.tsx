@@ -33,14 +33,17 @@ const MENU_VERTICAL_PADDING = 8;
 const MENU_MIN_HEIGHT = 96;
 const MENU_MAX_HEIGHT = MAX_VISIBLE_MENU_ROWS * MENU_ITEM_HEIGHT + MENU_VERTICAL_PADDING;
 
-let activeScrollLocks = 0;
-let previousBodyOverflow = "";
-let previousHtmlOverflow = "";
+// Ref-counted scroll lock shared across all editor instances
+const scrollLockState = {
+  count: 0,
+  previousBodyOverflow: "",
+  previousHtmlOverflow: "",
+};
 
 const STATIC_TAGS: Suggestion[] = [
   { id: "todo", label: "TODO", type: "tag", searchText: "todo" },
   { id: "blocked", label: "Blocked", type: "tag", searchText: "blocked" },
-  { id: "review", label: "Completed", type: "tag", searchText: "completed review" },
+  { id: "completed", label: "Completed", type: "tag", searchText: "completed" },
 ];
 
 class MentionOption extends MenuOption {
@@ -136,19 +139,19 @@ function acquireScrollLock(): () => void {
   }
 
   const { body, documentElement } = document;
-  if (activeScrollLocks === 0) {
-    previousBodyOverflow = body.style.overflow;
-    previousHtmlOverflow = documentElement.style.overflow;
+  if (scrollLockState.count === 0) {
+    scrollLockState.previousBodyOverflow = body.style.overflow;
+    scrollLockState.previousHtmlOverflow = documentElement.style.overflow;
     body.style.overflow = "hidden";
     documentElement.style.overflow = "hidden";
   }
-  activeScrollLocks += 1;
+  scrollLockState.count += 1;
 
   return () => {
-    activeScrollLocks = Math.max(0, activeScrollLocks - 1);
-    if (activeScrollLocks === 0) {
-      body.style.overflow = previousBodyOverflow;
-      documentElement.style.overflow = previousHtmlOverflow;
+    scrollLockState.count = Math.max(0, scrollLockState.count - 1);
+    if (scrollLockState.count === 0) {
+      body.style.overflow = scrollLockState.previousBodyOverflow;
+      documentElement.style.overflow = scrollLockState.previousHtmlOverflow;
     }
   };
 }

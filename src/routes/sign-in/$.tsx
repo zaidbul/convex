@@ -1,6 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
 import { auth } from "@clerk/tanstack-react-start/server"
+import { SignIn } from "@clerk/tanstack-react-start"
 
 const fetchAuthForRedirect = createServerFn({ method: "GET" }).handler(
   async () => {
@@ -21,7 +22,15 @@ export const Route = createFileRoute("/sign-in/$")({
     if (authState.userId) {
       throw redirect({ to: "/org-select" })
     }
-    // Not authenticated — send to sign-in root
-    throw redirect({ to: "/sign-in" })
+    // Not authenticated — render SignIn to allow Clerk OAuth callbacks (e.g. /sign-in/sso-callback)
   },
+  component: SignInCatchAll,
 })
+
+function SignInCatchAll() {
+  return (
+    <div className="grid min-h-screen place-items-center">
+      <SignIn />
+    </div>
+  )
+}

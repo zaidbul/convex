@@ -36,9 +36,15 @@ export function NoteAutoSavePlugin(props: NoteAutoSavePluginProps): null {
     return () => clearTimeout(timer);
   }, [noteId]);
 
+  const pendingRef = React.useRef<{ title: string; content: string } | null>(null);
+
   const performSave = React.useCallback(
     async (currentTitle: string, currentMarkdown: string) => {
-      if (isSavingRef.current) return;
+      if (isSavingRef.current) {
+        // Queue the latest content instead of dropping it
+        pendingRef.current = { title: currentTitle, content: currentMarkdown };
+        return;
+      }
 
       if (
         currentMarkdown === lastSavedContentRef.current &&
@@ -64,6 +70,12 @@ export function NoteAutoSavePlugin(props: NoteAutoSavePluginProps): null {
         onStatusChange?.("error");
       } finally {
         isSavingRef.current = false;
+        // Drain queued content
+        const pending = pendingRef.current;
+        pendingRef.current = null;
+        if (pending !== null && (pending.content !== lastSavedContentRef.current || pending.title !== lastSavedTitleRef.current)) {
+          performSave(pending.title, pending.content);
+        }
       }
     },
     [noteId, updateNote, onStatusChange],

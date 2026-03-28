@@ -17,10 +17,10 @@ export function CustomMarkdownShortcutPlugin({
   useEffect(() => {
     const unregisterMarkdown = registerMarkdownShortcuts(editor, transformers);
 
-    // Ensure focus is preserved after markdown transformations
+    // Ensure focus is preserved after markdown shortcut transformations only
     const unregisterFocus = editor.registerUpdateListener(
       ({ tags, editorState }) => {
-        if (tags.has("historic") || tags.has("collaboration")) {
+        if (!tags.has("markdown-shortcut")) {
           return;
         }
 

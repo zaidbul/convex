@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start"
-import { auth, clerkClient } from "@clerk/tanstack-react-start/server"
 import { db } from "@/db/connection"
 import type { IssuePriority, IssueStatus } from "@/components/tickets/types"
 import {
@@ -10,42 +9,9 @@ import {
   listCyclesForViewerTeam,
   listIssuesForViewerTeam,
   listTeamsForViewer,
-  syncViewerContext,
   updateIssueDescriptionForViewer,
 } from "./tickets-data"
-
-async function getViewerContext() {
-  const authState = await auth()
-
-  if (!authState.userId) {
-    throw new Error("Unauthorized")
-  }
-
-  const client = clerkClient()
-  const [clerkUser, organization] = await Promise.all([
-    client.users.getUser(authState.userId),
-    authState.orgId
-      ? client.organizations.getOrganization({ organizationId: authState.orgId })
-      : Promise.resolve(null),
-  ])
-
-  return syncViewerContext(db, {
-    auth: {
-      userId: authState.userId,
-      orgId: authState.orgId ?? null,
-      orgRole: authState.orgRole ?? null,
-      orgSlug: authState.orgSlug ?? null,
-    },
-    clerkUser,
-    organization: organization
-      ? {
-          id: organization.id,
-          name: organization.name,
-          slug: organization.slug,
-        }
-      : null,
-  })
-}
+import { getViewerContext } from "./viewer-context"
 
 export const getWorkspace = createServerFn({ method: "GET" }).handler(async () => {
   const viewerContext = await getViewerContext()

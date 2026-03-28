@@ -14,21 +14,26 @@ export const Route = createFileRoute(
 )({
   validateSearch: (search: Record<string, unknown>) => ({
     issueId: (search.issueId as string) || undefined,
+    filter: (search.filter as string) || undefined,
   }),
   component: IssuesPage,
 })
 
 function IssuesPage() {
   const { teamSlug } = Route.useParams()
-  const { issueId } = Route.useSearch()
+  const { issueId, filter } = Route.useSearch()
   const navigate = useNavigate()
   const { data: team } = useSuspenseQuery(teamQueryOptions(teamSlug))
   const { data: cycles } = useSuspenseQuery(cyclesQueryOptions(teamSlug))
-  const { data: issues } = useSuspenseQuery(issuesQueryOptions(teamSlug))
+  const { data: issues } = useSuspenseQuery(issuesQueryOptions(teamSlug, filter))
 
   return (
     <div className="flex h-screen flex-col bg-surface-low">
-      <TicketHeader team={team} />
+      <TicketHeader
+        team={team}
+        activeFilter={(filter as import("@/components/tickets/types").IssueFilter) ?? "active"}
+        onFilterChange={(f) => navigate({ search: (prev) => ({ ...prev, filter: f === "active" ? undefined : f }) } as Parameters<typeof navigate>[0])}
+      />
       <IssueList cycles={cycles} issues={issues} />
 
       {issueId && (
@@ -37,7 +42,9 @@ function IssuesPage() {
           open={true}
           onOpenChange={(open) => {
             if (!open) {
-              navigate({ search: {} } as never)
+              navigate({
+                search: (prev) => ({ ...prev, issueId: undefined }),
+              } as Parameters<typeof navigate>[0])
             }
           }}
         />

@@ -1,12 +1,10 @@
-export type IssueStatus =
-  | "backlog"
-  | "todo"
-  | "in-progress"
-  | "in-review"
-  | "done"
-  | "cancelled"
+import type { issueStatuses, issuePriorities, cycleStatuses } from "@/db/schema"
 
-export type IssuePriority = "urgent" | "high" | "medium" | "low" | "none"
+export type IssueStatus = (typeof issueStatuses)[number]
+
+export type IssuePriority = (typeof issuePriorities)[number]
+
+export type CycleStatus = (typeof cycleStatuses)[number]
 
 export interface User {
   id: string
@@ -46,7 +44,7 @@ export interface Cycle {
   number: number
   startDate: string
   endDate: string
-  status: "active" | "upcoming" | "completed"
+  status: CycleStatus
 }
 
 export interface Team {

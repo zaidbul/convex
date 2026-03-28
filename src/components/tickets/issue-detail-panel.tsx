@@ -15,6 +15,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { cn } from "@/lib/utils"
 import { DescriptionEditor } from "@/components/editor/DescriptionEditor"
 import type { IssueStatus, IssuePriority } from "./types"
+import { labelColorMap } from "./constants"
 
 const statusConfig: Record<IssueStatus, { label: string; color: string }> = {
   backlog: { label: "Backlog", color: "bg-muted-foreground/40" },
@@ -31,13 +32,6 @@ const priorityConfig: Record<IssuePriority, { label: string; color: string }> = 
   medium: { label: "Medium", color: "text-amber-500" },
   low: { label: "Low", color: "text-blue-500" },
   none: { label: "None", color: "text-muted-foreground" },
-}
-
-const labelColorMap: Record<string, string> = {
-  blue: "bg-blue-500/15 text-blue-400",
-  red: "bg-red-500/15 text-red-400",
-  green: "bg-green-500/15 text-green-400",
-  purple: "bg-purple-500/15 text-purple-400",
 }
 
 function formatDate(dateStr: string): string {
@@ -57,7 +51,7 @@ export function IssueDetailPanel({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
-  const { data: issue, isLoading } = useQuery(issueDetailQueryOptions(issueId))
+  const { data: issue, isLoading, isError } = useQuery(issueDetailQueryOptions(issueId))
 
   const status = issue ? statusConfig[issue.status] : null
   const priority = issue ? priorityConfig[issue.priority] : null
@@ -68,6 +62,10 @@ export function IssueDetailPanel({
         {isLoading ? (
           <div className="flex flex-1 items-center justify-center">
             <Spinner className="size-6" />
+          </div>
+        ) : isError ? (
+          <div className="flex flex-1 items-center justify-center">
+            <p className="text-destructive">Failed to load issue</p>
           </div>
         ) : !issue ? (
           <div className="flex flex-1 items-center justify-center">

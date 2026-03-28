@@ -13,6 +13,10 @@ import { Input } from "@/components/ui/input"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Spinner } from "@/components/ui/spinner"
 
+function slugify(value: string): string {
+  return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "workspace"
+}
+
 const fetchAuthForOrgSelect = createServerFn({ method: "GET" }).handler(
   async () => {
     const { userId, orgSlug } = await auth()
@@ -70,9 +74,10 @@ function OrgSelectPage() {
       const org = await createOrganization?.({ name: newOrgName.trim() })
       if (org) {
         await setActive?.({ organization: org.id })
+        const slug = org.slug ?? slugify(org.name)
         navigate({
           to: "/$slug/tickets",
-          params: { slug: org.slug! },
+          params: { slug },
         })
       }
     } finally {

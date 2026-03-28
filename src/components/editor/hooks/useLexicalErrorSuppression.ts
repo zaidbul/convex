@@ -1,77 +1,60 @@
 import { useEffect } from "react";
 
+function isLexicalDOMError(msg: string): boolean {
+  return (
+    (msg.includes("removeChild") && msg.includes("not a child")) ||
+    msg.includes("NotFoundError") ||
+    (msg.includes("Failed to execute") && msg.includes("removeChild"))
+  );
+}
+
+// Ref-counted singleton: only one set of global handlers regardless of editor count
+let refCount = 0;
+let savedOnerror: typeof globalThis.onerror = null;
+let unhandledRejectionHandler: ((e: PromiseRejectionEvent) => void) | null = null;
+
+function acquire() {
+  refCount++;
+  if (refCount > 1) return; // already installed
+
+  savedOnerror = globalThis.onerror;
+
+  globalThis.onerror = (event, source, lineno, colno, error) => {
+    const msg =
+      (error instanceof Error ? error.message : typeof event === "string" ? event : "") || "";
+    if (isLexicalDOMError(msg)) return true;
+    if (typeof savedOnerror === "function") {
+      return savedOnerror(event, source, lineno, colno, error);
+    }
+    return false;
+  };
+
+  unhandledRejectionHandler = (event: PromiseRejectionEvent) => {
+    const msg = event.reason?.message || String(event.reason || "");
+    if (isLexicalDOMError(msg)) {
+      event.preventDefault();
+    }
+  };
+
+  globalThis.addEventListener("unhandledrejection", unhandledRejectionHandler);
+}
+
+function release() {
+  refCount = Math.max(0, refCount - 1);
+  if (refCount > 0) return; // other editors still mounted
+
+  globalThis.onerror = savedOnerror;
+  savedOnerror = null;
+
+  if (unhandledRejectionHandler) {
+    globalThis.removeEventListener("unhandledrejection", unhandledRejectionHandler);
+    unhandledRejectionHandler = null;
+  }
+}
+
 export function useLexicalErrorSuppression() {
   useEffect(() => {
-    const originalError = globalThis.onerror;
-
-    const errorHandler = (
-      event: ErrorEvent | string,
-      source?: string,
-      lineno?: number,
-      colno?: number,
-      error?: Error | null,
-    ): boolean => {
-      const errorMessage =
-        (error && typeof error === "object" && "message" in error
-          ? error.message
-          : typeof event === "string"
-            ? event
-            : event.message) || "";
-
-      if (
-        (errorMessage.includes("removeChild") && errorMessage.includes("not a child")) ||
-        errorMessage.includes("NotFoundError") ||
-        (errorMessage.includes("Failed to execute") && errorMessage.includes("removeChild"))
-      ) {
-        return true;
-      }
-
-      if (originalError) {
-        if (typeof originalError === "function") {
-          return originalError(event, source, lineno, colno, error || undefined);
-        }
-      }
-      return false;
-    };
-
-    globalThis.onerror = errorHandler as typeof globalThis.onerror;
-
-    const unhandledRejectionHandler = (event: PromiseRejectionEvent) => {
-      const errorMessage = event.reason?.message || String(event.reason || "");
-      if (
-        (errorMessage.includes("removeChild") && errorMessage.includes("not a child")) ||
-        errorMessage.includes("NotFoundError") ||
-        (errorMessage.includes("Failed to execute") && errorMessage.includes("removeChild"))
-      ) {
-        event.preventDefault();
-        return;
-      }
-    };
-
-    globalThis.addEventListener("unhandledrejection", unhandledRejectionHandler);
-
-    const reactErrorHandler = (event: Event) => {
-      if (event instanceof ErrorEvent) {
-        const errorMessage = event.message || event.error?.message || "";
-        if (
-          (errorMessage.includes("removeChild") && errorMessage.includes("not a child")) ||
-          errorMessage.includes("NotFoundError") ||
-          (errorMessage.includes("Failed to execute") && errorMessage.includes("removeChild"))
-        ) {
-          event.preventDefault();
-          event.stopPropagation();
-          return false;
-        }
-      }
-      return true;
-    };
-
-    document.addEventListener("error", reactErrorHandler, true);
-
-    return () => {
-      globalThis.onerror = originalError;
-      document.removeEventListener("error", reactErrorHandler, true);
-      globalThis.removeEventListener("unhandledrejection", unhandledRejectionHandler);
-    };
+    acquire();
+    return release;
   }, []);
 }

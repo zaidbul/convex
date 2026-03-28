@@ -34,9 +34,15 @@ export function IssueAutoSavePlugin(props: IssueAutoSavePluginProps): null {
     return () => clearTimeout(timer);
   }, [issueId]);
 
+  const pendingContentRef = React.useRef<string | null>(null);
+
   const performSave = React.useCallback(
     async (currentMarkdown: string) => {
-      if (isSavingRef.current) return;
+      if (isSavingRef.current) {
+        // Queue the latest content instead of dropping it
+        pendingContentRef.current = currentMarkdown;
+        return;
+      }
 
       // Skip if nothing changed
       if (currentMarkdown === lastSavedRef.current) {
@@ -58,6 +64,12 @@ export function IssueAutoSavePlugin(props: IssueAutoSavePluginProps): null {
         onStatusChange?.("error");
       } finally {
         isSavingRef.current = false;
+        // Drain queued content
+        const pending = pendingContentRef.current;
+        pendingContentRef.current = null;
+        if (pending !== null && pending !== lastSavedRef.current) {
+          performSave(pending);
+        }
       }
     },
     [issueId, updateDescription, onStatusChange],

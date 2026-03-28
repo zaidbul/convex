@@ -45,6 +45,20 @@ export class MentionNode extends TextNode {
     this.__label = label;
   }
 
+  static override importDOM(): Record<string, (node: HTMLElement) => { conversion: (domNode: HTMLElement) => { node: MentionNode } | null; priority: 0 | 1 | 2 | 3 | 4 } | null> | null {
+    return {
+      span: (domNode: HTMLElement) => {
+        const mentionId = domNode.dataset.mentionId;
+        const mentionLabel = domNode.dataset.mentionLabel;
+        if (!mentionId || !mentionLabel) return null;
+        return {
+          conversion: () => ({ node: new MentionNode(mentionLabel, mentionId) }),
+          priority: 1 as const,
+        };
+      },
+    };
+  }
+
   override createDOM(config: EditorConfig): HTMLElement {
     const dom = super.createDOM(config);
     dom.dataset.mentionId = this.__id;

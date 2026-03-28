@@ -73,6 +73,7 @@ export async function getNoteByIdForViewer(
       and(
         eq(schema.notes.id, noteId),
         eq(schema.notes.workspaceId, context.workspaceId),
+        eq(schema.notes.authorUserId, context.userId),
       )
     )
 
@@ -114,7 +115,7 @@ export async function updateNoteForViewer(
     throw new Error("No active workspace")
   }
 
-  const updates: Record<string, string> = { updatedAt: nowIso() }
+  const updates: Partial<Pick<typeof schema.notes.$inferInsert, "title" | "content" | "updatedAt">> = { updatedAt: nowIso() }
   if (input.title !== undefined) updates.title = input.title
   if (input.content !== undefined) updates.content = input.content
 
@@ -125,6 +126,7 @@ export async function updateNoteForViewer(
       and(
         eq(schema.notes.id, noteId),
         eq(schema.notes.workspaceId, context.workspaceId),
+        eq(schema.notes.authorUserId, context.userId),
       )
     )
 }
@@ -144,6 +146,7 @@ export async function deleteNoteForViewer(
       and(
         eq(schema.notes.id, noteId),
         eq(schema.notes.workspaceId, context.workspaceId),
+        eq(schema.notes.authorUserId, context.userId),
       )
     )
 }

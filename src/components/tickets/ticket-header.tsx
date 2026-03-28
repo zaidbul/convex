@@ -7,17 +7,10 @@ import {
 import { Button } from "@/components/ui/button"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { FilterPills } from "./filter-pills"
-import type { Team } from "./types"
+import type { IssueFilter, Team } from "./types"
+import { teamColorMap } from "./constants"
 
-const teamColorMap: Record<string, string> = {
-  purple: "bg-purple-500",
-  blue: "bg-blue-500",
-  green: "bg-green-500",
-  red: "bg-red-500",
-  orange: "bg-orange-500",
-}
-
-export function TicketHeader({ team }: { team: Team }) {
+export function TicketHeader({ team, activeFilter, onFilterChange }: { team: Team; activeFilter?: IssueFilter; onFilterChange?: (filter: IssueFilter) => void }) {
   return (
     <div className="sticky top-0 z-10 flex flex-col bg-surface-low">
       {/* Row 1: Team name + actions */}
@@ -39,7 +32,7 @@ export function TicketHeader({ team }: { team: Team }) {
       {/* Row 2: Filter pills + toolbar */}
       <div className="flex items-center gap-2 px-4 py-1.5">
         <div className="flex-1 min-w-0">
-          <FilterPills />
+          <FilterPills activeFilter={activeFilter} onFilterChange={onFilterChange} />
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <Button variant="ghost" size="icon" className="size-7">

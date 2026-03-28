@@ -11,26 +11,36 @@ export class LexicalDOMErrorBoundary extends React.Component<
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(_error: Error) {
-    // Never set error state to prevent remounting - errors are handled globally
-    return { hasError: false };
+  static getDerivedStateFromError(error: Error) {
+    const msg = error.message || "";
+    const isLexicalDOMError =
+      (msg.includes("removeChild") && msg.includes("not a child")) ||
+      msg.includes("NotFoundError") ||
+      (msg.includes("Failed to execute") && msg.includes("removeChild"));
+    // Only suppress known Lexical DOM reconciliation errors
+    return { hasError: !isLexicalDOMError };
   }
 
   override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Suppress React DOM reconciliation errors - they're handled globally
-    const errorMessage = error.message || "";
-    if (
-      (errorMessage.includes("removeChild") && errorMessage.includes("not a child")) ||
-      errorMessage.includes("NotFoundError") ||
-      (errorMessage.includes("Failed to execute") && errorMessage.includes("removeChild"))
-    ) {
+    const msg = error.message || "";
+    const isLexicalDOMError =
+      (msg.includes("removeChild") && msg.includes("not a child")) ||
+      msg.includes("NotFoundError") ||
+      (msg.includes("Failed to execute") && msg.includes("removeChild"));
+    if (isLexicalDOMError) {
       return;
     }
     console.error("[Editor] Error caught by boundary:", error, errorInfo);
   }
 
   override render() {
-    // Always render children - never remount to preserve focus
+    if (this.state.hasError) {
+      return (
+        <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">
+          Something went wrong in the editor. Please reload the page.
+        </div>
+      );
+    }
     return this.props.children;
   }
 }

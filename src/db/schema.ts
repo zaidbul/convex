@@ -42,6 +42,16 @@ export const issuePriorities = [
   "none",
 ] as const
 
+export const issueActivityTypes = [
+  "created",
+  "status_change",
+  "priority_change",
+  "assignee_change",
+  "label_change",
+  "description_change",
+  "comment",
+] as const
+
 export const users = sqliteTable(
   "users",
   {
@@ -109,7 +119,7 @@ export const teams = sqliteTable(
     slug: text("slug").notNull(),
     identifier: text("identifier").notNull(),
     color: text("color").notNull(),
-    nextIssueNumber: integer("next_issue_number").notNull().default(0),
+    nextIssueNumber: integer("next_issue_number").notNull().default(1),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
   },
@@ -321,7 +331,7 @@ export const issueActivity = sqliteTable(
     actorUserId: text("actor_user_id").references(() => users.id, {
       onDelete: "set null",
     }),
-    type: text("type").notNull(),
+    type: text("type", { enum: issueActivityTypes }).notNull(),
     data: text("data", { mode: "json" })
       .$type<Record<string, unknown>>()
       .notNull()

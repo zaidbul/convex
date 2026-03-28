@@ -4,15 +4,7 @@ import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import type { Issue, IssueStatus } from "./types"
-
-const statusColorMap: Record<IssueStatus, string> = {
-  backlog: "bg-on-surface-variant/40",
-  todo: "bg-on-surface-variant/60",
-  "in-progress": "bg-amber-500",
-  "in-review": "bg-purple-500",
-  done: "bg-green-500",
-  cancelled: "bg-red-500/50",
-}
+import { statusColorMap, labelColorMap } from "./constants"
 
 const statusRingMap: Record<IssueStatus, string> = {
   backlog: "border-on-surface-variant/30",
@@ -21,13 +13,6 @@ const statusRingMap: Record<IssueStatus, string> = {
   "in-review": "border-purple-500",
   done: "border-green-500",
   cancelled: "border-red-500/40",
-}
-
-const labelColorMap: Record<string, string> = {
-  blue: "bg-blue-500/15 text-blue-400",
-  red: "bg-red-500/15 text-red-400",
-  green: "bg-green-500/15 text-green-400",
-  purple: "bg-purple-500/15 text-purple-400",
 }
 
 function formatDate(dateStr: string): string {
@@ -48,8 +33,8 @@ export function IssueRow({ issue }: { issue: Issue }) {
 
   function handleClick() {
     navigate({
-      search: { issueId: issue.id },
-    } as never)
+      search: (prev) => ({ ...prev, issueId: issue.id }),
+    } as Parameters<typeof navigate>[0])
   }
 
   return (
