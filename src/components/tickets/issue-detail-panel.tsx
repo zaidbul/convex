@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { Spinner } from "@/components/ui/spinner"
 import { cn } from "@/lib/utils"
+import { DescriptionEditor } from "@/components/editor/DescriptionEditor"
 import type { IssueStatus, IssuePriority } from "./types"
 
 const statusConfig: Record<IssueStatus, { label: string; color: string }> = {
@@ -165,8 +166,11 @@ export function IssueDetailPanel({
               {/* Description */}
               <div>
                 <span className="text-sm font-medium text-foreground">Description</span>
-                <div className="mt-2 text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                  {issue.description || "No description provided."}
+                <div className="mt-2">
+                  <DescriptionEditor
+                    issueId={issue.id}
+                    initialMarkdown={issue.description}
+                  />
                 </div>
               </div>
             </SheetBody>

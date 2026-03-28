@@ -335,6 +335,27 @@ export const issueActivity = sqliteTable(
   })
 )
 
+export const notes = sqliteTable(
+  "notes",
+  {
+    id: text("id").primaryKey(),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    authorUserId: text("author_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    title: text("title").notNull().default(""),
+    content: text("content"),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => ({
+    workspaceIdIdx: index("notes_workspace_id_idx").on(table.workspaceId),
+    authorUserIdIdx: index("notes_author_user_id_idx").on(table.authorUserId),
+  })
+)
+
 export type User = typeof users.$inferSelect
 export type Workspace = typeof workspaces.$inferSelect
 export type WorkspaceMembership = typeof workspaceMemberships.$inferSelect
@@ -346,3 +367,4 @@ export type Label = typeof labels.$inferSelect
 export type Issue = typeof issues.$inferSelect
 export type IssueComment = typeof issueComments.$inferSelect
 export type IssueActivity = typeof issueActivity.$inferSelect
+export type Note = typeof notes.$inferSelect

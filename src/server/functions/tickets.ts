@@ -11,6 +11,7 @@ import {
   listIssuesForViewerTeam,
   listTeamsForViewer,
   syncViewerContext,
+  updateIssueDescriptionForViewer,
 } from "./tickets-data"
 
 async function getViewerContext() {
@@ -109,4 +110,11 @@ export const getIssueById = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     return getIssueByIdForViewer(db, viewerContext, data.issueId)
+  })
+
+export const updateIssueDescription = createServerFn({ method: "POST" })
+  .inputValidator((data: { issueId: string; description: string }) => data)
+  .handler(async ({ data }) => {
+    const viewerContext = await getViewerContext()
+    return updateIssueDescriptionForViewer(db, viewerContext, data.issueId, data.description)
   })

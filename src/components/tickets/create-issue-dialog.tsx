@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { toast } from "sonner"
 import {
   Dialog,
@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
@@ -19,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useCreateIssueMutation } from "@/query/mutations/tickets"
+import { CompactIssueEditor, type CompactIssueEditorHandle } from "@/components/editor/CompactIssueEditor"
 import type { IssueStatus, IssuePriority, Team } from "./types"
 
 const statusOptions: { value: IssueStatus; label: string }[] = [
@@ -50,19 +50,19 @@ export function CreateIssueDialog({
   defaultTeamId,
 }: CreateIssueDialogProps) {
   const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
   const [status, setStatus] = useState<IssueStatus>("backlog")
   const [priority, setPriority] = useState<IssuePriority>("none")
   const [teamId, setTeamId] = useState(defaultTeamId ?? teams[0]?.id ?? "")
+  const editorRef = useRef<CompactIssueEditorHandle>(null)
 
   const createIssue = useCreateIssueMutation()
 
   function resetForm() {
     setTitle("")
-    setDescription("")
     setStatus("backlog")
     setPriority("none")
     setTeamId(defaultTeamId ?? teams[0]?.id ?? "")
+    editorRef.current?.clearEditor()
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -70,10 +70,11 @@ export function CreateIssueDialog({
     if (!title.trim() || !teamId) return
 
     try {
+      const description = editorRef.current?.getMarkdown()?.trim() || undefined
       const result = await createIssue.mutateAsync({
         teamId,
         title: title.trim(),
-        description: description.trim() || undefined,
+        description,
         status,
         priority,
       })
@@ -93,7 +94,7 @@ export function CreateIssueDialog({
         onOpenChange(nextOpen)
       }}
     >
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>New Issue</DialogTitle>
           <DialogDescription>
@@ -109,13 +110,7 @@ export function CreateIssueDialog({
             autoFocus
           />
 
-          <Textarea
-            placeholder="Add a description..."
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={3}
-            className="resize-none"
-          />
+          <CompactIssueEditor ref={editorRef} />
 
           <div className="flex flex-wrap items-center gap-3">
             {/* Team selector */}

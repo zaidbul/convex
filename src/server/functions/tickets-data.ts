@@ -165,6 +165,70 @@ export async function syncViewerContext(
       },
     })
 
+  // Bootstrap a default team if this workspace has none yet
+  const existingTeams = await db.query.teams.findFirst({
+    where: eq(schema.teams.workspaceId, input.organization.id),
+  })
+
+  if (!existingTeams) {
+    const teamId = crypto.randomUUID()
+    const teamName = input.organization.name
+    const teamSlug = slugify(teamName)
+    const teamIdentifier = teamName
+      .split(/\s+/)
+      .map((w) => w[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 3) || "DEF"
+
+    await db.insert(schema.teams).values({
+      id: teamId,
+      workspaceId: input.organization.id,
+      name: teamName,
+      slug: teamSlug,
+      identifier: teamIdentifier,
+      color: "#6366f1",
+      nextIssueNumber: 1,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    })
+
+    await db
+      .insert(schema.teamMemberships)
+      .values({
+        teamId,
+        userId: input.clerkUser.id,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      })
+      .onConflictDoNothing()
+  } else {
+    // Ensure the current user is a member of at least one team in this workspace
+    const membershipRow = await db
+      .select({ teamId: schema.teamMemberships.teamId })
+      .from(schema.teamMemberships)
+      .innerJoin(schema.teams, eq(schema.teamMemberships.teamId, schema.teams.id))
+      .where(
+        and(
+          eq(schema.teamMemberships.userId, input.clerkUser.id),
+          eq(schema.teams.workspaceId, input.organization.id)
+        )
+      )
+      .limit(1)
+
+    if (membershipRow.length === 0) {
+      await db
+        .insert(schema.teamMemberships)
+        .values({
+          teamId: existingTeams.id,
+          userId: input.clerkUser.id,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        })
+        .onConflictDoNothing()
+    }
+  }
+
   return { userId: input.clerkUser.id, workspaceId: input.organization.id }
 }
 
@@ -553,4 +617,25 @@ export async function getIssueByIdForViewer(
     updatedAt: issue.updatedAt,
     creator: creator ? mapUser(creator) : { id: issue.creatorUserId, name: "Unknown", initials: "??" },
   }
+}
+
+export async function updateIssueDescriptionForViewer(
+  db: TicketsDatabase,
+  context: ViewerContext,
+  issueId: string,
+  description: string
+): Promise<void> {
+  if (!context.workspaceId) {
+    throw new Error("No active workspace")
+  }
+
+  await db
+    .update(schema.issues)
+    .set({ description, updatedAt: nowIso() })
+    .where(
+      and(
+        eq(schema.issues.id, issueId),
+        eq(schema.issues.workspaceId, context.workspaceId)
+      )
+    )
 }

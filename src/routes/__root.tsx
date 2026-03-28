@@ -2,6 +2,7 @@ import {
   HeadContent,
   Outlet,
   Scripts,
+  type ErrorComponentProps,
   createRootRouteWithContext,
 } from "@tanstack/react-router"
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
@@ -42,6 +43,7 @@ export const Route = createRootRouteWithContext<{
     ],
   }),
   component: RootComponent,
+  errorComponent: RootErrorComponent,
   shellComponent: RootDocument,
 })
 
@@ -87,5 +89,32 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <Scripts />
       </body>
     </html>
+  )
+}
+
+function RootErrorComponent({ error, reset }: ErrorComponentProps) {
+  const message = error instanceof Error ? error.message : String(error)
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-surface-low px-6">
+      <div className="w-full max-w-lg rounded-2xl border border-outline-variant/20 bg-surface p-6 shadow-sm">
+        <p className="text-sm font-medium text-destructive">Application error</p>
+        <h1 className="mt-2 text-2xl font-semibold text-foreground">
+          Something went wrong while rendering this route.
+        </h1>
+        {import.meta.env.DEV ? (
+          <pre className="mt-4 overflow-x-auto rounded-xl bg-muted p-3 text-sm text-muted-foreground">
+            <code>{message}</code>
+          </pre>
+        ) : null}
+        <button
+          type="button"
+          onClick={reset}
+          className="mt-5 inline-flex h-10 items-center justify-center rounded-lg bg-foreground px-4 text-sm font-medium text-background"
+        >
+          Try again
+        </button>
+      </div>
+    </div>
   )
 }

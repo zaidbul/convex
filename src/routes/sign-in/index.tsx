@@ -10,7 +10,7 @@ const fetchAuthForRedirect = createServerFn({ method: "GET" }).handler(
   }
 )
 
-export const Route = createFileRoute("/sign-in")({
+export const Route = createFileRoute("/sign-in/")({
   beforeLoad: async () => {
     const authState = await fetchAuthForRedirect()
     if (authState.userId && authState.orgSlug) {
