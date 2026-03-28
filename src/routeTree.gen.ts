@@ -9,9 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as DefaultRouteImport } from './routes/_default'
+import { Route as TicketsRouteRouteImport } from './routes/tickets/route'
 import { Route as StyleGuideRouteRouteImport } from './routes/style-guide/route'
 import { Route as LayoutGuidesRouteRouteImport } from './routes/layout-guides/route'
+import { Route as AuthRouteRouteImport } from './routes/_auth/route'
+import { Route as TicketsIndexRouteImport } from './routes/tickets/index'
 import { Route as StyleGuideIndexRouteImport } from './routes/style-guide/index'
 import { Route as LayoutGuidesIndexRouteImport } from './routes/layout-guides/index'
 import { Route as DefaultIndexRouteImport } from './routes/_default.index'
@@ -51,11 +55,24 @@ import { Route as LayoutGuidesMarketingPublicRouteImport } from './routes/layout
 import { Route as LayoutGuidesLeftnavRightPanelRouteImport } from './routes/layout-guides/leftnav-right-panel'
 import { Route as LayoutGuidesDataTableLayoutRouteImport } from './routes/layout-guides/data-table-layout'
 import { Route as LayoutGuidesAuthMinimalRouteImport } from './routes/layout-guides/auth-minimal'
+import { Route as TicketsTeamSlugRouteRouteImport } from './routes/tickets/$teamSlug/route'
 import { Route as StyleGuideLayoutsIndexRouteImport } from './routes/style-guide/layouts/index'
+import { Route as TicketsTeamSlugIssuesRouteImport } from './routes/tickets/$teamSlug/issues'
 import { Route as StyleGuideLayoutsLayoutIdRouteImport } from './routes/style-guide/layouts/$layoutId'
+import { Route as AuthSlugDashboardRouteImport } from './routes/_auth/$slug.dashboard'
 
+const SignInRoute = SignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DefaultRoute = DefaultRouteImport.update({
   id: '/_default',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TicketsRouteRoute = TicketsRouteRouteImport.update({
+  id: '/tickets',
+  path: '/tickets',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StyleGuideRouteRoute = StyleGuideRouteRouteImport.update({
@@ -67,6 +84,15 @@ const LayoutGuidesRouteRoute = LayoutGuidesRouteRouteImport.update({
   id: '/layout-guides',
   path: '/layout-guides',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRouteRoute = AuthRouteRouteImport.update({
+  id: '/_auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TicketsIndexRoute = TicketsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => TicketsRouteRoute,
 } as any)
 const StyleGuideIndexRoute = StyleGuideIndexRouteImport.update({
   id: '/',
@@ -277,10 +303,20 @@ const LayoutGuidesAuthMinimalRoute = LayoutGuidesAuthMinimalRouteImport.update({
   path: '/auth-minimal',
   getParentRoute: () => LayoutGuidesRouteRoute,
 } as any)
+const TicketsTeamSlugRouteRoute = TicketsTeamSlugRouteRouteImport.update({
+  id: '/$teamSlug',
+  path: '/$teamSlug',
+  getParentRoute: () => TicketsRouteRoute,
+} as any)
 const StyleGuideLayoutsIndexRoute = StyleGuideLayoutsIndexRouteImport.update({
   id: '/layouts/',
   path: '/layouts/',
   getParentRoute: () => StyleGuideRouteRoute,
+} as any)
+const TicketsTeamSlugIssuesRoute = TicketsTeamSlugIssuesRouteImport.update({
+  id: '/issues',
+  path: '/issues',
+  getParentRoute: () => TicketsTeamSlugRouteRoute,
 } as any)
 const StyleGuideLayoutsLayoutIdRoute =
   StyleGuideLayoutsLayoutIdRouteImport.update({
@@ -288,11 +324,19 @@ const StyleGuideLayoutsLayoutIdRoute =
     path: '/layouts/$layoutId',
     getParentRoute: () => StyleGuideRouteRoute,
   } as any)
+const AuthSlugDashboardRoute = AuthSlugDashboardRouteImport.update({
+  id: '/$slug/dashboard',
+  path: '/$slug/dashboard',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof DefaultIndexRoute
   '/layout-guides': typeof LayoutGuidesRouteRouteWithChildren
   '/style-guide': typeof StyleGuideRouteRouteWithChildren
-  '/': typeof DefaultIndexRoute
+  '/tickets': typeof TicketsRouteRouteWithChildren
+  '/sign-in': typeof SignInRoute
+  '/tickets/$teamSlug': typeof TicketsTeamSlugRouteRouteWithChildren
   '/layout-guides/auth-minimal': typeof LayoutGuidesAuthMinimalRoute
   '/layout-guides/data-table-layout': typeof LayoutGuidesDataTableLayoutRoute
   '/layout-guides/leftnav-right-panel': typeof LayoutGuidesLeftnavRightPanelRoute
@@ -331,10 +375,16 @@ export interface FileRoutesByFullPath {
   '/style-guide/wizards': typeof StyleGuideWizardsRoute
   '/layout-guides/': typeof LayoutGuidesIndexRoute
   '/style-guide/': typeof StyleGuideIndexRoute
+  '/tickets/': typeof TicketsIndexRoute
+  '/$slug/dashboard': typeof AuthSlugDashboardRoute
   '/style-guide/layouts/$layoutId': typeof StyleGuideLayoutsLayoutIdRoute
+  '/tickets/$teamSlug/issues': typeof TicketsTeamSlugIssuesRoute
   '/style-guide/layouts/': typeof StyleGuideLayoutsIndexRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof DefaultIndexRoute
+  '/sign-in': typeof SignInRoute
+  '/tickets/$teamSlug': typeof TicketsTeamSlugRouteRouteWithChildren
   '/layout-guides/auth-minimal': typeof LayoutGuidesAuthMinimalRoute
   '/layout-guides/data-table-layout': typeof LayoutGuidesDataTableLayoutRoute
   '/layout-guides/leftnav-right-panel': typeof LayoutGuidesLeftnavRightPanelRoute
@@ -371,17 +421,23 @@ export interface FileRoutesByTo {
   '/style-guide/settings': typeof StyleGuideSettingsRoute
   '/style-guide/sheets': typeof StyleGuideSheetsRoute
   '/style-guide/wizards': typeof StyleGuideWizardsRoute
-  '/': typeof DefaultIndexRoute
   '/layout-guides': typeof LayoutGuidesIndexRoute
   '/style-guide': typeof StyleGuideIndexRoute
+  '/tickets': typeof TicketsIndexRoute
+  '/$slug/dashboard': typeof AuthSlugDashboardRoute
   '/style-guide/layouts/$layoutId': typeof StyleGuideLayoutsLayoutIdRoute
+  '/tickets/$teamSlug/issues': typeof TicketsTeamSlugIssuesRoute
   '/style-guide/layouts': typeof StyleGuideLayoutsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/_auth': typeof AuthRouteRouteWithChildren
   '/layout-guides': typeof LayoutGuidesRouteRouteWithChildren
   '/style-guide': typeof StyleGuideRouteRouteWithChildren
+  '/tickets': typeof TicketsRouteRouteWithChildren
   '/_default': typeof DefaultRouteWithChildren
+  '/sign-in': typeof SignInRoute
+  '/tickets/$teamSlug': typeof TicketsTeamSlugRouteRouteWithChildren
   '/layout-guides/auth-minimal': typeof LayoutGuidesAuthMinimalRoute
   '/layout-guides/data-table-layout': typeof LayoutGuidesDataTableLayoutRoute
   '/layout-guides/leftnav-right-panel': typeof LayoutGuidesLeftnavRightPanelRoute
@@ -421,15 +477,21 @@ export interface FileRoutesById {
   '/_default/': typeof DefaultIndexRoute
   '/layout-guides/': typeof LayoutGuidesIndexRoute
   '/style-guide/': typeof StyleGuideIndexRoute
+  '/tickets/': typeof TicketsIndexRoute
+  '/_auth/$slug/dashboard': typeof AuthSlugDashboardRoute
   '/style-guide/layouts/$layoutId': typeof StyleGuideLayoutsLayoutIdRoute
+  '/tickets/$teamSlug/issues': typeof TicketsTeamSlugIssuesRoute
   '/style-guide/layouts/': typeof StyleGuideLayoutsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/'
     | '/layout-guides'
     | '/style-guide'
-    | '/'
+    | '/tickets'
+    | '/sign-in'
+    | '/tickets/$teamSlug'
     | '/layout-guides/auth-minimal'
     | '/layout-guides/data-table-layout'
     | '/layout-guides/leftnav-right-panel'
@@ -468,10 +530,16 @@ export interface FileRouteTypes {
     | '/style-guide/wizards'
     | '/layout-guides/'
     | '/style-guide/'
+    | '/tickets/'
+    | '/$slug/dashboard'
     | '/style-guide/layouts/$layoutId'
+    | '/tickets/$teamSlug/issues'
     | '/style-guide/layouts/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
+    | '/sign-in'
+    | '/tickets/$teamSlug'
     | '/layout-guides/auth-minimal'
     | '/layout-guides/data-table-layout'
     | '/layout-guides/leftnav-right-panel'
@@ -508,16 +576,22 @@ export interface FileRouteTypes {
     | '/style-guide/settings'
     | '/style-guide/sheets'
     | '/style-guide/wizards'
-    | '/'
     | '/layout-guides'
     | '/style-guide'
+    | '/tickets'
+    | '/$slug/dashboard'
     | '/style-guide/layouts/$layoutId'
+    | '/tickets/$teamSlug/issues'
     | '/style-guide/layouts'
   id:
     | '__root__'
+    | '/_auth'
     | '/layout-guides'
     | '/style-guide'
+    | '/tickets'
     | '/_default'
+    | '/sign-in'
+    | '/tickets/$teamSlug'
     | '/layout-guides/auth-minimal'
     | '/layout-guides/data-table-layout'
     | '/layout-guides/leftnav-right-panel'
@@ -557,23 +631,43 @@ export interface FileRouteTypes {
     | '/_default/'
     | '/layout-guides/'
     | '/style-guide/'
+    | '/tickets/'
+    | '/_auth/$slug/dashboard'
     | '/style-guide/layouts/$layoutId'
+    | '/tickets/$teamSlug/issues'
     | '/style-guide/layouts/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  AuthRouteRoute: typeof AuthRouteRouteWithChildren
   LayoutGuidesRouteRoute: typeof LayoutGuidesRouteRouteWithChildren
   StyleGuideRouteRoute: typeof StyleGuideRouteRouteWithChildren
+  TicketsRouteRoute: typeof TicketsRouteRouteWithChildren
   DefaultRoute: typeof DefaultRouteWithChildren
+  SignInRoute: typeof SignInRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sign-in': {
+      id: '/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_default': {
       id: '/_default'
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof DefaultRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tickets': {
+      id: '/tickets'
+      path: '/tickets'
+      fullPath: '/tickets'
+      preLoaderRoute: typeof TicketsRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/style-guide': {
@@ -589,6 +683,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/layout-guides'
       preLoaderRoute: typeof LayoutGuidesRouteRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_auth': {
+      id: '/_auth'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tickets/': {
+      id: '/tickets/'
+      path: '/'
+      fullPath: '/tickets/'
+      preLoaderRoute: typeof TicketsIndexRouteImport
+      parentRoute: typeof TicketsRouteRoute
     }
     '/style-guide/': {
       id: '/style-guide/'
@@ -863,12 +971,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutGuidesAuthMinimalRouteImport
       parentRoute: typeof LayoutGuidesRouteRoute
     }
+    '/tickets/$teamSlug': {
+      id: '/tickets/$teamSlug'
+      path: '/$teamSlug'
+      fullPath: '/tickets/$teamSlug'
+      preLoaderRoute: typeof TicketsTeamSlugRouteRouteImport
+      parentRoute: typeof TicketsRouteRoute
+    }
     '/style-guide/layouts/': {
       id: '/style-guide/layouts/'
       path: '/layouts'
       fullPath: '/style-guide/layouts/'
       preLoaderRoute: typeof StyleGuideLayoutsIndexRouteImport
       parentRoute: typeof StyleGuideRouteRoute
+    }
+    '/tickets/$teamSlug/issues': {
+      id: '/tickets/$teamSlug/issues'
+      path: '/issues'
+      fullPath: '/tickets/$teamSlug/issues'
+      preLoaderRoute: typeof TicketsTeamSlugIssuesRouteImport
+      parentRoute: typeof TicketsTeamSlugRouteRoute
     }
     '/style-guide/layouts/$layoutId': {
       id: '/style-guide/layouts/$layoutId'
@@ -877,8 +999,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StyleGuideLayoutsLayoutIdRouteImport
       parentRoute: typeof StyleGuideRouteRoute
     }
+    '/_auth/$slug/dashboard': {
+      id: '/_auth/$slug/dashboard'
+      path: '/$slug/dashboard'
+      fullPath: '/$slug/dashboard'
+      preLoaderRoute: typeof AuthSlugDashboardRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
   }
 }
+
+interface AuthRouteRouteChildren {
+  AuthSlugDashboardRoute: typeof AuthSlugDashboardRoute
+}
+
+const AuthRouteRouteChildren: AuthRouteRouteChildren = {
+  AuthSlugDashboardRoute: AuthSlugDashboardRoute,
+}
+
+const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
+  AuthRouteRouteChildren,
+)
 
 interface LayoutGuidesRouteRouteChildren {
   LayoutGuidesAuthMinimalRoute: typeof LayoutGuidesAuthMinimalRoute
@@ -981,6 +1122,31 @@ const StyleGuideRouteRouteWithChildren = StyleGuideRouteRoute._addFileChildren(
   StyleGuideRouteRouteChildren,
 )
 
+interface TicketsTeamSlugRouteRouteChildren {
+  TicketsTeamSlugIssuesRoute: typeof TicketsTeamSlugIssuesRoute
+}
+
+const TicketsTeamSlugRouteRouteChildren: TicketsTeamSlugRouteRouteChildren = {
+  TicketsTeamSlugIssuesRoute: TicketsTeamSlugIssuesRoute,
+}
+
+const TicketsTeamSlugRouteRouteWithChildren =
+  TicketsTeamSlugRouteRoute._addFileChildren(TicketsTeamSlugRouteRouteChildren)
+
+interface TicketsRouteRouteChildren {
+  TicketsTeamSlugRouteRoute: typeof TicketsTeamSlugRouteRouteWithChildren
+  TicketsIndexRoute: typeof TicketsIndexRoute
+}
+
+const TicketsRouteRouteChildren: TicketsRouteRouteChildren = {
+  TicketsTeamSlugRouteRoute: TicketsTeamSlugRouteRouteWithChildren,
+  TicketsIndexRoute: TicketsIndexRoute,
+}
+
+const TicketsRouteRouteWithChildren = TicketsRouteRoute._addFileChildren(
+  TicketsRouteRouteChildren,
+)
+
 interface DefaultRouteChildren {
   DefaultIndexRoute: typeof DefaultIndexRoute
 }
@@ -993,19 +1159,23 @@ const DefaultRouteWithChildren =
   DefaultRoute._addFileChildren(DefaultRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
+  AuthRouteRoute: AuthRouteRouteWithChildren,
   LayoutGuidesRouteRoute: LayoutGuidesRouteRouteWithChildren,
   StyleGuideRouteRoute: StyleGuideRouteRouteWithChildren,
+  TicketsRouteRoute: TicketsRouteRouteWithChildren,
   DefaultRoute: DefaultRouteWithChildren,
+  SignInRoute: SignInRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
+import type { startInstance } from './start.ts'
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
     router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }
