@@ -1,4 +1,4 @@
-import { Preview } from "../types";
+import type { Preview } from "../types";
 import { store } from "../store";
 import { Sandbox } from "@e2b/code-interpreter";
 
@@ -37,13 +37,9 @@ export async function createE2BPreview(
       `git clone ${repoPath} /home/user/app && cd /home/user/app && git checkout ${branch}`
     );
 
-    await sandbox.commands.run(
-      "cd /home/user/app && bun install"
-    );
+    await sandbox.commands.run("cd /home/user/app && bun install");
 
-    sandbox.commands.run(
-      "cd /home/user/app && bun run preview:dev"
-    );
+    sandbox.commands.run("cd /home/user/app && bun run preview:dev");
 
     const host = sandbox.getHost(3000);
     const baseUrl = `https://${host}`;

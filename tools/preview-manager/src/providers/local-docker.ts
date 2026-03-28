@@ -1,5 +1,6 @@
 import { exec } from "child_process";
 import { promisify } from "util";
+import { mkdirSync, cpSync } from "fs";
 import type { Preview } from "../types";
 import { store } from "../store";
 
@@ -9,18 +10,13 @@ function getRandomPort(): number {
   return Math.floor(Math.random() * (65535 - 10000) + 10000);
 }
 
-async function waitUntilReady(
-  port: number,
-  maxAttempts = 30
-): Promise<boolean> {
+async function waitUntilReady(port: number, maxAttempts = 40): Promise<boolean> {
   for (let i = 0; i < maxAttempts; i++) {
     try {
       const res = await fetch(`http://127.0.0.1:${port}/`);
       if (res.ok || res.status < 500) return true;
-    } catch {
-      // not ready yet
-    }
-    await new Promise((r) => setTimeout(r, 2000));
+    } catch {}
+    await new Promise((r) => setTimeout(r, 3000));
   }
   return false;
 }
@@ -49,9 +45,17 @@ export async function createLocalDockerPreview(
   store.set(id, preview);
 
   try {
-    const workspacePath = `.preview/workspaces/${id}`;
-    await execAsync(`mkdir -p ${workspacePath}`);
-    await execAsync(`git worktree add ${workspacePath} ${branch}`);
+    const tempDir = (process.env.TEMP || process.env.TMP || "/tmp").replace(/\\/g, "/");
+    const workspacePath = `${tempDir}/convex-previews/${id}`;
+    mkdirSync(workspacePath, { recursive: true });
+
+    cpSync(repoPath, workspacePath, {
+      recursive: true,
+      filter: (src) =>
+        !src.includes("node_modules") &&
+        !src.includes("convex-previews") &&
+        !src.includes(".git"),
+    });
 
     store.update(id, { status: "starting", workspacePath });
 
@@ -61,16 +65,13 @@ export async function createLocalDockerPreview(
       NODE_ENV: "development",
       APP_URL: `http://127.0.0.1:4310/preview/${id}`,
     })
-      .map(([k, v]) => `-e ${k}="${v}"`)
+      .map(([k, v]) => `-e "${k}=${v}"`)
       .join(" ");
 
+    const dockerPath = workspacePath.replace(/^([A-Za-z]):/, "/$1").replace(/\\/g, "/");
+
     const { stdout: containerId } = await execAsync(
-      `docker run -d --rm \
-        -p ${port}:3000 \
-        ${envFlags} \
-        -v ${process.cwd()}/${workspacePath}:/home/preview/app \
-        convex-preview \
-        sh -c "bun install && bun run preview:dev"`
+      `docker run -d --rm -p ${port}:3000 ${envFlags} -v "${dockerPath}:/home/preview/app" convex-preview sh -c "bun install && bun run preview:dev"`
     );
 
     store.update(id, { containerId: containerId.trim() });
