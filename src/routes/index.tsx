@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { Button } from "@/components/ui/button"
+import Sandbox from "@/components/sandbox";
 
 export const Route = createFileRoute("/")({ component: App })
 
@@ -11,6 +12,7 @@ function App() {
           <h1 className="font-medium">Project ready!</h1>
           <p>You may now add components and start building.</p>
           <p>We&apos;ve already added the button component for you.</p>
+          <Sandbox />
           <Button className="mt-2">Button</Button>
         </div>
       </div>
