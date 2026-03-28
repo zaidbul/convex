@@ -5,7 +5,7 @@ import {
   issuesQueryOptions,
 } from "@/query/options/tickets"
 
-export const Route = createFileRoute("/tickets/$teamSlug")({
+export const Route = createFileRoute("/_auth/$slug/tickets/$teamSlug")({
   loader: ({ context, params }) => {
     const { teamSlug } = params
     context.queryClient.ensureQueryData(teamQueryOptions(teamSlug))

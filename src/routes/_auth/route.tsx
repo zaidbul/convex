@@ -9,7 +9,11 @@ const fetchAuthState = createServerFn({ method: "GET" }).handler(async () => {
     throw redirect({ to: "/sign-in" })
   }
 
-  return { userId, orgId: orgId ?? null, orgSlug: orgSlug ?? null, sessionId }
+  if (!orgSlug) {
+    throw redirect({ to: "/org-select" })
+  }
+
+  return { userId, orgId: orgId ?? null, orgSlug, sessionId }
 })
 
 export const Route = createFileRoute("/_auth")({

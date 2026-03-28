@@ -13,14 +13,14 @@ import {
   workspaceQueryOptions,
 } from "@/query/options/tickets"
 
-export const Route = createFileRoute("/tickets/")({
-  beforeLoad: async ({ context }) => {
+export const Route = createFileRoute("/_auth/$slug/tickets/")({
+  beforeLoad: async ({ context, params }) => {
     const teams = await context.queryClient.ensureQueryData(teamsQueryOptions())
 
     if (teams[0]) {
       throw redirect({
-        to: "/tickets/$teamSlug/issues",
-        params: { teamSlug: teams[0].slug },
+        to: "/$slug/tickets/$teamSlug/issues",
+        params: { slug: params.slug, teamSlug: teams[0].slug },
       })
     }
   },

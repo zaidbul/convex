@@ -41,6 +41,7 @@ const cycleSubItems = [{ label: "Current" }, { label: "Upcoming" }]
 
 export function TeamTree({ teams }: { teams: Team[] }) {
   const params = useParams({ strict: false })
+  const slug = (params as { slug?: string }).slug
   const activeTeamSlug = (params as { teamSlug?: string }).teamSlug
 
   if (teams.length === 0) {
@@ -66,6 +67,7 @@ export function TeamTree({ teams }: { teams: Team[] }) {
 
 function TeamItem({ team, isActive }: { team: Team; isActive: boolean }) {
   const params = useParams({ strict: false })
+  const slug = (params as { slug?: string }).slug
   const activeTeamSlug = (params as { teamSlug?: string }).teamSlug
 
   return (
@@ -93,8 +95,8 @@ function TeamItem({ team, isActive }: { team: Team; isActive: boolean }) {
                   }
                   render={
                     <Link
-                      to="/tickets/$teamSlug/issues"
-                      params={{ teamSlug: team.slug }}
+                      to="/$slug/tickets/$teamSlug/issues"
+                      params={{ slug: slug!, teamSlug: team.slug }}
                     />
                   }
                 >

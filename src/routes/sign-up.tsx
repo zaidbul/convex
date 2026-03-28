@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
 import { auth } from "@clerk/tanstack-react-start/server"
-import { SignIn } from "@clerk/tanstack-react-start"
+import { SignUp } from "@clerk/tanstack-react-start"
 
 const fetchAuthForRedirect = createServerFn({ method: "GET" }).handler(
   async () => {
@@ -10,7 +10,7 @@ const fetchAuthForRedirect = createServerFn({ method: "GET" }).handler(
   }
 )
 
-export const Route = createFileRoute("/sign-in")({
+export const Route = createFileRoute("/sign-up")({
   beforeLoad: async () => {
     const authState = await fetchAuthForRedirect()
     if (authState.userId && authState.orgSlug) {
@@ -23,13 +23,13 @@ export const Route = createFileRoute("/sign-in")({
       throw redirect({ to: "/org-select" })
     }
   },
-  component: SignInPage,
+  component: SignUpPage,
 })
 
-function SignInPage() {
+function SignUpPage() {
   return (
     <div className="grid min-h-screen place-items-center bg-background">
-      <SignIn signUpUrl="/sign-up" fallbackRedirectUrl="/org-select" />
+      <SignUp signInUrl="/sign-in" fallbackRedirectUrl="/org-select" />
     </div>
   )
 }

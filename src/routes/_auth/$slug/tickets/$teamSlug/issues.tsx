@@ -8,7 +8,9 @@ import {
   issuesQueryOptions,
 } from "@/query/options/tickets"
 
-export const Route = createFileRoute("/tickets/$teamSlug/issues")({
+export const Route = createFileRoute(
+  "/_auth/$slug/tickets/$teamSlug/issues"
+)({
   component: IssuesPage,
 })
 

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { useState } from "react"
 import {
   Wallet,
@@ -40,7 +40,7 @@ function HeroSection() {
           <span>Limitations and risks apply.</span>
         </div>
         <div className="mt-8">
-          <Button size="lg" className="px-8 shadow-glow">
+          <Button size="lg" className="px-8 shadow-glow" render={<Link to="/sign-up" />}>
             Get started
           </Button>
         </div>
@@ -769,7 +769,7 @@ function IntelligenceSection() {
           markets and make your next move. Only with cnvx Gold.
         </p>
         <div className="mt-8">
-          <Button size="lg" className="px-8 shadow-glow">
+          <Button size="lg" className="px-8 shadow-glow" render={<Link to="/sign-up" />}>
             Get started
           </Button>
         </div>
@@ -1045,7 +1045,7 @@ function JoinCtaSection() {
           of investors
         </h2>
         <div className="mt-10">
-          <Button size="lg" className="px-8 shadow-glow">
+          <Button size="lg" className="px-8 shadow-glow" render={<Link to="/sign-up" />}>
             Get started
           </Button>
         </div>

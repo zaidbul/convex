@@ -110,9 +110,21 @@ function Navbar() {
         {/* Logo */}
         <Link
           to="/"
-          className="font-display text-xl font-bold tracking-tight text-foreground"
+          className="flex items-center gap-2"
         >
-          cnvx
+          <img
+            src="/logos/SVG/icon_dark.svg"
+            alt="cnvx"
+            className="h-8 w-8 dark:hidden"
+          />
+          <img
+            src="/logos/SVG/icon_light.svg"
+            alt="cnvx"
+            className="hidden h-8 w-8 dark:block"
+          />
+          <span className="font-display text-xl font-bold tracking-tight text-foreground">
+            cnvx
+          </span>
         </Link>
 
         {/* Desktop nav links */}
@@ -131,10 +143,17 @@ function Navbar() {
         {/* Right actions */}
         <div className="ml-auto flex items-center gap-2">
           <ThemeToggle />
-          <Button variant="ghost" size="sm" className="hidden sm:inline-flex">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="hidden sm:inline-flex"
+            render={<Link to="/sign-in" />}
+          >
             Log In
           </Button>
-          <Button size="sm">Sign Up</Button>
+          <Button size="sm" render={<Link to="/sign-up" />}>
+            Sign Up
+          </Button>
 
           {/* Mobile hamburger */}
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -160,10 +179,16 @@ function Navbar() {
                   ))}
                 </div>
                 <div className="mt-8 flex flex-col gap-2">
-                  <Button variant="ghost" className="w-full justify-start">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start"
+                    render={<Link to="/sign-in" />}
+                  >
                     Log In
                   </Button>
-                  <Button className="w-full">Sign Up</Button>
+                  <Button className="w-full" render={<Link to="/sign-up" />}>
+                    Sign Up
+                  </Button>
                 </div>
               </SheetBody>
             </SheetContent>
@@ -250,7 +275,12 @@ function Footer() {
         </div>
 
         {/* Large wordmark */}
-        <div className="mt-16 overflow-hidden">
+        <div className="mt-16 flex items-end gap-4 overflow-hidden md:gap-6 lg:gap-8">
+          <img
+            src="/logos/SVG/icon_light.svg"
+            alt=""
+            className="h-24 w-24 shrink-0 opacity-90 md:h-36 md:w-36 lg:h-48 lg:w-48"
+          />
           <span className="font-display text-[8rem] leading-none font-bold opacity-90 md:text-[12rem] lg:text-[16rem]">
             cnvx
           </span>

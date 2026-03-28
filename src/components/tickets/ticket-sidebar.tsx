@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router"
+import { Link, useParams } from "@tanstack/react-router"
 import { useSuspenseQuery } from "@tanstack/react-query"
 import {
   Inbox,
@@ -32,6 +32,8 @@ import {
 import { TeamTree } from "./team-tree"
 
 export function TicketSidebar() {
+  const params = useParams({ strict: false })
+  const slug = (params as { slug?: string }).slug
   const { data: workspace } = useSuspenseQuery(workspaceQueryOptions())
   const { data: teams } = useSuspenseQuery(teamsQueryOptions())
   const workspaceName = workspace?.name ?? "No workspace"
@@ -68,13 +70,27 @@ export function TicketSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton render={<Link to="/tickets" />}>
+                <SidebarMenuButton
+                  render={
+                    <Link
+                      to="/$slug/tickets"
+                      params={{ slug: slug! }}
+                    />
+                  }
+                >
                   <Inbox className="size-4" strokeWidth={1.5} />
                   <span>Inbox</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton render={<Link to="/tickets" />}>
+                <SidebarMenuButton
+                  render={
+                    <Link
+                      to="/$slug/tickets"
+                      params={{ slug: slug! }}
+                    />
+                  }
+                >
                   <CircleUser className="size-4" strokeWidth={1.5} />
                   <span>My Issues</span>
                 </SidebarMenuButton>
