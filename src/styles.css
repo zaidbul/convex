@@ -123,7 +123,7 @@
   --chart-3: #f9a785;
   --chart-4: #c25730;
   --chart-5: #a84520;
-  --radius: 1.5rem;
+  --radius: 0.35rem;
   --sidebar: #f5f0ea;
   --sidebar-foreground: #1c1912;
   --sidebar-primary: #fd5300;
@@ -207,5 +207,25 @@
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-display;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@keyframes rain-fall {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(calc(100vh + 200px));
+    opacity: 0;
   }
 }

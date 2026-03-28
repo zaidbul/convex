@@ -9,60 +9,379 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as SignUpRouteImport } from './routes/sign-up'
+import { Route as OrgSelectRouteImport } from './routes/org-select'
+import { Route as DefaultRouteImport } from './routes/_default'
+import { Route as AuthRouteRouteImport } from './routes/_auth/route'
+import { Route as SignInIndexRouteImport } from './routes/sign-in/index'
+import { Route as DefaultIndexRouteImport } from './routes/_default.index'
+import { Route as SignInSplatRouteImport } from './routes/sign-in/$'
+import { Route as AuthSlugRouteRouteImport } from './routes/_auth/$slug/route'
+import { Route as AuthSlugNotesRouteImport } from './routes/_auth/$slug/notes'
+import { Route as AuthSlugDashboardRouteImport } from './routes/_auth/$slug.dashboard'
+import { Route as AuthSlugTicketsRouteRouteImport } from './routes/_auth/$slug/tickets/route'
+import { Route as AuthSlugTicketsIndexRouteImport } from './routes/_auth/$slug/tickets/index'
+import { Route as AuthSlugTicketsTeamSlugRouteRouteImport } from './routes/_auth/$slug/tickets/$teamSlug/route'
+import { Route as AuthSlugTicketsTeamSlugIssuesRouteImport } from './routes/_auth/$slug/tickets/$teamSlug/issues'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const SignUpRoute = SignUpRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OrgSelectRoute = OrgSelectRouteImport.update({
+  id: '/org-select',
+  path: '/org-select',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DefaultRoute = DefaultRouteImport.update({
+  id: '/_default',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRouteRoute = AuthRouteRouteImport.update({
+  id: '/_auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignInIndexRoute = SignInIndexRouteImport.update({
+  id: '/sign-in/',
+  path: '/sign-in/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DefaultIndexRoute = DefaultIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DefaultRoute,
+} as any)
+const SignInSplatRoute = SignInSplatRouteImport.update({
+  id: '/sign-in/$',
+  path: '/sign-in/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthSlugRouteRoute = AuthSlugRouteRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
+const AuthSlugNotesRoute = AuthSlugNotesRouteImport.update({
+  id: '/notes',
+  path: '/notes',
+  getParentRoute: () => AuthSlugRouteRoute,
+} as any)
+const AuthSlugDashboardRoute = AuthSlugDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthSlugRouteRoute,
+} as any)
+const AuthSlugTicketsRouteRoute = AuthSlugTicketsRouteRouteImport.update({
+  id: '/tickets',
+  path: '/tickets',
+  getParentRoute: () => AuthSlugRouteRoute,
+} as any)
+const AuthSlugTicketsIndexRoute = AuthSlugTicketsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthSlugTicketsRouteRoute,
+} as any)
+const AuthSlugTicketsTeamSlugRouteRoute =
+  AuthSlugTicketsTeamSlugRouteRouteImport.update({
+    id: '/$teamSlug',
+    path: '/$teamSlug',
+    getParentRoute: () => AuthSlugTicketsRouteRoute,
+  } as any)
+const AuthSlugTicketsTeamSlugIssuesRoute =
+  AuthSlugTicketsTeamSlugIssuesRouteImport.update({
+    id: '/issues',
+    path: '/issues',
+    getParentRoute: () => AuthSlugTicketsTeamSlugRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof DefaultIndexRoute
+  '/org-select': typeof OrgSelectRoute
+  '/sign-up': typeof SignUpRoute
+  '/$slug': typeof AuthSlugRouteRouteWithChildren
+  '/sign-in/$': typeof SignInSplatRoute
+  '/sign-in/': typeof SignInIndexRoute
+  '/$slug/tickets': typeof AuthSlugTicketsRouteRouteWithChildren
+  '/$slug/dashboard': typeof AuthSlugDashboardRoute
+  '/$slug/notes': typeof AuthSlugNotesRoute
+  '/$slug/tickets/$teamSlug': typeof AuthSlugTicketsTeamSlugRouteRouteWithChildren
+  '/$slug/tickets/': typeof AuthSlugTicketsIndexRoute
+  '/$slug/tickets/$teamSlug/issues': typeof AuthSlugTicketsTeamSlugIssuesRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/': typeof DefaultIndexRoute
+  '/org-select': typeof OrgSelectRoute
+  '/sign-up': typeof SignUpRoute
+  '/$slug': typeof AuthSlugRouteRouteWithChildren
+  '/sign-in/$': typeof SignInSplatRoute
+  '/sign-in': typeof SignInIndexRoute
+  '/$slug/dashboard': typeof AuthSlugDashboardRoute
+  '/$slug/notes': typeof AuthSlugNotesRoute
+  '/$slug/tickets/$teamSlug': typeof AuthSlugTicketsTeamSlugRouteRouteWithChildren
+  '/$slug/tickets': typeof AuthSlugTicketsIndexRoute
+  '/$slug/tickets/$teamSlug/issues': typeof AuthSlugTicketsTeamSlugIssuesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_auth': typeof AuthRouteRouteWithChildren
+  '/_default': typeof DefaultRouteWithChildren
+  '/org-select': typeof OrgSelectRoute
+  '/sign-up': typeof SignUpRoute
+  '/_auth/$slug': typeof AuthSlugRouteRouteWithChildren
+  '/sign-in/$': typeof SignInSplatRoute
+  '/_default/': typeof DefaultIndexRoute
+  '/sign-in/': typeof SignInIndexRoute
+  '/_auth/$slug/tickets': typeof AuthSlugTicketsRouteRouteWithChildren
+  '/_auth/$slug/dashboard': typeof AuthSlugDashboardRoute
+  '/_auth/$slug/notes': typeof AuthSlugNotesRoute
+  '/_auth/$slug/tickets/$teamSlug': typeof AuthSlugTicketsTeamSlugRouteRouteWithChildren
+  '/_auth/$slug/tickets/': typeof AuthSlugTicketsIndexRoute
+  '/_auth/$slug/tickets/$teamSlug/issues': typeof AuthSlugTicketsTeamSlugIssuesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/org-select'
+    | '/sign-up'
+    | '/$slug'
+    | '/sign-in/$'
+    | '/sign-in/'
+    | '/$slug/tickets'
+    | '/$slug/dashboard'
+    | '/$slug/notes'
+    | '/$slug/tickets/$teamSlug'
+    | '/$slug/tickets/'
+    | '/$slug/tickets/$teamSlug/issues'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/org-select'
+    | '/sign-up'
+    | '/$slug'
+    | '/sign-in/$'
+    | '/sign-in'
+    | '/$slug/dashboard'
+    | '/$slug/notes'
+    | '/$slug/tickets/$teamSlug'
+    | '/$slug/tickets'
+    | '/$slug/tickets/$teamSlug/issues'
+  id:
+    | '__root__'
+    | '/_auth'
+    | '/_default'
+    | '/org-select'
+    | '/sign-up'
+    | '/_auth/$slug'
+    | '/sign-in/$'
+    | '/_default/'
+    | '/sign-in/'
+    | '/_auth/$slug/tickets'
+    | '/_auth/$slug/dashboard'
+    | '/_auth/$slug/notes'
+    | '/_auth/$slug/tickets/$teamSlug'
+    | '/_auth/$slug/tickets/'
+    | '/_auth/$slug/tickets/$teamSlug/issues'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  AuthRouteRoute: typeof AuthRouteRouteWithChildren
+  DefaultRoute: typeof DefaultRouteWithChildren
+  OrgSelectRoute: typeof OrgSelectRoute
+  SignUpRoute: typeof SignUpRoute
+  SignInSplatRoute: typeof SignInSplatRoute
+  SignInIndexRoute: typeof SignInIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/sign-up': {
+      id: '/sign-up'
+      path: '/sign-up'
+      fullPath: '/sign-up'
+      preLoaderRoute: typeof SignUpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/org-select': {
+      id: '/org-select'
+      path: '/org-select'
+      fullPath: '/org-select'
+      preLoaderRoute: typeof OrgSelectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_default': {
+      id: '/_default'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof DefaultRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_auth': {
+      id: '/_auth'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-in/': {
+      id: '/sign-in/'
+      path: '/sign-in'
+      fullPath: '/sign-in/'
+      preLoaderRoute: typeof SignInIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_default/': {
+      id: '/_default/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof DefaultIndexRouteImport
+      parentRoute: typeof DefaultRoute
+    }
+    '/sign-in/$': {
+      id: '/sign-in/$'
+      path: '/sign-in/$'
+      fullPath: '/sign-in/$'
+      preLoaderRoute: typeof SignInSplatRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_auth/$slug': {
+      id: '/_auth/$slug'
+      path: '/$slug'
+      fullPath: '/$slug'
+      preLoaderRoute: typeof AuthSlugRouteRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/_auth/$slug/notes': {
+      id: '/_auth/$slug/notes'
+      path: '/notes'
+      fullPath: '/$slug/notes'
+      preLoaderRoute: typeof AuthSlugNotesRouteImport
+      parentRoute: typeof AuthSlugRouteRoute
+    }
+    '/_auth/$slug/dashboard': {
+      id: '/_auth/$slug/dashboard'
+      path: '/dashboard'
+      fullPath: '/$slug/dashboard'
+      preLoaderRoute: typeof AuthSlugDashboardRouteImport
+      parentRoute: typeof AuthSlugRouteRoute
+    }
+    '/_auth/$slug/tickets': {
+      id: '/_auth/$slug/tickets'
+      path: '/tickets'
+      fullPath: '/$slug/tickets'
+      preLoaderRoute: typeof AuthSlugTicketsRouteRouteImport
+      parentRoute: typeof AuthSlugRouteRoute
+    }
+    '/_auth/$slug/tickets/': {
+      id: '/_auth/$slug/tickets/'
+      path: '/'
+      fullPath: '/$slug/tickets/'
+      preLoaderRoute: typeof AuthSlugTicketsIndexRouteImport
+      parentRoute: typeof AuthSlugTicketsRouteRoute
+    }
+    '/_auth/$slug/tickets/$teamSlug': {
+      id: '/_auth/$slug/tickets/$teamSlug'
+      path: '/$teamSlug'
+      fullPath: '/$slug/tickets/$teamSlug'
+      preLoaderRoute: typeof AuthSlugTicketsTeamSlugRouteRouteImport
+      parentRoute: typeof AuthSlugTicketsRouteRoute
+    }
+    '/_auth/$slug/tickets/$teamSlug/issues': {
+      id: '/_auth/$slug/tickets/$teamSlug/issues'
+      path: '/issues'
+      fullPath: '/$slug/tickets/$teamSlug/issues'
+      preLoaderRoute: typeof AuthSlugTicketsTeamSlugIssuesRouteImport
+      parentRoute: typeof AuthSlugTicketsTeamSlugRouteRoute
     }
   }
 }
 
+interface AuthSlugTicketsTeamSlugRouteRouteChildren {
+  AuthSlugTicketsTeamSlugIssuesRoute: typeof AuthSlugTicketsTeamSlugIssuesRoute
+}
+
+const AuthSlugTicketsTeamSlugRouteRouteChildren: AuthSlugTicketsTeamSlugRouteRouteChildren =
+  {
+    AuthSlugTicketsTeamSlugIssuesRoute: AuthSlugTicketsTeamSlugIssuesRoute,
+  }
+
+const AuthSlugTicketsTeamSlugRouteRouteWithChildren =
+  AuthSlugTicketsTeamSlugRouteRoute._addFileChildren(
+    AuthSlugTicketsTeamSlugRouteRouteChildren,
+  )
+
+interface AuthSlugTicketsRouteRouteChildren {
+  AuthSlugTicketsTeamSlugRouteRoute: typeof AuthSlugTicketsTeamSlugRouteRouteWithChildren
+  AuthSlugTicketsIndexRoute: typeof AuthSlugTicketsIndexRoute
+}
+
+const AuthSlugTicketsRouteRouteChildren: AuthSlugTicketsRouteRouteChildren = {
+  AuthSlugTicketsTeamSlugRouteRoute:
+    AuthSlugTicketsTeamSlugRouteRouteWithChildren,
+  AuthSlugTicketsIndexRoute: AuthSlugTicketsIndexRoute,
+}
+
+const AuthSlugTicketsRouteRouteWithChildren =
+  AuthSlugTicketsRouteRoute._addFileChildren(AuthSlugTicketsRouteRouteChildren)
+
+interface AuthSlugRouteRouteChildren {
+  AuthSlugTicketsRouteRoute: typeof AuthSlugTicketsRouteRouteWithChildren
+  AuthSlugDashboardRoute: typeof AuthSlugDashboardRoute
+  AuthSlugNotesRoute: typeof AuthSlugNotesRoute
+}
+
+const AuthSlugRouteRouteChildren: AuthSlugRouteRouteChildren = {
+  AuthSlugTicketsRouteRoute: AuthSlugTicketsRouteRouteWithChildren,
+  AuthSlugDashboardRoute: AuthSlugDashboardRoute,
+  AuthSlugNotesRoute: AuthSlugNotesRoute,
+}
+
+const AuthSlugRouteRouteWithChildren = AuthSlugRouteRoute._addFileChildren(
+  AuthSlugRouteRouteChildren,
+)
+
+interface AuthRouteRouteChildren {
+  AuthSlugRouteRoute: typeof AuthSlugRouteRouteWithChildren
+}
+
+const AuthRouteRouteChildren: AuthRouteRouteChildren = {
+  AuthSlugRouteRoute: AuthSlugRouteRouteWithChildren,
+}
+
+const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
+  AuthRouteRouteChildren,
+)
+
+interface DefaultRouteChildren {
+  DefaultIndexRoute: typeof DefaultIndexRoute
+}
+
+const DefaultRouteChildren: DefaultRouteChildren = {
+  DefaultIndexRoute: DefaultIndexRoute,
+}
+
+const DefaultRouteWithChildren =
+  DefaultRoute._addFileChildren(DefaultRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  AuthRouteRoute: AuthRouteRouteWithChildren,
+  DefaultRoute: DefaultRouteWithChildren,
+  OrgSelectRoute: OrgSelectRoute,
+  SignUpRoute: SignUpRoute,
+  SignInSplatRoute: SignInSplatRoute,
+  SignInIndexRoute: SignInIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
+import type { startInstance } from './start.ts'
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
     router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }

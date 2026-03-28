@@ -7,6 +7,16 @@ import tailwindcss from "@tailwindcss/vite"
 import { nitro } from "nitro/vite"
 
 const config = defineConfig({
+  optimizeDeps: {
+    include: [
+      "prismjs",
+      "prismjs/components/prism-clike",
+      "prismjs/components/prism-javascript",
+      "prismjs/components/prism-typescript",
+      "prismjs/components/prism-json",
+      "prismjs/components/prism-markup",
+    ],
+  },
   plugins: [
     devtools(),
     nitro(),
