@@ -14,9 +14,11 @@ export interface Preview {
   repoPath: string;
   workspacePath: string;
   containerId?: string;
+  sandboxId?: string;
   port?: number;
   status: PreviewStatus;
   baseUrl?: string;
+  error?: string;
   pid?: number;
   startedAt: Date;
   lastSeenAt: Date;

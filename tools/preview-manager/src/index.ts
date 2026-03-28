@@ -1,8 +1,10 @@
 import http from "http";
 import { randomUUID } from "crypto";
 import { store } from "./store";
-import { createLocalDockerPreview } from "./providers/local-docker";
+import { createLocalDockerPreview, stopLocalDockerPreview } from "./providers/local-docker";
+import { createE2BPreview, stopE2BPreview } from "./providers/e2b";
 import { handleProxy, handleProxyUpgrade } from "./proxy";
+import type { PreviewProvider } from "./types";
 
 const PORT = 4310;
 
@@ -30,7 +32,7 @@ const server = http.createServer(async (req, res) => {
   const method = req.method ?? "GET";
 
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (method === "OPTIONS") {
@@ -46,22 +48,32 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // POST /api/previews
+  // GET /api/previews — list all
+  if (method === "GET" && url === "/api/previews") {
+    json(res, 200, store.all());
+    return;
+  }
+
+  // POST /api/previews — create
   if (method === "POST" && url === "/api/previews") {
     const body = await parseBody(req);
     const id = randomUUID();
     const repoPath = process.cwd();
     const branch = body.branch ?? "main";
+    const provider: PreviewProvider = body.provider ?? "local-docker";
     const env = {
       TURSO_DATABASE_URL: process.env.TURSO_DATABASE_URL ?? "",
       TURSO_AUTH_TOKEN: process.env.TURSO_AUTH_TOKEN ?? "",
     };
 
-    createLocalDockerPreview(id, branch, repoPath, env).catch((err) =>
-      console.error("[preview] error", err)
+    const createFn =
+      provider === "e2b" ? createE2BPreview : createLocalDockerPreview;
+
+    createFn(id, branch, repoPath, env).catch((err) =>
+      console.error(`[preview:${provider}] error`, err)
     );
 
-    json(res, 202, { id, status: "creating" });
+    json(res, 202, { id, status: "creating", provider });
     return;
   }
 
@@ -79,13 +91,31 @@ const server = http.createServer(async (req, res) => {
   if (method === "GET" && statusMatch) {
     const preview = store.get(statusMatch[1]);
     if (!preview) return json(res, 404, { error: "not found" });
-    json(res, 200, { status: preview.status, baseUrl: preview.baseUrl });
+    json(res, 200, {
+      status: preview.status,
+      baseUrl: preview.baseUrl,
+      provider: preview.provider,
+      error: preview.error,
+    });
     return;
   }
 
   // POST /api/previews/:id/stop
   const stopMatch = url.match(/^\/api\/previews\/([^/]+)\/stop$/);
   if (method === "POST" && stopMatch) {
+    const preview = store.get(stopMatch[1]);
+    if (!preview) return json(res, 404, { error: "not found" });
+
+    try {
+      if (preview.provider === "local-docker") {
+        await stopLocalDockerPreview(preview);
+      } else if (preview.provider === "e2b") {
+        await stopE2BPreview(preview);
+      }
+    } catch (err) {
+      console.error("[preview] stop error", err);
+    }
+
     store.update(stopMatch[1], { status: "stopped" });
     json(res, 200, { ok: true });
     return;

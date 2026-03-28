@@ -5,11 +5,11 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
 
 RUN npm install -g pnpm
 
-RUN curl -fsSL https://bun.sh/install | bash
-
-RUN ln -sf /root/.bun/bin/bun /usr/local/bin/bun && \
-    ln -sf /root/.bun/bin/bunx /usr/local/bin/bunx
-
 RUN useradd -m -u 1001 preview
+
+# Install bun as the preview user so it's accessible
 USER preview
+RUN curl -fsSL https://bun.sh/install | bash
+ENV PATH="/home/preview/.bun/bin:${PATH}"
+
 WORKDIR /home/preview/app

@@ -7,7 +7,7 @@ const proxy = httpProxy.createProxyServer({
   changeOrigin: true,
 });
 
-proxy.on("error", (err, req, res) => {
+proxy.on("error", (err, _req, res) => {
   console.error("[proxy] error", err.message);
   if (res instanceof http.ServerResponse) {
     res.writeHead(502, { "Content-Type": "text/plain" });
@@ -22,16 +22,28 @@ export function handleProxy(
 ) {
   const preview = store.get(previewId);
 
-  if (!preview || preview.status !== "ready" || !preview.port) {
+  if (!preview || preview.status !== "ready") {
     res.writeHead(503, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ status: preview?.status ?? "not_found" }));
     return;
   }
 
+  // E2B previews have a public URL — redirect instead of proxying
+  if (preview.provider === "e2b" && preview.baseUrl) {
+    res.writeHead(302, { Location: preview.baseUrl });
+    res.end();
+    return;
+  }
+
+  // Docker previews — proxy to the local container port
+  if (!preview.port) {
+    res.writeHead(503, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ status: "no_port" }));
+    return;
+  }
+
   const target = `http://127.0.0.1:${preview.port}`;
-
   res.setHeader("Cache-Control", "no-store");
-
   proxy.web(req, res, { target });
 }
 
