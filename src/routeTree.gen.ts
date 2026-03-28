@@ -13,51 +13,9 @@ import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as OrgSelectRouteImport } from './routes/org-select'
 import { Route as DefaultRouteImport } from './routes/_default'
-import { Route as StyleGuideRouteRouteImport } from './routes/style-guide/route'
-import { Route as LayoutGuidesRouteRouteImport } from './routes/layout-guides/route'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
-import { Route as StyleGuideIndexRouteImport } from './routes/style-guide/index'
-import { Route as LayoutGuidesIndexRouteImport } from './routes/layout-guides/index'
 import { Route as DefaultIndexRouteImport } from './routes/_default.index'
-import { Route as StyleGuideWizardsRouteImport } from './routes/style-guide/wizards'
-import { Route as StyleGuideSheetsRouteImport } from './routes/style-guide/sheets'
-import { Route as StyleGuideSettingsRouteImport } from './routes/style-guide/settings'
-import { Route as StyleGuideSearchFilterRouteImport } from './routes/style-guide/search-filter'
-import { Route as StyleGuideSchedulingRouteImport } from './routes/style-guide/scheduling'
-import { Route as StyleGuideRealtimeRouteImport } from './routes/style-guide/realtime'
-import { Route as StyleGuidePricingRouteImport } from './routes/style-guide/pricing'
-import { Route as StyleGuideOnboardingRouteImport } from './routes/style-guide/onboarding'
-import { Route as StyleGuideNavigationRouteImport } from './routes/style-guide/navigation'
-import { Route as StyleGuideMediaRouteImport } from './routes/style-guide/media'
-import { Route as StyleGuideLandingRouteImport } from './routes/style-guide/landing'
-import { Route as StyleGuideFeaturedRouteImport } from './routes/style-guide/featured'
-import { Route as StyleGuideEmptyStatesRouteImport } from './routes/style-guide/empty-states'
-import { Route as StyleGuideDateTimeRouteImport } from './routes/style-guide/date-time'
-import { Route as StyleGuideDataEntryRouteImport } from './routes/style-guide/data-entry'
-import { Route as StyleGuideDashboardRouteImport } from './routes/style-guide/dashboard'
-import { Route as StyleGuideCommandPaletteRouteImport } from './routes/style-guide/command-palette'
-import { Route as StyleGuideChatRouteImport } from './routes/style-guide/chat'
-import { Route as StyleGuideChartsRouteImport } from './routes/style-guide/charts'
-import { Route as StyleGuideBlogRouteImport } from './routes/style-guide/blog'
-import { Route as StyleGuideAuthRouteImport } from './routes/style-guide/auth'
-import { Route as LayoutGuidesTopnavOnlyRouteImport } from './routes/layout-guides/topnav-only'
-import { Route as LayoutGuidesTopnavLeftSidebarRouteImport } from './routes/layout-guides/topnav-left-sidebar'
-import { Route as LayoutGuidesThreeColumnWorkspaceRouteImport } from './routes/layout-guides/three-column-workspace'
-import { Route as LayoutGuidesSidebarRightRouteImport } from './routes/layout-guides/sidebar-right'
-import { Route as LayoutGuidesSidebarNonCollapsibleRouteImport } from './routes/layout-guides/sidebar-non-collapsible'
-import { Route as LayoutGuidesSidebarLeftOffcanvasRouteImport } from './routes/layout-guides/sidebar-left-offcanvas'
-import { Route as LayoutGuidesSidebarLeftInsetRouteImport } from './routes/layout-guides/sidebar-left-inset'
-import { Route as LayoutGuidesSidebarLeftIconRouteImport } from './routes/layout-guides/sidebar-left-icon'
-import { Route as LayoutGuidesSidebarLeftFloatingIconRouteImport } from './routes/layout-guides/sidebar-left-floating-icon'
-import { Route as LayoutGuidesSettingsSidebarRouteImport } from './routes/layout-guides/settings-sidebar'
-import { Route as LayoutGuidesMasterDetailRouteImport } from './routes/layout-guides/master-detail'
-import { Route as LayoutGuidesMarketingPublicRouteImport } from './routes/layout-guides/marketing-public'
-import { Route as LayoutGuidesLeftnavRightPanelRouteImport } from './routes/layout-guides/leftnav-right-panel'
-import { Route as LayoutGuidesDataTableLayoutRouteImport } from './routes/layout-guides/data-table-layout'
-import { Route as LayoutGuidesAuthMinimalRouteImport } from './routes/layout-guides/auth-minimal'
 import { Route as AuthSlugRouteRouteImport } from './routes/_auth/$slug/route'
-import { Route as StyleGuideLayoutsIndexRouteImport } from './routes/style-guide/layouts/index'
-import { Route as StyleGuideLayoutsLayoutIdRouteImport } from './routes/style-guide/layouts/$layoutId'
 import { Route as AuthSlugDashboardRouteImport } from './routes/_auth/$slug.dashboard'
 import { Route as AuthSlugTicketsRouteRouteImport } from './routes/_auth/$slug/tickets/route'
 import { Route as AuthSlugTicketsIndexRouteImport } from './routes/_auth/$slug/tickets/index'
@@ -83,245 +41,20 @@ const DefaultRoute = DefaultRouteImport.update({
   id: '/_default',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StyleGuideRouteRoute = StyleGuideRouteRouteImport.update({
-  id: '/style-guide',
-  path: '/style-guide',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LayoutGuidesRouteRoute = LayoutGuidesRouteRouteImport.update({
-  id: '/layout-guides',
-  path: '/layout-guides',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthRouteRoute = AuthRouteRouteImport.update({
   id: '/_auth',
   getParentRoute: () => rootRouteImport,
-} as any)
-const StyleGuideIndexRoute = StyleGuideIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => StyleGuideRouteRoute,
-} as any)
-const LayoutGuidesIndexRoute = LayoutGuidesIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => LayoutGuidesRouteRoute,
 } as any)
 const DefaultIndexRoute = DefaultIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => DefaultRoute,
 } as any)
-const StyleGuideWizardsRoute = StyleGuideWizardsRouteImport.update({
-  id: '/wizards',
-  path: '/wizards',
-  getParentRoute: () => StyleGuideRouteRoute,
-} as any)
-const StyleGuideSheetsRoute = StyleGuideSheetsRouteImport.update({
-  id: '/sheets',
-  path: '/sheets',
-  getParentRoute: () => StyleGuideRouteRoute,
-} as any)
-const StyleGuideSettingsRoute = StyleGuideSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => StyleGuideRouteRoute,
-} as any)
-const StyleGuideSearchFilterRoute = StyleGuideSearchFilterRouteImport.update({
-  id: '/search-filter',
-  path: '/search-filter',
-  getParentRoute: () => StyleGuideRouteRoute,
-} as any)
-const StyleGuideSchedulingRoute = StyleGuideSchedulingRouteImport.update({
-  id: '/scheduling',
-  path: '/scheduling',
-  getParentRoute: () => StyleGuideRouteRoute,
-} as any)
-const StyleGuideRealtimeRoute = StyleGuideRealtimeRouteImport.update({
-  id: '/realtime',
-  path: '/realtime',
-  getParentRoute: () => StyleGuideRouteRoute,
-} as any)
-const StyleGuidePricingRoute = StyleGuidePricingRouteImport.update({
-  id: '/pricing',
-  path: '/pricing',
-  getParentRoute: () => StyleGuideRouteRoute,
-} as any)
-const StyleGuideOnboardingRoute = StyleGuideOnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
-  getParentRoute: () => StyleGuideRouteRoute,
-} as any)
-const StyleGuideNavigationRoute = StyleGuideNavigationRouteImport.update({
-  id: '/navigation',
-  path: '/navigation',
-  getParentRoute: () => StyleGuideRouteRoute,
-} as any)
-const StyleGuideMediaRoute = StyleGuideMediaRouteImport.update({
-  id: '/media',
-  path: '/media',
-  getParentRoute: () => StyleGuideRouteRoute,
-} as any)
-const StyleGuideLandingRoute = StyleGuideLandingRouteImport.update({
-  id: '/landing',
-  path: '/landing',
-  getParentRoute: () => StyleGuideRouteRoute,
-} as any)
-const StyleGuideFeaturedRoute = StyleGuideFeaturedRouteImport.update({
-  id: '/featured',
-  path: '/featured',
-  getParentRoute: () => StyleGuideRouteRoute,
-} as any)
-const StyleGuideEmptyStatesRoute = StyleGuideEmptyStatesRouteImport.update({
-  id: '/empty-states',
-  path: '/empty-states',
-  getParentRoute: () => StyleGuideRouteRoute,
-} as any)
-const StyleGuideDateTimeRoute = StyleGuideDateTimeRouteImport.update({
-  id: '/date-time',
-  path: '/date-time',
-  getParentRoute: () => StyleGuideRouteRoute,
-} as any)
-const StyleGuideDataEntryRoute = StyleGuideDataEntryRouteImport.update({
-  id: '/data-entry',
-  path: '/data-entry',
-  getParentRoute: () => StyleGuideRouteRoute,
-} as any)
-const StyleGuideDashboardRoute = StyleGuideDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => StyleGuideRouteRoute,
-} as any)
-const StyleGuideCommandPaletteRoute =
-  StyleGuideCommandPaletteRouteImport.update({
-    id: '/command-palette',
-    path: '/command-palette',
-    getParentRoute: () => StyleGuideRouteRoute,
-  } as any)
-const StyleGuideChatRoute = StyleGuideChatRouteImport.update({
-  id: '/chat',
-  path: '/chat',
-  getParentRoute: () => StyleGuideRouteRoute,
-} as any)
-const StyleGuideChartsRoute = StyleGuideChartsRouteImport.update({
-  id: '/charts',
-  path: '/charts',
-  getParentRoute: () => StyleGuideRouteRoute,
-} as any)
-const StyleGuideBlogRoute = StyleGuideBlogRouteImport.update({
-  id: '/blog',
-  path: '/blog',
-  getParentRoute: () => StyleGuideRouteRoute,
-} as any)
-const StyleGuideAuthRoute = StyleGuideAuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => StyleGuideRouteRoute,
-} as any)
-const LayoutGuidesTopnavOnlyRoute = LayoutGuidesTopnavOnlyRouteImport.update({
-  id: '/topnav-only',
-  path: '/topnav-only',
-  getParentRoute: () => LayoutGuidesRouteRoute,
-} as any)
-const LayoutGuidesTopnavLeftSidebarRoute =
-  LayoutGuidesTopnavLeftSidebarRouteImport.update({
-    id: '/topnav-left-sidebar',
-    path: '/topnav-left-sidebar',
-    getParentRoute: () => LayoutGuidesRouteRoute,
-  } as any)
-const LayoutGuidesThreeColumnWorkspaceRoute =
-  LayoutGuidesThreeColumnWorkspaceRouteImport.update({
-    id: '/three-column-workspace',
-    path: '/three-column-workspace',
-    getParentRoute: () => LayoutGuidesRouteRoute,
-  } as any)
-const LayoutGuidesSidebarRightRoute =
-  LayoutGuidesSidebarRightRouteImport.update({
-    id: '/sidebar-right',
-    path: '/sidebar-right',
-    getParentRoute: () => LayoutGuidesRouteRoute,
-  } as any)
-const LayoutGuidesSidebarNonCollapsibleRoute =
-  LayoutGuidesSidebarNonCollapsibleRouteImport.update({
-    id: '/sidebar-non-collapsible',
-    path: '/sidebar-non-collapsible',
-    getParentRoute: () => LayoutGuidesRouteRoute,
-  } as any)
-const LayoutGuidesSidebarLeftOffcanvasRoute =
-  LayoutGuidesSidebarLeftOffcanvasRouteImport.update({
-    id: '/sidebar-left-offcanvas',
-    path: '/sidebar-left-offcanvas',
-    getParentRoute: () => LayoutGuidesRouteRoute,
-  } as any)
-const LayoutGuidesSidebarLeftInsetRoute =
-  LayoutGuidesSidebarLeftInsetRouteImport.update({
-    id: '/sidebar-left-inset',
-    path: '/sidebar-left-inset',
-    getParentRoute: () => LayoutGuidesRouteRoute,
-  } as any)
-const LayoutGuidesSidebarLeftIconRoute =
-  LayoutGuidesSidebarLeftIconRouteImport.update({
-    id: '/sidebar-left-icon',
-    path: '/sidebar-left-icon',
-    getParentRoute: () => LayoutGuidesRouteRoute,
-  } as any)
-const LayoutGuidesSidebarLeftFloatingIconRoute =
-  LayoutGuidesSidebarLeftFloatingIconRouteImport.update({
-    id: '/sidebar-left-floating-icon',
-    path: '/sidebar-left-floating-icon',
-    getParentRoute: () => LayoutGuidesRouteRoute,
-  } as any)
-const LayoutGuidesSettingsSidebarRoute =
-  LayoutGuidesSettingsSidebarRouteImport.update({
-    id: '/settings-sidebar',
-    path: '/settings-sidebar',
-    getParentRoute: () => LayoutGuidesRouteRoute,
-  } as any)
-const LayoutGuidesMasterDetailRoute =
-  LayoutGuidesMasterDetailRouteImport.update({
-    id: '/master-detail',
-    path: '/master-detail',
-    getParentRoute: () => LayoutGuidesRouteRoute,
-  } as any)
-const LayoutGuidesMarketingPublicRoute =
-  LayoutGuidesMarketingPublicRouteImport.update({
-    id: '/marketing-public',
-    path: '/marketing-public',
-    getParentRoute: () => LayoutGuidesRouteRoute,
-  } as any)
-const LayoutGuidesLeftnavRightPanelRoute =
-  LayoutGuidesLeftnavRightPanelRouteImport.update({
-    id: '/leftnav-right-panel',
-    path: '/leftnav-right-panel',
-    getParentRoute: () => LayoutGuidesRouteRoute,
-  } as any)
-const LayoutGuidesDataTableLayoutRoute =
-  LayoutGuidesDataTableLayoutRouteImport.update({
-    id: '/data-table-layout',
-    path: '/data-table-layout',
-    getParentRoute: () => LayoutGuidesRouteRoute,
-  } as any)
-const LayoutGuidesAuthMinimalRoute = LayoutGuidesAuthMinimalRouteImport.update({
-  id: '/auth-minimal',
-  path: '/auth-minimal',
-  getParentRoute: () => LayoutGuidesRouteRoute,
-} as any)
 const AuthSlugRouteRoute = AuthSlugRouteRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => AuthRouteRoute,
 } as any)
-const StyleGuideLayoutsIndexRoute = StyleGuideLayoutsIndexRouteImport.update({
-  id: '/layouts/',
-  path: '/layouts/',
-  getParentRoute: () => StyleGuideRouteRoute,
-} as any)
-const StyleGuideLayoutsLayoutIdRoute =
-  StyleGuideLayoutsLayoutIdRouteImport.update({
-    id: '/layouts/$layoutId',
-    path: '/layouts/$layoutId',
-    getParentRoute: () => StyleGuideRouteRoute,
-  } as any)
 const AuthSlugDashboardRoute = AuthSlugDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -352,54 +85,12 @@ const AuthSlugTicketsTeamSlugIssuesRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof DefaultIndexRoute
-  '/layout-guides': typeof LayoutGuidesRouteRouteWithChildren
-  '/style-guide': typeof StyleGuideRouteRouteWithChildren
   '/org-select': typeof OrgSelectRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/$slug': typeof AuthSlugRouteRouteWithChildren
-  '/layout-guides/auth-minimal': typeof LayoutGuidesAuthMinimalRoute
-  '/layout-guides/data-table-layout': typeof LayoutGuidesDataTableLayoutRoute
-  '/layout-guides/leftnav-right-panel': typeof LayoutGuidesLeftnavRightPanelRoute
-  '/layout-guides/marketing-public': typeof LayoutGuidesMarketingPublicRoute
-  '/layout-guides/master-detail': typeof LayoutGuidesMasterDetailRoute
-  '/layout-guides/settings-sidebar': typeof LayoutGuidesSettingsSidebarRoute
-  '/layout-guides/sidebar-left-floating-icon': typeof LayoutGuidesSidebarLeftFloatingIconRoute
-  '/layout-guides/sidebar-left-icon': typeof LayoutGuidesSidebarLeftIconRoute
-  '/layout-guides/sidebar-left-inset': typeof LayoutGuidesSidebarLeftInsetRoute
-  '/layout-guides/sidebar-left-offcanvas': typeof LayoutGuidesSidebarLeftOffcanvasRoute
-  '/layout-guides/sidebar-non-collapsible': typeof LayoutGuidesSidebarNonCollapsibleRoute
-  '/layout-guides/sidebar-right': typeof LayoutGuidesSidebarRightRoute
-  '/layout-guides/three-column-workspace': typeof LayoutGuidesThreeColumnWorkspaceRoute
-  '/layout-guides/topnav-left-sidebar': typeof LayoutGuidesTopnavLeftSidebarRoute
-  '/layout-guides/topnav-only': typeof LayoutGuidesTopnavOnlyRoute
-  '/style-guide/auth': typeof StyleGuideAuthRoute
-  '/style-guide/blog': typeof StyleGuideBlogRoute
-  '/style-guide/charts': typeof StyleGuideChartsRoute
-  '/style-guide/chat': typeof StyleGuideChatRoute
-  '/style-guide/command-palette': typeof StyleGuideCommandPaletteRoute
-  '/style-guide/dashboard': typeof StyleGuideDashboardRoute
-  '/style-guide/data-entry': typeof StyleGuideDataEntryRoute
-  '/style-guide/date-time': typeof StyleGuideDateTimeRoute
-  '/style-guide/empty-states': typeof StyleGuideEmptyStatesRoute
-  '/style-guide/featured': typeof StyleGuideFeaturedRoute
-  '/style-guide/landing': typeof StyleGuideLandingRoute
-  '/style-guide/media': typeof StyleGuideMediaRoute
-  '/style-guide/navigation': typeof StyleGuideNavigationRoute
-  '/style-guide/onboarding': typeof StyleGuideOnboardingRoute
-  '/style-guide/pricing': typeof StyleGuidePricingRoute
-  '/style-guide/realtime': typeof StyleGuideRealtimeRoute
-  '/style-guide/scheduling': typeof StyleGuideSchedulingRoute
-  '/style-guide/search-filter': typeof StyleGuideSearchFilterRoute
-  '/style-guide/settings': typeof StyleGuideSettingsRoute
-  '/style-guide/sheets': typeof StyleGuideSheetsRoute
-  '/style-guide/wizards': typeof StyleGuideWizardsRoute
-  '/layout-guides/': typeof LayoutGuidesIndexRoute
-  '/style-guide/': typeof StyleGuideIndexRoute
   '/$slug/tickets': typeof AuthSlugTicketsRouteRouteWithChildren
   '/$slug/dashboard': typeof AuthSlugDashboardRoute
-  '/style-guide/layouts/$layoutId': typeof StyleGuideLayoutsLayoutIdRoute
-  '/style-guide/layouts/': typeof StyleGuideLayoutsIndexRoute
   '/$slug/tickets/$teamSlug': typeof AuthSlugTicketsTeamSlugRouteRouteWithChildren
   '/$slug/tickets/': typeof AuthSlugTicketsIndexRoute
   '/$slug/tickets/$teamSlug/issues': typeof AuthSlugTicketsTeamSlugIssuesRoute
@@ -410,47 +101,7 @@ export interface FileRoutesByTo {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/$slug': typeof AuthSlugRouteRouteWithChildren
-  '/layout-guides/auth-minimal': typeof LayoutGuidesAuthMinimalRoute
-  '/layout-guides/data-table-layout': typeof LayoutGuidesDataTableLayoutRoute
-  '/layout-guides/leftnav-right-panel': typeof LayoutGuidesLeftnavRightPanelRoute
-  '/layout-guides/marketing-public': typeof LayoutGuidesMarketingPublicRoute
-  '/layout-guides/master-detail': typeof LayoutGuidesMasterDetailRoute
-  '/layout-guides/settings-sidebar': typeof LayoutGuidesSettingsSidebarRoute
-  '/layout-guides/sidebar-left-floating-icon': typeof LayoutGuidesSidebarLeftFloatingIconRoute
-  '/layout-guides/sidebar-left-icon': typeof LayoutGuidesSidebarLeftIconRoute
-  '/layout-guides/sidebar-left-inset': typeof LayoutGuidesSidebarLeftInsetRoute
-  '/layout-guides/sidebar-left-offcanvas': typeof LayoutGuidesSidebarLeftOffcanvasRoute
-  '/layout-guides/sidebar-non-collapsible': typeof LayoutGuidesSidebarNonCollapsibleRoute
-  '/layout-guides/sidebar-right': typeof LayoutGuidesSidebarRightRoute
-  '/layout-guides/three-column-workspace': typeof LayoutGuidesThreeColumnWorkspaceRoute
-  '/layout-guides/topnav-left-sidebar': typeof LayoutGuidesTopnavLeftSidebarRoute
-  '/layout-guides/topnav-only': typeof LayoutGuidesTopnavOnlyRoute
-  '/style-guide/auth': typeof StyleGuideAuthRoute
-  '/style-guide/blog': typeof StyleGuideBlogRoute
-  '/style-guide/charts': typeof StyleGuideChartsRoute
-  '/style-guide/chat': typeof StyleGuideChatRoute
-  '/style-guide/command-palette': typeof StyleGuideCommandPaletteRoute
-  '/style-guide/dashboard': typeof StyleGuideDashboardRoute
-  '/style-guide/data-entry': typeof StyleGuideDataEntryRoute
-  '/style-guide/date-time': typeof StyleGuideDateTimeRoute
-  '/style-guide/empty-states': typeof StyleGuideEmptyStatesRoute
-  '/style-guide/featured': typeof StyleGuideFeaturedRoute
-  '/style-guide/landing': typeof StyleGuideLandingRoute
-  '/style-guide/media': typeof StyleGuideMediaRoute
-  '/style-guide/navigation': typeof StyleGuideNavigationRoute
-  '/style-guide/onboarding': typeof StyleGuideOnboardingRoute
-  '/style-guide/pricing': typeof StyleGuidePricingRoute
-  '/style-guide/realtime': typeof StyleGuideRealtimeRoute
-  '/style-guide/scheduling': typeof StyleGuideSchedulingRoute
-  '/style-guide/search-filter': typeof StyleGuideSearchFilterRoute
-  '/style-guide/settings': typeof StyleGuideSettingsRoute
-  '/style-guide/sheets': typeof StyleGuideSheetsRoute
-  '/style-guide/wizards': typeof StyleGuideWizardsRoute
-  '/layout-guides': typeof LayoutGuidesIndexRoute
-  '/style-guide': typeof StyleGuideIndexRoute
   '/$slug/dashboard': typeof AuthSlugDashboardRoute
-  '/style-guide/layouts/$layoutId': typeof StyleGuideLayoutsLayoutIdRoute
-  '/style-guide/layouts': typeof StyleGuideLayoutsIndexRoute
   '/$slug/tickets/$teamSlug': typeof AuthSlugTicketsTeamSlugRouteRouteWithChildren
   '/$slug/tickets': typeof AuthSlugTicketsIndexRoute
   '/$slug/tickets/$teamSlug/issues': typeof AuthSlugTicketsTeamSlugIssuesRoute
@@ -458,56 +109,14 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_auth': typeof AuthRouteRouteWithChildren
-  '/layout-guides': typeof LayoutGuidesRouteRouteWithChildren
-  '/style-guide': typeof StyleGuideRouteRouteWithChildren
   '/_default': typeof DefaultRouteWithChildren
   '/org-select': typeof OrgSelectRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/_auth/$slug': typeof AuthSlugRouteRouteWithChildren
-  '/layout-guides/auth-minimal': typeof LayoutGuidesAuthMinimalRoute
-  '/layout-guides/data-table-layout': typeof LayoutGuidesDataTableLayoutRoute
-  '/layout-guides/leftnav-right-panel': typeof LayoutGuidesLeftnavRightPanelRoute
-  '/layout-guides/marketing-public': typeof LayoutGuidesMarketingPublicRoute
-  '/layout-guides/master-detail': typeof LayoutGuidesMasterDetailRoute
-  '/layout-guides/settings-sidebar': typeof LayoutGuidesSettingsSidebarRoute
-  '/layout-guides/sidebar-left-floating-icon': typeof LayoutGuidesSidebarLeftFloatingIconRoute
-  '/layout-guides/sidebar-left-icon': typeof LayoutGuidesSidebarLeftIconRoute
-  '/layout-guides/sidebar-left-inset': typeof LayoutGuidesSidebarLeftInsetRoute
-  '/layout-guides/sidebar-left-offcanvas': typeof LayoutGuidesSidebarLeftOffcanvasRoute
-  '/layout-guides/sidebar-non-collapsible': typeof LayoutGuidesSidebarNonCollapsibleRoute
-  '/layout-guides/sidebar-right': typeof LayoutGuidesSidebarRightRoute
-  '/layout-guides/three-column-workspace': typeof LayoutGuidesThreeColumnWorkspaceRoute
-  '/layout-guides/topnav-left-sidebar': typeof LayoutGuidesTopnavLeftSidebarRoute
-  '/layout-guides/topnav-only': typeof LayoutGuidesTopnavOnlyRoute
-  '/style-guide/auth': typeof StyleGuideAuthRoute
-  '/style-guide/blog': typeof StyleGuideBlogRoute
-  '/style-guide/charts': typeof StyleGuideChartsRoute
-  '/style-guide/chat': typeof StyleGuideChatRoute
-  '/style-guide/command-palette': typeof StyleGuideCommandPaletteRoute
-  '/style-guide/dashboard': typeof StyleGuideDashboardRoute
-  '/style-guide/data-entry': typeof StyleGuideDataEntryRoute
-  '/style-guide/date-time': typeof StyleGuideDateTimeRoute
-  '/style-guide/empty-states': typeof StyleGuideEmptyStatesRoute
-  '/style-guide/featured': typeof StyleGuideFeaturedRoute
-  '/style-guide/landing': typeof StyleGuideLandingRoute
-  '/style-guide/media': typeof StyleGuideMediaRoute
-  '/style-guide/navigation': typeof StyleGuideNavigationRoute
-  '/style-guide/onboarding': typeof StyleGuideOnboardingRoute
-  '/style-guide/pricing': typeof StyleGuidePricingRoute
-  '/style-guide/realtime': typeof StyleGuideRealtimeRoute
-  '/style-guide/scheduling': typeof StyleGuideSchedulingRoute
-  '/style-guide/search-filter': typeof StyleGuideSearchFilterRoute
-  '/style-guide/settings': typeof StyleGuideSettingsRoute
-  '/style-guide/sheets': typeof StyleGuideSheetsRoute
-  '/style-guide/wizards': typeof StyleGuideWizardsRoute
   '/_default/': typeof DefaultIndexRoute
-  '/layout-guides/': typeof LayoutGuidesIndexRoute
-  '/style-guide/': typeof StyleGuideIndexRoute
   '/_auth/$slug/tickets': typeof AuthSlugTicketsRouteRouteWithChildren
   '/_auth/$slug/dashboard': typeof AuthSlugDashboardRoute
-  '/style-guide/layouts/$layoutId': typeof StyleGuideLayoutsLayoutIdRoute
-  '/style-guide/layouts/': typeof StyleGuideLayoutsIndexRoute
   '/_auth/$slug/tickets/$teamSlug': typeof AuthSlugTicketsTeamSlugRouteRouteWithChildren
   '/_auth/$slug/tickets/': typeof AuthSlugTicketsIndexRoute
   '/_auth/$slug/tickets/$teamSlug/issues': typeof AuthSlugTicketsTeamSlugIssuesRoute
@@ -516,54 +125,12 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/layout-guides'
-    | '/style-guide'
     | '/org-select'
     | '/sign-in'
     | '/sign-up'
     | '/$slug'
-    | '/layout-guides/auth-minimal'
-    | '/layout-guides/data-table-layout'
-    | '/layout-guides/leftnav-right-panel'
-    | '/layout-guides/marketing-public'
-    | '/layout-guides/master-detail'
-    | '/layout-guides/settings-sidebar'
-    | '/layout-guides/sidebar-left-floating-icon'
-    | '/layout-guides/sidebar-left-icon'
-    | '/layout-guides/sidebar-left-inset'
-    | '/layout-guides/sidebar-left-offcanvas'
-    | '/layout-guides/sidebar-non-collapsible'
-    | '/layout-guides/sidebar-right'
-    | '/layout-guides/three-column-workspace'
-    | '/layout-guides/topnav-left-sidebar'
-    | '/layout-guides/topnav-only'
-    | '/style-guide/auth'
-    | '/style-guide/blog'
-    | '/style-guide/charts'
-    | '/style-guide/chat'
-    | '/style-guide/command-palette'
-    | '/style-guide/dashboard'
-    | '/style-guide/data-entry'
-    | '/style-guide/date-time'
-    | '/style-guide/empty-states'
-    | '/style-guide/featured'
-    | '/style-guide/landing'
-    | '/style-guide/media'
-    | '/style-guide/navigation'
-    | '/style-guide/onboarding'
-    | '/style-guide/pricing'
-    | '/style-guide/realtime'
-    | '/style-guide/scheduling'
-    | '/style-guide/search-filter'
-    | '/style-guide/settings'
-    | '/style-guide/sheets'
-    | '/style-guide/wizards'
-    | '/layout-guides/'
-    | '/style-guide/'
     | '/$slug/tickets'
     | '/$slug/dashboard'
-    | '/style-guide/layouts/$layoutId'
-    | '/style-guide/layouts/'
     | '/$slug/tickets/$teamSlug'
     | '/$slug/tickets/'
     | '/$slug/tickets/$teamSlug/issues'
@@ -574,103 +141,21 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/$slug'
-    | '/layout-guides/auth-minimal'
-    | '/layout-guides/data-table-layout'
-    | '/layout-guides/leftnav-right-panel'
-    | '/layout-guides/marketing-public'
-    | '/layout-guides/master-detail'
-    | '/layout-guides/settings-sidebar'
-    | '/layout-guides/sidebar-left-floating-icon'
-    | '/layout-guides/sidebar-left-icon'
-    | '/layout-guides/sidebar-left-inset'
-    | '/layout-guides/sidebar-left-offcanvas'
-    | '/layout-guides/sidebar-non-collapsible'
-    | '/layout-guides/sidebar-right'
-    | '/layout-guides/three-column-workspace'
-    | '/layout-guides/topnav-left-sidebar'
-    | '/layout-guides/topnav-only'
-    | '/style-guide/auth'
-    | '/style-guide/blog'
-    | '/style-guide/charts'
-    | '/style-guide/chat'
-    | '/style-guide/command-palette'
-    | '/style-guide/dashboard'
-    | '/style-guide/data-entry'
-    | '/style-guide/date-time'
-    | '/style-guide/empty-states'
-    | '/style-guide/featured'
-    | '/style-guide/landing'
-    | '/style-guide/media'
-    | '/style-guide/navigation'
-    | '/style-guide/onboarding'
-    | '/style-guide/pricing'
-    | '/style-guide/realtime'
-    | '/style-guide/scheduling'
-    | '/style-guide/search-filter'
-    | '/style-guide/settings'
-    | '/style-guide/sheets'
-    | '/style-guide/wizards'
-    | '/layout-guides'
-    | '/style-guide'
     | '/$slug/dashboard'
-    | '/style-guide/layouts/$layoutId'
-    | '/style-guide/layouts'
     | '/$slug/tickets/$teamSlug'
     | '/$slug/tickets'
     | '/$slug/tickets/$teamSlug/issues'
   id:
     | '__root__'
     | '/_auth'
-    | '/layout-guides'
-    | '/style-guide'
     | '/_default'
     | '/org-select'
     | '/sign-in'
     | '/sign-up'
     | '/_auth/$slug'
-    | '/layout-guides/auth-minimal'
-    | '/layout-guides/data-table-layout'
-    | '/layout-guides/leftnav-right-panel'
-    | '/layout-guides/marketing-public'
-    | '/layout-guides/master-detail'
-    | '/layout-guides/settings-sidebar'
-    | '/layout-guides/sidebar-left-floating-icon'
-    | '/layout-guides/sidebar-left-icon'
-    | '/layout-guides/sidebar-left-inset'
-    | '/layout-guides/sidebar-left-offcanvas'
-    | '/layout-guides/sidebar-non-collapsible'
-    | '/layout-guides/sidebar-right'
-    | '/layout-guides/three-column-workspace'
-    | '/layout-guides/topnav-left-sidebar'
-    | '/layout-guides/topnav-only'
-    | '/style-guide/auth'
-    | '/style-guide/blog'
-    | '/style-guide/charts'
-    | '/style-guide/chat'
-    | '/style-guide/command-palette'
-    | '/style-guide/dashboard'
-    | '/style-guide/data-entry'
-    | '/style-guide/date-time'
-    | '/style-guide/empty-states'
-    | '/style-guide/featured'
-    | '/style-guide/landing'
-    | '/style-guide/media'
-    | '/style-guide/navigation'
-    | '/style-guide/onboarding'
-    | '/style-guide/pricing'
-    | '/style-guide/realtime'
-    | '/style-guide/scheduling'
-    | '/style-guide/search-filter'
-    | '/style-guide/settings'
-    | '/style-guide/sheets'
-    | '/style-guide/wizards'
     | '/_default/'
-    | '/layout-guides/'
-    | '/style-guide/'
     | '/_auth/$slug/tickets'
     | '/_auth/$slug/dashboard'
-    | '/style-guide/layouts/$layoutId'
-    | '/style-guide/layouts/'
     | '/_auth/$slug/tickets/$teamSlug'
     | '/_auth/$slug/tickets/'
     | '/_auth/$slug/tickets/$teamSlug/issues'
@@ -678,8 +163,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
-  LayoutGuidesRouteRoute: typeof LayoutGuidesRouteRouteWithChildren
-  StyleGuideRouteRoute: typeof StyleGuideRouteRouteWithChildren
   DefaultRoute: typeof DefaultRouteWithChildren
   OrgSelectRoute: typeof OrgSelectRoute
   SignInRoute: typeof SignInRoute
@@ -716,40 +199,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DefaultRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/style-guide': {
-      id: '/style-guide'
-      path: '/style-guide'
-      fullPath: '/style-guide'
-      preLoaderRoute: typeof StyleGuideRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/layout-guides': {
-      id: '/layout-guides'
-      path: '/layout-guides'
-      fullPath: '/layout-guides'
-      preLoaderRoute: typeof LayoutGuidesRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_auth': {
       id: '/_auth'
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthRouteRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/style-guide/': {
-      id: '/style-guide/'
-      path: '/'
-      fullPath: '/style-guide/'
-      preLoaderRoute: typeof StyleGuideIndexRouteImport
-      parentRoute: typeof StyleGuideRouteRoute
-    }
-    '/layout-guides/': {
-      id: '/layout-guides/'
-      path: '/'
-      fullPath: '/layout-guides/'
-      preLoaderRoute: typeof LayoutGuidesIndexRouteImport
-      parentRoute: typeof LayoutGuidesRouteRoute
     }
     '/_default/': {
       id: '/_default/'
@@ -758,278 +213,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DefaultIndexRouteImport
       parentRoute: typeof DefaultRoute
     }
-    '/style-guide/wizards': {
-      id: '/style-guide/wizards'
-      path: '/wizards'
-      fullPath: '/style-guide/wizards'
-      preLoaderRoute: typeof StyleGuideWizardsRouteImport
-      parentRoute: typeof StyleGuideRouteRoute
-    }
-    '/style-guide/sheets': {
-      id: '/style-guide/sheets'
-      path: '/sheets'
-      fullPath: '/style-guide/sheets'
-      preLoaderRoute: typeof StyleGuideSheetsRouteImport
-      parentRoute: typeof StyleGuideRouteRoute
-    }
-    '/style-guide/settings': {
-      id: '/style-guide/settings'
-      path: '/settings'
-      fullPath: '/style-guide/settings'
-      preLoaderRoute: typeof StyleGuideSettingsRouteImport
-      parentRoute: typeof StyleGuideRouteRoute
-    }
-    '/style-guide/search-filter': {
-      id: '/style-guide/search-filter'
-      path: '/search-filter'
-      fullPath: '/style-guide/search-filter'
-      preLoaderRoute: typeof StyleGuideSearchFilterRouteImport
-      parentRoute: typeof StyleGuideRouteRoute
-    }
-    '/style-guide/scheduling': {
-      id: '/style-guide/scheduling'
-      path: '/scheduling'
-      fullPath: '/style-guide/scheduling'
-      preLoaderRoute: typeof StyleGuideSchedulingRouteImport
-      parentRoute: typeof StyleGuideRouteRoute
-    }
-    '/style-guide/realtime': {
-      id: '/style-guide/realtime'
-      path: '/realtime'
-      fullPath: '/style-guide/realtime'
-      preLoaderRoute: typeof StyleGuideRealtimeRouteImport
-      parentRoute: typeof StyleGuideRouteRoute
-    }
-    '/style-guide/pricing': {
-      id: '/style-guide/pricing'
-      path: '/pricing'
-      fullPath: '/style-guide/pricing'
-      preLoaderRoute: typeof StyleGuidePricingRouteImport
-      parentRoute: typeof StyleGuideRouteRoute
-    }
-    '/style-guide/onboarding': {
-      id: '/style-guide/onboarding'
-      path: '/onboarding'
-      fullPath: '/style-guide/onboarding'
-      preLoaderRoute: typeof StyleGuideOnboardingRouteImport
-      parentRoute: typeof StyleGuideRouteRoute
-    }
-    '/style-guide/navigation': {
-      id: '/style-guide/navigation'
-      path: '/navigation'
-      fullPath: '/style-guide/navigation'
-      preLoaderRoute: typeof StyleGuideNavigationRouteImport
-      parentRoute: typeof StyleGuideRouteRoute
-    }
-    '/style-guide/media': {
-      id: '/style-guide/media'
-      path: '/media'
-      fullPath: '/style-guide/media'
-      preLoaderRoute: typeof StyleGuideMediaRouteImport
-      parentRoute: typeof StyleGuideRouteRoute
-    }
-    '/style-guide/landing': {
-      id: '/style-guide/landing'
-      path: '/landing'
-      fullPath: '/style-guide/landing'
-      preLoaderRoute: typeof StyleGuideLandingRouteImport
-      parentRoute: typeof StyleGuideRouteRoute
-    }
-    '/style-guide/featured': {
-      id: '/style-guide/featured'
-      path: '/featured'
-      fullPath: '/style-guide/featured'
-      preLoaderRoute: typeof StyleGuideFeaturedRouteImport
-      parentRoute: typeof StyleGuideRouteRoute
-    }
-    '/style-guide/empty-states': {
-      id: '/style-guide/empty-states'
-      path: '/empty-states'
-      fullPath: '/style-guide/empty-states'
-      preLoaderRoute: typeof StyleGuideEmptyStatesRouteImport
-      parentRoute: typeof StyleGuideRouteRoute
-    }
-    '/style-guide/date-time': {
-      id: '/style-guide/date-time'
-      path: '/date-time'
-      fullPath: '/style-guide/date-time'
-      preLoaderRoute: typeof StyleGuideDateTimeRouteImport
-      parentRoute: typeof StyleGuideRouteRoute
-    }
-    '/style-guide/data-entry': {
-      id: '/style-guide/data-entry'
-      path: '/data-entry'
-      fullPath: '/style-guide/data-entry'
-      preLoaderRoute: typeof StyleGuideDataEntryRouteImport
-      parentRoute: typeof StyleGuideRouteRoute
-    }
-    '/style-guide/dashboard': {
-      id: '/style-guide/dashboard'
-      path: '/dashboard'
-      fullPath: '/style-guide/dashboard'
-      preLoaderRoute: typeof StyleGuideDashboardRouteImport
-      parentRoute: typeof StyleGuideRouteRoute
-    }
-    '/style-guide/command-palette': {
-      id: '/style-guide/command-palette'
-      path: '/command-palette'
-      fullPath: '/style-guide/command-palette'
-      preLoaderRoute: typeof StyleGuideCommandPaletteRouteImport
-      parentRoute: typeof StyleGuideRouteRoute
-    }
-    '/style-guide/chat': {
-      id: '/style-guide/chat'
-      path: '/chat'
-      fullPath: '/style-guide/chat'
-      preLoaderRoute: typeof StyleGuideChatRouteImport
-      parentRoute: typeof StyleGuideRouteRoute
-    }
-    '/style-guide/charts': {
-      id: '/style-guide/charts'
-      path: '/charts'
-      fullPath: '/style-guide/charts'
-      preLoaderRoute: typeof StyleGuideChartsRouteImport
-      parentRoute: typeof StyleGuideRouteRoute
-    }
-    '/style-guide/blog': {
-      id: '/style-guide/blog'
-      path: '/blog'
-      fullPath: '/style-guide/blog'
-      preLoaderRoute: typeof StyleGuideBlogRouteImport
-      parentRoute: typeof StyleGuideRouteRoute
-    }
-    '/style-guide/auth': {
-      id: '/style-guide/auth'
-      path: '/auth'
-      fullPath: '/style-guide/auth'
-      preLoaderRoute: typeof StyleGuideAuthRouteImport
-      parentRoute: typeof StyleGuideRouteRoute
-    }
-    '/layout-guides/topnav-only': {
-      id: '/layout-guides/topnav-only'
-      path: '/topnav-only'
-      fullPath: '/layout-guides/topnav-only'
-      preLoaderRoute: typeof LayoutGuidesTopnavOnlyRouteImport
-      parentRoute: typeof LayoutGuidesRouteRoute
-    }
-    '/layout-guides/topnav-left-sidebar': {
-      id: '/layout-guides/topnav-left-sidebar'
-      path: '/topnav-left-sidebar'
-      fullPath: '/layout-guides/topnav-left-sidebar'
-      preLoaderRoute: typeof LayoutGuidesTopnavLeftSidebarRouteImport
-      parentRoute: typeof LayoutGuidesRouteRoute
-    }
-    '/layout-guides/three-column-workspace': {
-      id: '/layout-guides/three-column-workspace'
-      path: '/three-column-workspace'
-      fullPath: '/layout-guides/three-column-workspace'
-      preLoaderRoute: typeof LayoutGuidesThreeColumnWorkspaceRouteImport
-      parentRoute: typeof LayoutGuidesRouteRoute
-    }
-    '/layout-guides/sidebar-right': {
-      id: '/layout-guides/sidebar-right'
-      path: '/sidebar-right'
-      fullPath: '/layout-guides/sidebar-right'
-      preLoaderRoute: typeof LayoutGuidesSidebarRightRouteImport
-      parentRoute: typeof LayoutGuidesRouteRoute
-    }
-    '/layout-guides/sidebar-non-collapsible': {
-      id: '/layout-guides/sidebar-non-collapsible'
-      path: '/sidebar-non-collapsible'
-      fullPath: '/layout-guides/sidebar-non-collapsible'
-      preLoaderRoute: typeof LayoutGuidesSidebarNonCollapsibleRouteImport
-      parentRoute: typeof LayoutGuidesRouteRoute
-    }
-    '/layout-guides/sidebar-left-offcanvas': {
-      id: '/layout-guides/sidebar-left-offcanvas'
-      path: '/sidebar-left-offcanvas'
-      fullPath: '/layout-guides/sidebar-left-offcanvas'
-      preLoaderRoute: typeof LayoutGuidesSidebarLeftOffcanvasRouteImport
-      parentRoute: typeof LayoutGuidesRouteRoute
-    }
-    '/layout-guides/sidebar-left-inset': {
-      id: '/layout-guides/sidebar-left-inset'
-      path: '/sidebar-left-inset'
-      fullPath: '/layout-guides/sidebar-left-inset'
-      preLoaderRoute: typeof LayoutGuidesSidebarLeftInsetRouteImport
-      parentRoute: typeof LayoutGuidesRouteRoute
-    }
-    '/layout-guides/sidebar-left-icon': {
-      id: '/layout-guides/sidebar-left-icon'
-      path: '/sidebar-left-icon'
-      fullPath: '/layout-guides/sidebar-left-icon'
-      preLoaderRoute: typeof LayoutGuidesSidebarLeftIconRouteImport
-      parentRoute: typeof LayoutGuidesRouteRoute
-    }
-    '/layout-guides/sidebar-left-floating-icon': {
-      id: '/layout-guides/sidebar-left-floating-icon'
-      path: '/sidebar-left-floating-icon'
-      fullPath: '/layout-guides/sidebar-left-floating-icon'
-      preLoaderRoute: typeof LayoutGuidesSidebarLeftFloatingIconRouteImport
-      parentRoute: typeof LayoutGuidesRouteRoute
-    }
-    '/layout-guides/settings-sidebar': {
-      id: '/layout-guides/settings-sidebar'
-      path: '/settings-sidebar'
-      fullPath: '/layout-guides/settings-sidebar'
-      preLoaderRoute: typeof LayoutGuidesSettingsSidebarRouteImport
-      parentRoute: typeof LayoutGuidesRouteRoute
-    }
-    '/layout-guides/master-detail': {
-      id: '/layout-guides/master-detail'
-      path: '/master-detail'
-      fullPath: '/layout-guides/master-detail'
-      preLoaderRoute: typeof LayoutGuidesMasterDetailRouteImport
-      parentRoute: typeof LayoutGuidesRouteRoute
-    }
-    '/layout-guides/marketing-public': {
-      id: '/layout-guides/marketing-public'
-      path: '/marketing-public'
-      fullPath: '/layout-guides/marketing-public'
-      preLoaderRoute: typeof LayoutGuidesMarketingPublicRouteImport
-      parentRoute: typeof LayoutGuidesRouteRoute
-    }
-    '/layout-guides/leftnav-right-panel': {
-      id: '/layout-guides/leftnav-right-panel'
-      path: '/leftnav-right-panel'
-      fullPath: '/layout-guides/leftnav-right-panel'
-      preLoaderRoute: typeof LayoutGuidesLeftnavRightPanelRouteImport
-      parentRoute: typeof LayoutGuidesRouteRoute
-    }
-    '/layout-guides/data-table-layout': {
-      id: '/layout-guides/data-table-layout'
-      path: '/data-table-layout'
-      fullPath: '/layout-guides/data-table-layout'
-      preLoaderRoute: typeof LayoutGuidesDataTableLayoutRouteImport
-      parentRoute: typeof LayoutGuidesRouteRoute
-    }
-    '/layout-guides/auth-minimal': {
-      id: '/layout-guides/auth-minimal'
-      path: '/auth-minimal'
-      fullPath: '/layout-guides/auth-minimal'
-      preLoaderRoute: typeof LayoutGuidesAuthMinimalRouteImport
-      parentRoute: typeof LayoutGuidesRouteRoute
-    }
     '/_auth/$slug': {
       id: '/_auth/$slug'
       path: '/$slug'
       fullPath: '/$slug'
       preLoaderRoute: typeof AuthSlugRouteRouteImport
       parentRoute: typeof AuthRouteRoute
-    }
-    '/style-guide/layouts/': {
-      id: '/style-guide/layouts/'
-      path: '/layouts'
-      fullPath: '/style-guide/layouts/'
-      preLoaderRoute: typeof StyleGuideLayoutsIndexRouteImport
-      parentRoute: typeof StyleGuideRouteRoute
-    }
-    '/style-guide/layouts/$layoutId': {
-      id: '/style-guide/layouts/$layoutId'
-      path: '/layouts/$layoutId'
-      fullPath: '/style-guide/layouts/$layoutId'
-      preLoaderRoute: typeof StyleGuideLayoutsLayoutIdRouteImport
-      parentRoute: typeof StyleGuideRouteRoute
     }
     '/_auth/$slug/dashboard': {
       id: '/_auth/$slug/dashboard'
@@ -1123,107 +312,6 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
   AuthRouteRouteChildren,
 )
 
-interface LayoutGuidesRouteRouteChildren {
-  LayoutGuidesAuthMinimalRoute: typeof LayoutGuidesAuthMinimalRoute
-  LayoutGuidesDataTableLayoutRoute: typeof LayoutGuidesDataTableLayoutRoute
-  LayoutGuidesLeftnavRightPanelRoute: typeof LayoutGuidesLeftnavRightPanelRoute
-  LayoutGuidesMarketingPublicRoute: typeof LayoutGuidesMarketingPublicRoute
-  LayoutGuidesMasterDetailRoute: typeof LayoutGuidesMasterDetailRoute
-  LayoutGuidesSettingsSidebarRoute: typeof LayoutGuidesSettingsSidebarRoute
-  LayoutGuidesSidebarLeftFloatingIconRoute: typeof LayoutGuidesSidebarLeftFloatingIconRoute
-  LayoutGuidesSidebarLeftIconRoute: typeof LayoutGuidesSidebarLeftIconRoute
-  LayoutGuidesSidebarLeftInsetRoute: typeof LayoutGuidesSidebarLeftInsetRoute
-  LayoutGuidesSidebarLeftOffcanvasRoute: typeof LayoutGuidesSidebarLeftOffcanvasRoute
-  LayoutGuidesSidebarNonCollapsibleRoute: typeof LayoutGuidesSidebarNonCollapsibleRoute
-  LayoutGuidesSidebarRightRoute: typeof LayoutGuidesSidebarRightRoute
-  LayoutGuidesThreeColumnWorkspaceRoute: typeof LayoutGuidesThreeColumnWorkspaceRoute
-  LayoutGuidesTopnavLeftSidebarRoute: typeof LayoutGuidesTopnavLeftSidebarRoute
-  LayoutGuidesTopnavOnlyRoute: typeof LayoutGuidesTopnavOnlyRoute
-  LayoutGuidesIndexRoute: typeof LayoutGuidesIndexRoute
-}
-
-const LayoutGuidesRouteRouteChildren: LayoutGuidesRouteRouteChildren = {
-  LayoutGuidesAuthMinimalRoute: LayoutGuidesAuthMinimalRoute,
-  LayoutGuidesDataTableLayoutRoute: LayoutGuidesDataTableLayoutRoute,
-  LayoutGuidesLeftnavRightPanelRoute: LayoutGuidesLeftnavRightPanelRoute,
-  LayoutGuidesMarketingPublicRoute: LayoutGuidesMarketingPublicRoute,
-  LayoutGuidesMasterDetailRoute: LayoutGuidesMasterDetailRoute,
-  LayoutGuidesSettingsSidebarRoute: LayoutGuidesSettingsSidebarRoute,
-  LayoutGuidesSidebarLeftFloatingIconRoute:
-    LayoutGuidesSidebarLeftFloatingIconRoute,
-  LayoutGuidesSidebarLeftIconRoute: LayoutGuidesSidebarLeftIconRoute,
-  LayoutGuidesSidebarLeftInsetRoute: LayoutGuidesSidebarLeftInsetRoute,
-  LayoutGuidesSidebarLeftOffcanvasRoute: LayoutGuidesSidebarLeftOffcanvasRoute,
-  LayoutGuidesSidebarNonCollapsibleRoute:
-    LayoutGuidesSidebarNonCollapsibleRoute,
-  LayoutGuidesSidebarRightRoute: LayoutGuidesSidebarRightRoute,
-  LayoutGuidesThreeColumnWorkspaceRoute: LayoutGuidesThreeColumnWorkspaceRoute,
-  LayoutGuidesTopnavLeftSidebarRoute: LayoutGuidesTopnavLeftSidebarRoute,
-  LayoutGuidesTopnavOnlyRoute: LayoutGuidesTopnavOnlyRoute,
-  LayoutGuidesIndexRoute: LayoutGuidesIndexRoute,
-}
-
-const LayoutGuidesRouteRouteWithChildren =
-  LayoutGuidesRouteRoute._addFileChildren(LayoutGuidesRouteRouteChildren)
-
-interface StyleGuideRouteRouteChildren {
-  StyleGuideAuthRoute: typeof StyleGuideAuthRoute
-  StyleGuideBlogRoute: typeof StyleGuideBlogRoute
-  StyleGuideChartsRoute: typeof StyleGuideChartsRoute
-  StyleGuideChatRoute: typeof StyleGuideChatRoute
-  StyleGuideCommandPaletteRoute: typeof StyleGuideCommandPaletteRoute
-  StyleGuideDashboardRoute: typeof StyleGuideDashboardRoute
-  StyleGuideDataEntryRoute: typeof StyleGuideDataEntryRoute
-  StyleGuideDateTimeRoute: typeof StyleGuideDateTimeRoute
-  StyleGuideEmptyStatesRoute: typeof StyleGuideEmptyStatesRoute
-  StyleGuideFeaturedRoute: typeof StyleGuideFeaturedRoute
-  StyleGuideLandingRoute: typeof StyleGuideLandingRoute
-  StyleGuideMediaRoute: typeof StyleGuideMediaRoute
-  StyleGuideNavigationRoute: typeof StyleGuideNavigationRoute
-  StyleGuideOnboardingRoute: typeof StyleGuideOnboardingRoute
-  StyleGuidePricingRoute: typeof StyleGuidePricingRoute
-  StyleGuideRealtimeRoute: typeof StyleGuideRealtimeRoute
-  StyleGuideSchedulingRoute: typeof StyleGuideSchedulingRoute
-  StyleGuideSearchFilterRoute: typeof StyleGuideSearchFilterRoute
-  StyleGuideSettingsRoute: typeof StyleGuideSettingsRoute
-  StyleGuideSheetsRoute: typeof StyleGuideSheetsRoute
-  StyleGuideWizardsRoute: typeof StyleGuideWizardsRoute
-  StyleGuideIndexRoute: typeof StyleGuideIndexRoute
-  StyleGuideLayoutsLayoutIdRoute: typeof StyleGuideLayoutsLayoutIdRoute
-  StyleGuideLayoutsIndexRoute: typeof StyleGuideLayoutsIndexRoute
-}
-
-const StyleGuideRouteRouteChildren: StyleGuideRouteRouteChildren = {
-  StyleGuideAuthRoute: StyleGuideAuthRoute,
-  StyleGuideBlogRoute: StyleGuideBlogRoute,
-  StyleGuideChartsRoute: StyleGuideChartsRoute,
-  StyleGuideChatRoute: StyleGuideChatRoute,
-  StyleGuideCommandPaletteRoute: StyleGuideCommandPaletteRoute,
-  StyleGuideDashboardRoute: StyleGuideDashboardRoute,
-  StyleGuideDataEntryRoute: StyleGuideDataEntryRoute,
-  StyleGuideDateTimeRoute: StyleGuideDateTimeRoute,
-  StyleGuideEmptyStatesRoute: StyleGuideEmptyStatesRoute,
-  StyleGuideFeaturedRoute: StyleGuideFeaturedRoute,
-  StyleGuideLandingRoute: StyleGuideLandingRoute,
-  StyleGuideMediaRoute: StyleGuideMediaRoute,
-  StyleGuideNavigationRoute: StyleGuideNavigationRoute,
-  StyleGuideOnboardingRoute: StyleGuideOnboardingRoute,
-  StyleGuidePricingRoute: StyleGuidePricingRoute,
-  StyleGuideRealtimeRoute: StyleGuideRealtimeRoute,
-  StyleGuideSchedulingRoute: StyleGuideSchedulingRoute,
-  StyleGuideSearchFilterRoute: StyleGuideSearchFilterRoute,
-  StyleGuideSettingsRoute: StyleGuideSettingsRoute,
-  StyleGuideSheetsRoute: StyleGuideSheetsRoute,
-  StyleGuideWizardsRoute: StyleGuideWizardsRoute,
-  StyleGuideIndexRoute: StyleGuideIndexRoute,
-  StyleGuideLayoutsLayoutIdRoute: StyleGuideLayoutsLayoutIdRoute,
-  StyleGuideLayoutsIndexRoute: StyleGuideLayoutsIndexRoute,
-}
-
-const StyleGuideRouteRouteWithChildren = StyleGuideRouteRoute._addFileChildren(
-  StyleGuideRouteRouteChildren,
-)
-
 interface DefaultRouteChildren {
   DefaultIndexRoute: typeof DefaultIndexRoute
 }
@@ -1237,8 +325,6 @@ const DefaultRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   AuthRouteRoute: AuthRouteRouteWithChildren,
-  LayoutGuidesRouteRoute: LayoutGuidesRouteRouteWithChildren,
-  StyleGuideRouteRoute: StyleGuideRouteRouteWithChildren,
   DefaultRoute: DefaultRouteWithChildren,
   OrgSelectRoute: OrgSelectRoute,
   SignInRoute: SignInRoute,

@@ -1,3 +1,4 @@
+import { useNavigate } from "@tanstack/react-router"
 import { MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -43,8 +44,19 @@ function formatDate(dateStr: string): string {
 }
 
 export function IssueRow({ issue }: { issue: Issue }) {
+  const navigate = useNavigate()
+
+  function handleClick() {
+    navigate({
+      search: { issueId: issue.id },
+    } as never)
+  }
+
   return (
-    <div className="group flex h-11 items-center gap-2 px-4 hover:bg-surface-container/60 transition-colors cursor-pointer">
+    <div
+      className="group flex h-11 items-center gap-2 px-4 hover:bg-surface-container/60 transition-colors cursor-pointer"
+      onClick={handleClick}
+    >
       {/* Kebab menu - visible on hover */}
       <button className="flex size-5 shrink-0 items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant hover:text-on-surface">
         <MoreHorizontal className="size-4" strokeWidth={1.5} />

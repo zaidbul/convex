@@ -1,10 +1,13 @@
-import { and, asc, desc, eq, gt, gte, inArray } from "drizzle-orm"
+import { and, asc, desc, eq, gt, gte, inArray, sql } from "drizzle-orm"
 import type { LibSQLDatabase } from "drizzle-orm/libsql"
 import * as schema from "@/db/schema"
 import type {
   Cycle as TicketCycle,
   Issue as TicketIssue,
+  IssueDetail as TicketIssueDetail,
   IssueFilter,
+  IssuePriority,
+  IssueStatus,
   Team as TicketTeam,
   User as TicketUser,
   Workspace as TicketWorkspace,
@@ -421,4 +424,133 @@ export async function listIssuesForViewerTeam(
       updatedAt: issue.updatedAt,
     }
   })
+}
+
+const priorityScoreMap: Record<IssuePriority, number> = {
+  urgent: 4,
+  high: 3,
+  medium: 2,
+  low: 1,
+  none: 0,
+}
+
+export async function createIssueForViewer(
+  db: TicketsDatabase,
+  context: ViewerContext,
+  input: {
+    teamId: string
+    title: string
+    description?: string
+    status: IssueStatus
+    priority: IssuePriority
+  }
+): Promise<{ id: string; identifier: string }> {
+  if (!context.workspaceId) {
+    throw new Error("No active workspace")
+  }
+
+  const timestamp = nowIso()
+  const issueId = crypto.randomUUID()
+
+  // Atomically read+increment nextIssueNumber and insert the issue
+  const [teamRow] = await db
+    .update(schema.teams)
+    .set({ nextIssueNumber: sql`${schema.teams.nextIssueNumber} + 1` })
+    .where(
+      and(
+        eq(schema.teams.id, input.teamId),
+        eq(schema.teams.workspaceId, context.workspaceId)
+      )
+    )
+    .returning({
+      identifier: schema.teams.identifier,
+      sequenceNumber: schema.teams.nextIssueNumber,
+    })
+
+  if (!teamRow) {
+    throw new Error("Team not found or not accessible")
+  }
+
+  // nextIssueNumber was already incremented, so the previous value is sequenceNumber - 1
+  const seqNum = teamRow.sequenceNumber - 1
+  const identifier = `${teamRow.identifier}-${seqNum}`
+
+  await db.insert(schema.issues).values({
+    id: issueId,
+    workspaceId: context.workspaceId,
+    teamId: input.teamId,
+    creatorUserId: context.userId,
+    identifier,
+    sequenceNumber: seqNum,
+    title: input.title,
+    description: input.description ?? null,
+    status: input.status,
+    priority: input.priority,
+    priorityScore: priorityScoreMap[input.priority],
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  })
+
+  return { id: issueId, identifier }
+}
+
+export async function getIssueByIdForViewer(
+  db: TicketsDatabase,
+  context: ViewerContext,
+  issueId: string
+): Promise<TicketIssueDetail | null> {
+  if (!context.workspaceId) {
+    return null
+  }
+
+  const issue = await db.query.issues.findFirst({
+    where: and(
+      eq(schema.issues.id, issueId),
+      eq(schema.issues.workspaceId, context.workspaceId)
+    ),
+  })
+
+  if (!issue) {
+    return null
+  }
+
+  const [labelRows, creator, assignee] = await Promise.all([
+    db
+      .select({
+        labelId: schema.labels.id,
+        labelName: schema.labels.name,
+        labelColor: schema.labels.color,
+      })
+      .from(schema.issueLabels)
+      .innerJoin(schema.labels, eq(schema.issueLabels.labelId, schema.labels.id))
+      .where(eq(schema.issueLabels.issueId, issueId)),
+    db.query.users.findFirst({
+      where: eq(schema.users.id, issue.creatorUserId),
+    }),
+    issue.assigneeUserId
+      ? db.query.users.findFirst({
+          where: eq(schema.users.id, issue.assigneeUserId),
+        })
+      : Promise.resolve(undefined),
+  ])
+
+  return {
+    id: issue.id,
+    identifier: issue.identifier,
+    title: issue.title,
+    description: issue.description,
+    status: issue.status,
+    priority: issue.priority,
+    priorityScore: issue.priorityScore,
+    labels: labelRows.map((row) => ({
+      id: row.labelId,
+      name: row.labelName,
+      color: row.labelColor,
+    })),
+    assignees: assignee ? [mapUser(assignee)] : [],
+    cycleId: issue.cycleId,
+    createdAt: issue.createdAt,
+    updatedAt: issue.updatedAt,
+    creator: creator ? mapUser(creator) : { id: issue.creatorUserId, name: "Unknown", initials: "??" },
+  }
 }

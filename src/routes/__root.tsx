@@ -9,6 +9,7 @@ import { TanStackDevtools } from "@tanstack/react-devtools"
 import { ClerkProvider } from "@clerk/tanstack-react-start"
 import { ThemeProvider } from "next-themes"
 import { QueryClientProvider, type QueryClient } from "@tanstack/react-query"
+import { Toaster } from "@/components/ui/sonner"
 
 import appCss from "../styles.css?url"
 
@@ -69,6 +70,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             disableTransitionOnChange
           >
             {children}
+            <Toaster />
           </ThemeProvider>
         </ClerkProvider>
         <TanStackDevtools

@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { Link, useParams } from "@tanstack/react-router"
 import { useSuspenseQuery } from "@tanstack/react-query"
 import {
@@ -9,7 +10,6 @@ import {
   FolderKanban,
   Eye,
   MoreHorizontal,
-  ChevronDown,
   HelpCircle,
 } from "lucide-react"
 import {
@@ -30,34 +30,31 @@ import {
   workspaceQueryOptions,
 } from "@/query/options/tickets"
 import { TeamTree } from "./team-tree"
+import { WorkspaceDropdown } from "./workspace-dropdown"
+import { CreateIssueDialog } from "./create-issue-dialog"
 
 export function TicketSidebar() {
   const params = useParams({ strict: false })
   const slug = (params as { slug?: string }).slug
   const { data: workspace } = useSuspenseQuery(workspaceQueryOptions())
   const { data: teams } = useSuspenseQuery(teamsQueryOptions())
-  const workspaceName = workspace?.name ?? "No workspace"
-  const workspaceInitial = workspaceName[0]?.toUpperCase() ?? "?"
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
 
   return (
     <>
       <SidebarHeader className="px-3 py-2">
         <div className="flex items-center justify-between">
-          <SidebarMenuButton
-            size="lg"
-            className="gap-2 font-medium"
-          >
-            <span className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground text-xs font-bold">
-              {workspaceInitial}
-            </span>
-            <span className="truncate">{workspaceName}</span>
-            <ChevronDown className="ml-auto size-4 text-on-surface-variant" strokeWidth={1.5} />
-          </SidebarMenuButton>
+          <WorkspaceDropdown workspace={workspace} />
           <div className="flex items-center gap-0.5">
             <Button variant="ghost" size="icon" className="size-7">
               <Search className="size-4" strokeWidth={1.5} />
             </Button>
-            <Button variant="ghost" size="icon" className="size-7">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7"
+              onClick={() => setCreateDialogOpen(true)}
+            >
               <Plus className="size-4" strokeWidth={1.5} />
             </Button>
           </div>
@@ -156,6 +153,12 @@ export function TicketSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+
+      <CreateIssueDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        teams={teams}
+      />
     </>
   )
 }

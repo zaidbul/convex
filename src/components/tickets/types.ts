@@ -35,6 +35,11 @@ export interface Issue {
   updatedAt: string
 }
 
+export interface IssueDetail extends Issue {
+  description: string | null
+  creator: User
+}
+
 export interface Cycle {
   id: string
   name: string

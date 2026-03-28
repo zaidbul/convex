@@ -1,8 +1,11 @@
 import { createServerFn } from "@tanstack/react-start"
 import { auth, clerkClient } from "@clerk/tanstack-react-start/server"
 import { db } from "@/db/connection"
+import type { IssuePriority, IssueStatus } from "@/components/tickets/types"
 import {
+  createIssueForViewer,
   getAccessibleTeamBySlug,
+  getIssueByIdForViewer,
   getWorkspaceForViewer,
   listCyclesForViewerTeam,
   listIssuesForViewerTeam,
@@ -78,4 +81,32 @@ export const getIssues = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     return listIssuesForViewerTeam(db, viewerContext, data.teamSlug, data.filter)
+  })
+
+export const createIssue = createServerFn({ method: "POST" })
+  .inputValidator(
+    (data: {
+      teamId: string
+      title: string
+      description?: string
+      status?: string
+      priority?: string
+    }) => data
+  )
+  .handler(async ({ data }) => {
+    const viewerContext = await getViewerContext()
+    return createIssueForViewer(db, viewerContext, {
+      teamId: data.teamId,
+      title: data.title,
+      description: data.description,
+      status: (data.status ?? "backlog") as IssueStatus,
+      priority: (data.priority ?? "none") as IssuePriority,
+    })
+  })
+
+export const getIssueById = createServerFn({ method: "GET" })
+  .inputValidator((data: { issueId: string }) => data)
+  .handler(async ({ data }) => {
+    const viewerContext = await getViewerContext()
+    return getIssueByIdForViewer(db, viewerContext, data.issueId)
   })
