@@ -6,9 +6,10 @@ export default function Sandbox() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const runCode = () => {
+    const encoded = encodeURIComponent(code);
     const html = `<!DOCTYPE html>
 <html>
-  <head><script src="https://unpkg.com/typescript/lib/typescript.js"></script></head>
+  <head><script src="https://unpkg.com/typescript/lib/typescript.js"><\/script></head>
   <body>
     <script>
       const logs = [];
@@ -17,12 +18,13 @@ export default function Sandbox() {
         window.parent.postMessage({ type: "log", logs }, "*");
       };
       try {
-        const js = ts.transpileModule(\`${"`"}${"{code}"}\`${"`"}, {}).outputText;
+        const src = decodeURIComponent("${encoded}");
+        const js = ts.transpileModule(src, {}).outputText;
         eval(js);
       } catch(e) {
         window.parent.postMessage({ type: "error", message: e.message }, "*");
       }
-    </script>
+    <\/script>
   </body>
 </html>`;
 
