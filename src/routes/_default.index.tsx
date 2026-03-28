@@ -61,7 +61,7 @@ function SphereTransition() {
           className="h-[600px] w-[900px] rounded-[50%] md:h-[700px] md:w-[1100px]"
           style={{
             background:
-              "radial-gradient(ellipse at 50% 30%, #5b9bd5 0%, #3a7bbf 25%, #1a4a7a 50%, transparent 70%)",
+              "radial-gradient(ellipse at 50% 30%, var(--accent) 0%, var(--secondary) 25%, var(--primary-container) 50%, transparent 70%)",
           }}
         />
       </div>
@@ -185,7 +185,7 @@ function StrategiesSection() {
                     strokeWidth="12"
                     strokeDasharray="220 94"
                     strokeLinecap="round"
-                    className="text-[#8b5cf6]"
+                    className="text-primary"
                     transform="rotate(-90 60 60)"
                   />
                   <circle
@@ -197,7 +197,7 @@ function StrategiesSection() {
                     strokeWidth="10"
                     strokeDasharray="140 86"
                     strokeLinecap="round"
-                    className="text-[#a78bfa]"
+                    className="text-accent"
                     transform="rotate(-90 60 60)"
                   />
                 </svg>
@@ -875,10 +875,10 @@ function DigestsTradeSection() {
               }}
             />
             {/* Colored orbs */}
-            <div className="absolute top-1/4 left-1/3 size-8 rounded-full bg-green-500 blur-sm opacity-70" />
-            <div className="absolute top-1/2 right-1/3 size-6 rounded-full bg-orange-500 blur-sm opacity-70" />
-            <div className="absolute top-1/3 right-1/4 size-10 rounded-full bg-green-400 blur-sm opacity-60" />
-            <div className="absolute bottom-1/3 left-1/2 size-5 rounded-full bg-orange-400 blur-sm opacity-60" />
+            <div className="absolute top-1/4 left-1/3 size-8 rounded-full bg-primary blur-sm opacity-70" />
+            <div className="absolute top-1/2 right-1/3 size-6 rounded-full bg-accent blur-sm opacity-70" />
+            <div className="absolute top-1/3 right-1/4 size-10 rounded-full bg-primary blur-sm opacity-60" />
+            <div className="absolute bottom-1/3 left-1/2 size-5 rounded-full bg-accent blur-sm opacity-60" />
           </div>
         </div>
       </div>
@@ -926,21 +926,21 @@ function CustomFeaturesSection() {
             >
               <polyline
                 fill="none"
-                stroke="#3b82f6"
+                stroke="var(--primary)"
                 strokeWidth="2"
                 points="0,70 30,65 60,60 90,55 120,60 150,50 180,45 210,50 240,40 270,35 300,30"
               />
               <polyline
                 fill="none"
-                stroke="#ef4444"
+                stroke="var(--secondary)"
                 strokeWidth="2"
                 points="0,80 30,78 60,75 90,70 120,65 150,68 180,60 210,55 240,58 270,50 300,45"
               />
               {/* Signal dots */}
-              <circle cx="90" cy="55" r="4" fill="#f59e0b" />
-              <circle cx="150" cy="50" r="4" fill="#22c55e" />
-              <circle cx="210" cy="50" r="4" fill="#f59e0b" />
-              <circle cx="270" cy="35" r="4" fill="#22c55e" />
+              <circle cx="90" cy="55" r="4" fill="var(--accent)" />
+              <circle cx="150" cy="50" r="4" fill="var(--primary)" />
+              <circle cx="210" cy="50" r="4" fill="var(--accent)" />
+              <circle cx="270" cy="35" r="4" fill="var(--primary)" />
             </svg>
           </div>
           <p className="mt-4 text-xs text-on-surface-variant/40">

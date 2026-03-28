@@ -15,6 +15,7 @@ import {
   SheetContent,
   SheetBody,
 } from "@/components/ui/sheet"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { cn } from "@/lib/utils"
 
 export const Route = createFileRoute("/_default")({
@@ -129,6 +130,7 @@ function Navbar() {
 
         {/* Right actions */}
         <div className="ml-auto flex items-center gap-2">
+          <ThemeToggle />
           <Button variant="ghost" size="sm" className="hidden sm:inline-flex">
             Log In
           </Button>
