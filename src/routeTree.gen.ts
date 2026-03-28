@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignUpRouteImport } from './routes/sign-up'
+import { Route as PreviewRouteImport } from './routes/preview'
 import { Route as OrgSelectRouteImport } from './routes/org-select'
 import { Route as DefaultRouteImport } from './routes/_default'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
@@ -27,6 +28,11 @@ import { Route as AuthSlugTicketsTeamSlugIssuesRouteImport } from './routes/_aut
 const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
   path: '/sign-up',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PreviewRoute = PreviewRouteImport.update({
+  id: '/preview',
+  path: '/preview',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrgSelectRoute = OrgSelectRouteImport.update({
@@ -98,6 +104,7 @@ const AuthSlugTicketsTeamSlugIssuesRoute =
 export interface FileRoutesByFullPath {
   '/': typeof DefaultIndexRoute
   '/org-select': typeof OrgSelectRoute
+  '/preview': typeof PreviewRoute
   '/sign-up': typeof SignUpRoute
   '/$slug': typeof AuthSlugRouteRouteWithChildren
   '/sign-in/$': typeof SignInSplatRoute
@@ -112,6 +119,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof DefaultIndexRoute
   '/org-select': typeof OrgSelectRoute
+  '/preview': typeof PreviewRoute
   '/sign-up': typeof SignUpRoute
   '/$slug': typeof AuthSlugRouteRouteWithChildren
   '/sign-in/$': typeof SignInSplatRoute
@@ -127,6 +135,7 @@ export interface FileRoutesById {
   '/_auth': typeof AuthRouteRouteWithChildren
   '/_default': typeof DefaultRouteWithChildren
   '/org-select': typeof OrgSelectRoute
+  '/preview': typeof PreviewRoute
   '/sign-up': typeof SignUpRoute
   '/_auth/$slug': typeof AuthSlugRouteRouteWithChildren
   '/sign-in/$': typeof SignInSplatRoute
@@ -144,6 +153,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/org-select'
+    | '/preview'
     | '/sign-up'
     | '/$slug'
     | '/sign-in/$'
@@ -158,6 +168,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/org-select'
+    | '/preview'
     | '/sign-up'
     | '/$slug'
     | '/sign-in/$'
@@ -172,6 +183,7 @@ export interface FileRouteTypes {
     | '/_auth'
     | '/_default'
     | '/org-select'
+    | '/preview'
     | '/sign-up'
     | '/_auth/$slug'
     | '/sign-in/$'
@@ -189,6 +201,7 @@ export interface RootRouteChildren {
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
   DefaultRoute: typeof DefaultRouteWithChildren
   OrgSelectRoute: typeof OrgSelectRoute
+  PreviewRoute: typeof PreviewRoute
   SignUpRoute: typeof SignUpRoute
   SignInSplatRoute: typeof SignInSplatRoute
   SignInIndexRoute: typeof SignInIndexRoute
@@ -201,6 +214,13 @@ declare module '@tanstack/react-router' {
       path: '/sign-up'
       fullPath: '/sign-up'
       preLoaderRoute: typeof SignUpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/preview': {
+      id: '/preview'
+      path: '/preview'
+      fullPath: '/preview'
+      preLoaderRoute: typeof PreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/org-select': {
@@ -368,6 +388,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRouteRoute: AuthRouteRouteWithChildren,
   DefaultRoute: DefaultRouteWithChildren,
   OrgSelectRoute: OrgSelectRoute,
+  PreviewRoute: PreviewRoute,
   SignUpRoute: SignUpRoute,
   SignInSplatRoute: SignInSplatRoute,
   SignInIndexRoute: SignInIndexRoute,
