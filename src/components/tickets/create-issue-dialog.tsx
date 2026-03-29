@@ -18,7 +18,9 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useCreateIssueMutation } from "@/query/mutations/tickets"
+import { teamMembersQueryOptions } from "@/query/options/tickets"
 import { CompactIssueEditor, type CompactIssueEditorHandle } from "@/components/editor/CompactIssueEditor"
+import { useQuery } from "@tanstack/react-query"
 import type { IssueStatus, IssuePriority, Team } from "./types"
 
 const statusOptions: { value: IssueStatus; label: string }[] = [
@@ -54,6 +56,7 @@ export function CreateIssueDialog({
   const [priority, setPriority] = useState<IssuePriority>("none")
   const [teamId, setTeamId] = useState(defaultTeamId ?? teams[0]?.id ?? "")
   const editorRef = useRef<CompactIssueEditorHandle>(null)
+  const { data: teamMembers = [] } = useQuery(teamMembersQueryOptions(teamId))
 
   const createIssue = useCreateIssueMutation()
 
@@ -110,7 +113,7 @@ export function CreateIssueDialog({
             autoFocus
           />
 
-          <CompactIssueEditor ref={editorRef} />
+          <CompactIssueEditor ref={editorRef} members={teamMembers} />
 
           <div className="flex flex-wrap items-center gap-3">
             {/* Team selector */}

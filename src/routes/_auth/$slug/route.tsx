@@ -13,7 +13,7 @@ function SlugLayout() {
 
   useEffect(() => {
     if (orgSlug && orgSlug !== slug) {
-      navigate({ to: "/$slug/tickets", params: { slug: orgSlug } })
+      navigate({ to: "/$slug/tickets", params: { slug: orgSlug }, search: {} })
     }
   }, [orgSlug, slug, navigate])
 

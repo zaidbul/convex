@@ -1,10 +1,12 @@
-import type { issueStatuses, issuePriorities, cycleStatuses } from "@/db/schema"
+import type { issueStatuses, issuePriorities, cycleStatuses, projectStatuses } from "@/db/schema"
 
 export type IssueStatus = (typeof issueStatuses)[number]
 
 export type IssuePriority = (typeof issuePriorities)[number]
 
 export type CycleStatus = (typeof cycleStatuses)[number]
+
+export type ProjectStatus = (typeof projectStatuses)[number]
 
 export interface User {
   id: string
@@ -75,6 +77,17 @@ export interface IssueCommentDetail {
   id: string
   author: User
   body: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Project {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  status: ProjectStatus
+  leadUserId: string | null
   createdAt: string
   updatedAt: string
 }

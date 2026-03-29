@@ -9,7 +9,7 @@ import {
   Rocket,
   FolderKanban,
   Eye,
-  MoreHorizontal,
+  Settings,
   HelpCircle,
 } from "lucide-react"
 import {
@@ -32,6 +32,7 @@ import {
 import { TeamTree } from "./team-tree"
 import { WorkspaceDropdown } from "./workspace-dropdown"
 import { CreateIssueDialog } from "./create-issue-dialog"
+import { useCommandPalette } from "./command-palette-provider"
 
 export function TicketSidebar() {
   const params = useParams({ strict: false })
@@ -39,6 +40,7 @@ export function TicketSidebar() {
   const { data: workspace } = useSuspenseQuery(workspaceQueryOptions())
   const { data: teams } = useSuspenseQuery(teamsQueryOptions())
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const { setOpen: setCommandPaletteOpen } = useCommandPalette()
 
   return (
     <>
@@ -46,7 +48,7 @@ export function TicketSidebar() {
         <div className="flex items-center justify-between">
           <WorkspaceDropdown workspace={workspace} />
           <div className="flex items-center gap-0.5">
-            <Button variant="ghost" size="icon" className="size-7" disabled title="Coming soon">
+            <Button variant="ghost" size="icon" className="size-7" onClick={() => setCommandPaletteOpen(true)}>
               <Search className="size-4" strokeWidth={1.5} />
             </Button>
             <Button
@@ -72,6 +74,7 @@ export function TicketSidebar() {
                     <Link
                       to="/$slug/tickets"
                       params={{ slug: slug! }}
+                      search={{}}
                     />
                   }
                 >
@@ -88,7 +91,7 @@ export function TicketSidebar() {
                           params={{ slug: slug!, teamSlug: teams[0].slug }}
                           search={{ filter: "my-issues" }}
                         />
-                      : <Link to="/$slug/tickets" params={{ slug: slug! }} />
+                      : <Link to="/$slug/tickets" params={{ slug: slug! }} search={{}} />
                   }
                 >
                   <CircleUser className="size-4" strokeWidth={1.5} />
@@ -109,27 +112,55 @@ export function TicketSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton disabled className="opacity-50 pointer-events-none">
+                <SidebarMenuButton
+                  render={
+                    <Link
+                      to="/$slug/tickets/initiatives"
+                      params={{ slug: slug! }}
+                    />
+                  }
+                >
                   <Rocket className="size-4" strokeWidth={1.5} />
                   <span>Initiatives</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton disabled className="opacity-50 pointer-events-none">
+                <SidebarMenuButton
+                  render={
+                    <Link
+                      to="/$slug/tickets/projects"
+                      params={{ slug: slug! }}
+                    />
+                  }
+                >
                   <FolderKanban className="size-4" strokeWidth={1.5} />
                   <span>Projects</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton disabled className="opacity-50 pointer-events-none">
+                <SidebarMenuButton
+                  render={
+                    <Link
+                      to="/$slug/tickets/views"
+                      params={{ slug: slug! }}
+                    />
+                  }
+                >
                   <Eye className="size-4" strokeWidth={1.5} />
                   <span>Views</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton disabled className="opacity-50 pointer-events-none">
-                  <MoreHorizontal className="size-4" strokeWidth={1.5} />
-                  <span>More</span>
+                <SidebarMenuButton
+                  render={
+                    <Link
+                      to="/$slug/tickets/settings"
+                      params={{ slug: slug! }}
+                    />
+                  }
+                >
+                  <Settings className="size-4" strokeWidth={1.5} />
+                  <span>Settings</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

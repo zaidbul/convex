@@ -36,7 +36,7 @@ export function WorkspaceDropdown({ workspace }: { workspace: Workspace | null }
     if (orgId === currentOrg?.id) return
     await setActive?.({ organization: orgId })
     if (orgSlug) {
-      navigate({ to: "/$slug/tickets", params: { slug: orgSlug } })
+      navigate({ to: "/$slug/tickets", params: { slug: orgSlug }, search: {} })
     }
   }
 

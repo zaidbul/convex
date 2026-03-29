@@ -52,6 +52,17 @@ export const issueActivityTypes = [
   "comment",
 ] as const
 
+export const notificationTypes = [
+  "issue_assigned",
+  "issue_status_changed",
+  "issue_commented",
+  "issue_mentioned",
+  "cycle_started",
+  "cycle_completed",
+] as const
+
+export const notificationEntityTypes = ["issue", "cycle"] as const
+
 export const users = sqliteTable(
   "users",
   {
@@ -259,6 +270,8 @@ export const issues = sqliteTable(
     updatedAt: text("updated_at").notNull(),
     completedAt: text("completed_at"),
     cancelledAt: text("cancelled_at"),
+    archivedAt: text("archived_at"),
+    deletedAt: text("deleted_at"),
   },
   (table) => ({
     workspaceIdIdx: index("issues_workspace_id_idx").on(table.workspaceId),
@@ -297,6 +310,26 @@ export const issueLabels = sqliteTable(
       name: "issue_labels_pk",
     }),
     labelIdIdx: index("issue_labels_label_id_idx").on(table.labelId),
+  })
+)
+
+export const issueFavorites = sqliteTable(
+  "issue_favorites",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    issueId: text("issue_id")
+      .notNull()
+      .references(() => issues.id, { onDelete: "cascade" }),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => ({
+    pk: primaryKey({
+      columns: [table.userId, table.issueId],
+      name: "issue_favorites_pk",
+    }),
+    issueIdIdx: index("issue_favorites_issue_id_idx").on(table.issueId),
   })
 )
 
@@ -345,6 +378,45 @@ export const issueActivity = sqliteTable(
   })
 )
 
+export const notifications = sqliteTable(
+  "notifications",
+  {
+    id: text("id").primaryKey(),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    recipientUserId: text("recipient_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    actorUserId: text("actor_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    type: text("type", { enum: notificationTypes }).notNull(),
+    title: text("title").notNull(),
+    body: text("body"),
+    entityType: text("entity_type", { enum: notificationEntityTypes }).notNull(),
+    entityId: text("entity_id").notNull(),
+    metadata: text("metadata", { mode: "json" })
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default(sql`'{}'`),
+    readAt: text("read_at"),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => ({
+    workspaceIdIdx: index("notifications_workspace_id_idx").on(table.workspaceId),
+    recipientUserIdIdx: index("notifications_recipient_user_id_idx").on(table.recipientUserId),
+    actorUserIdIdx: index("notifications_actor_user_id_idx").on(table.actorUserId),
+    typeIdx: index("notifications_type_idx").on(table.type),
+    createdAtIdx: index("notifications_created_at_idx").on(table.createdAt),
+    recipientReadCreatedIdx: index("notifications_recipient_read_created_idx").on(
+      table.recipientUserId,
+      table.readAt,
+      table.createdAt
+    ),
+  })
+)
+
 export const notes = sqliteTable(
   "notes",
   {
@@ -375,6 +447,8 @@ export type Project = typeof projects.$inferSelect
 export type Cycle = typeof cycles.$inferSelect
 export type Label = typeof labels.$inferSelect
 export type Issue = typeof issues.$inferSelect
+export type IssueFavorite = typeof issueFavorites.$inferSelect
 export type IssueComment = typeof issueComments.$inferSelect
 export type IssueActivity = typeof issueActivity.$inferSelect
+export type Notification = typeof notifications.$inferSelect
 export type Note = typeof notes.$inferSelect

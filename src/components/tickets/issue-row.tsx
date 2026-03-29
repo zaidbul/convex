@@ -3,6 +3,7 @@ import { MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { IssueActionsDropdown, IssueActionsContextMenu } from "./issue-actions-menu"
 import type { Issue, IssueStatus } from "./types"
 import { statusColorMap, labelColorMap } from "./constants"
 
@@ -32,6 +33,8 @@ export function IssueRow({ issue }: { issue: Issue }) {
   const navigate = useNavigate()
   const params = useParams({ strict: false }) as { slug?: string; teamSlug?: string }
 
+  const issueUrl = `${window.location.origin}/${params.slug}/tickets/${params.teamSlug}/issue/${issue.id}`
+
   function handleClick() {
     navigate({
       to: "/$slug/tickets/$teamSlug/issue/$issueId",
@@ -44,87 +47,101 @@ export function IssueRow({ issue }: { issue: Issue }) {
   }
 
   return (
-    <div
-      className="group flex h-11 items-center gap-2 px-4 hover:bg-surface-container/60 transition-colors cursor-pointer"
-      onClick={handleClick}
+    <IssueActionsContextMenu
+      issueId={issue.id}
+      issueIdentifier={issue.identifier}
+      issueUrl={issueUrl}
     >
-      {/* Kebab menu - visible on hover */}
-      <button
-        disabled
-        title="Coming soon"
-        onClick={(e) => e.stopPropagation()}
-        className="flex size-5 shrink-0 items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant hover:text-on-surface disabled:opacity-50 disabled:cursor-not-allowed"
+      <div
+        className="group flex h-11 items-center gap-2 px-4 hover:bg-surface-container/60 transition-colors cursor-pointer"
+        onClick={handleClick}
       >
-        <MoreHorizontal className="size-4" strokeWidth={1.5} />
-      </button>
+        {/* Kebab menu - visible on hover */}
+        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+        <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+          <IssueActionsDropdown
+            issueId={issue.id}
+            issueIdentifier={issue.identifier}
+            issueUrl={issueUrl}
+            align="start"
+            trigger={
+              <button
+                className="flex size-5 items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant hover:text-on-surface"
+              >
+                <MoreHorizontal className="size-4" strokeWidth={1.5} />
+              </button>
+            }
+          />
+        </div>
 
-      {/* Priority / status indicator */}
-      <div className={cn(
-        "size-4 shrink-0 rounded-full border-2",
-        statusRingMap[issue.status]
-      )}>
-        {(issue.status === "in-progress" || issue.status === "done") && (
-          <div className={cn(
-            "size-full rounded-full scale-50",
-            statusColorMap[issue.status]
-          )} />
+        {/* Priority / status indicator */}
+        <div className={cn(
+          "size-4 shrink-0 rounded-full border-2",
+          statusRingMap[issue.status]
+        )}>
+          {(issue.status === "in-progress" || issue.status === "done") && (
+            <div className={cn(
+              "size-full rounded-full scale-50",
+              statusColorMap[issue.status]
+            )} />
+          )}
+        </div>
+
+        {/* Issue ID */}
+        <span className="shrink-0 text-xs text-on-surface-variant font-mono w-16">
+          {issue.identifier}
+        </span>
+
+        {/* Status dot */}
+        <span className={cn(
+          "size-2 shrink-0 rounded-full",
+          statusColorMap[issue.status]
+        )} />
+
+        {/* Title */}
+        <span className="min-w-0 flex-1 truncate text-sm text-on-surface">
+          {issue.title}
+        </span>
+
+        {/* Labels */}
+        {issue.labels.length > 0 && (
+          <div className="flex items-center gap-1 shrink-0">
+            {issue.labels.map((label) => (
+              <Badge
+                key={label.id}
+                variant="outline"
+                className={cn(
+                  "rounded-full border-0 px-2 py-0 text-[10px] font-medium h-5",
+                  labelColorMap[label.color] ?? "bg-muted text-muted-foreground"
+                )}
+              >
+                {label.name}
+              </Badge>
+            ))}
+          </div>
         )}
-      </div>
 
-      {/* Issue ID */}
-      <span className="shrink-0 text-xs text-on-surface-variant font-mono w-16">
-        {issue.identifier}
-      </span>
+        {/* Priority score */}
+        <span className="shrink-0 text-xs text-on-surface-variant tabular-nums w-8 text-right">
+          {issue.priorityScore}
+        </span>
 
-      {/* Status dot */}
-      <span className={cn(
-        "size-2 shrink-0 rounded-full",
-        statusColorMap[issue.status]
-      )} />
-
-      {/* Title */}
-      <span className="min-w-0 flex-1 truncate text-sm text-on-surface">
-        {issue.title}
-      </span>
-
-      {/* Labels */}
-      {issue.labels.length > 0 && (
-        <div className="flex items-center gap-1 shrink-0">
-          {issue.labels.map((label) => (
-            <Badge
-              key={label.id}
-              variant="outline"
-              className={cn(
-                "rounded-full border-0 px-2 py-0 text-[10px] font-medium h-5",
-                labelColorMap[label.color] ?? "bg-muted text-muted-foreground"
-              )}
-            >
-              {label.name}
-            </Badge>
+        {/* Assignees */}
+        <div className="flex shrink-0 -space-x-1">
+          {issue.assignees.map((user) => (
+            <Avatar key={user.id} className="size-5 ring-1 ring-surface-low">
+              <AvatarFallback className="text-[8px] bg-surface-high text-on-surface-variant font-medium">
+                {user.initials}
+              </AvatarFallback>
+            </Avatar>
           ))}
         </div>
-      )}
 
-      {/* Priority score */}
-      <span className="shrink-0 text-xs text-on-surface-variant tabular-nums w-8 text-right">
-        {issue.priorityScore}
-      </span>
-
-      {/* Assignees */}
-      <div className="flex shrink-0 -space-x-1">
-        {issue.assignees.map((user) => (
-          <Avatar key={user.id} className="size-5 ring-1 ring-surface-low">
-            <AvatarFallback className="text-[8px] bg-surface-high text-on-surface-variant font-medium">
-              {user.initials}
-            </AvatarFallback>
-          </Avatar>
-        ))}
+        {/* Date */}
+        <span className="shrink-0 text-xs text-on-surface-variant tabular-nums w-16 text-right">
+          {formatDate(issue.createdAt)}
+        </span>
       </div>
-
-      {/* Date */}
-      <span className="shrink-0 text-xs text-on-surface-variant tabular-nums w-16 text-right">
-        {formatDate(issue.createdAt)}
-      </span>
-    </div>
+    </IssueActionsContextMenu>
   )
 }

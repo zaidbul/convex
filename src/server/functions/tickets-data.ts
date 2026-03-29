@@ -3,6 +3,7 @@ import type { LibSQLDatabase } from "drizzle-orm/libsql"
 import * as schema from "@/db/schema"
 import type {
   ActivityEntry,
+  CycleStatus,
   Cycle as TicketCycle,
   Issue as TicketIssue,
   IssueCommentDetail,
@@ -11,10 +12,12 @@ import type {
   IssuePriority,
   IssueStatus,
   Label as TicketLabel,
+  Project as TicketProject,
   Team as TicketTeam,
   User as TicketUser,
   Workspace as TicketWorkspace,
 } from "@/components/tickets/types"
+import { createNotificationsForEvent } from "./notifications-data"
 
 export type TicketsDatabase = LibSQLDatabase<typeof schema>
 
@@ -47,6 +50,29 @@ export type ViewerContext = {
 
 function nowIso(): string {
   return new Date().toISOString()
+}
+
+const MARKDOWN_MENTION_REGEXP = /@\[(.+?)\]\(mention:([^)]+)\)/g
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+}
+
+function extractMentionedUserIdsFromMarkdown(markdown?: string | null): string[] {
+  if (!markdown) {
+    return []
+  }
+
+  const mentionedUserIds = new Set<string>()
+
+  for (const match of markdown.matchAll(MARKDOWN_MENTION_REGEXP)) {
+    const userId = match[2]
+    if (userId) {
+      mentionedUserIds.add(userId)
+    }
+  }
+
+  return Array.from(mentionedUserIds)
 }
 
 function slugify(value: string): string {
@@ -283,6 +309,171 @@ function mapUser(row: typeof schema.users.$inferSelect): TicketUser {
   }
 }
 
+async function getTeamRecordById(
+  db: TicketsDatabase,
+  teamId: string,
+) {
+  return db.query.teams.findFirst({
+    where: eq(schema.teams.id, teamId),
+  })
+}
+
+async function listTeamUserRecords(
+  db: TicketsDatabase,
+  teamId: string,
+): Promise<Array<typeof schema.users.$inferSelect>> {
+  const rows = await db
+    .select({ user: schema.users })
+    .from(schema.teamMemberships)
+    .innerJoin(schema.users, eq(schema.teamMemberships.userId, schema.users.id))
+    .where(eq(schema.teamMemberships.teamId, teamId))
+    .orderBy(asc(schema.users.name))
+
+  return rows.map((row) => row.user)
+}
+
+async function buildIssueNotificationMetadata(
+  db: TicketsDatabase,
+  issue: Pick<
+    typeof schema.issues.$inferSelect,
+    "id" | "teamId" | "identifier" | "title"
+  >,
+) {
+  const team = await getTeamRecordById(db, issue.teamId)
+
+  if (!team) {
+    throw new Error("Issue team not found")
+  }
+
+  return {
+    team,
+    metadata: {
+      teamSlug: team.slug,
+      teamName: team.name,
+      issueIdentifier: issue.identifier,
+      issueTitle: issue.title,
+    },
+  }
+}
+
+async function notifyIssueMentions(
+  db: TicketsDatabase,
+  issue: Pick<
+    typeof schema.issues.$inferSelect,
+    "id" | "workspaceId" | "teamId" | "identifier" | "title"
+  >,
+  actorUserId: string,
+  mentionedUserIds: string[],
+  body?: string | null,
+): Promise<void> {
+  if (mentionedUserIds.length === 0) {
+    return
+  }
+
+  const { metadata } = await buildIssueNotificationMetadata(db, issue)
+
+  await createNotificationsForEvent(db, {
+    workspaceId: issue.workspaceId,
+    actorUserId,
+    recipients: mentionedUserIds,
+    type: "issue_mentioned",
+    title: `You were mentioned in ${issue.identifier}`,
+    body: issue.title,
+    entityType: "issue",
+    entityId: issue.id,
+    metadata: {
+      ...metadata,
+      commentPreview: body ? body.slice(0, 140) : undefined,
+    },
+  })
+}
+
+async function notifyIssueAssignment(
+  db: TicketsDatabase,
+  issue: Pick<
+    typeof schema.issues.$inferSelect,
+    "id" | "workspaceId" | "teamId" | "identifier" | "title"
+  >,
+  actorUserId: string,
+  assigneeUserId: string | null,
+): Promise<void> {
+  if (!assigneeUserId) {
+    return
+  }
+
+  const { metadata } = await buildIssueNotificationMetadata(db, issue)
+
+  await createNotificationsForEvent(db, {
+    workspaceId: issue.workspaceId,
+    actorUserId,
+    recipients: [assigneeUserId],
+    type: "issue_assigned",
+    title: `Assigned you ${issue.identifier}`,
+    body: issue.title,
+    entityType: "issue",
+    entityId: issue.id,
+    metadata,
+  })
+}
+
+async function listIssueParticipantUserIds(
+  db: TicketsDatabase,
+  issue: Pick<
+    typeof schema.issues.$inferSelect,
+    "id" | "creatorUserId" | "assigneeUserId"
+  >,
+): Promise<string[]> {
+  const commentRows = await db
+    .select({
+      authorUserId: schema.issueComments.authorUserId,
+    })
+    .from(schema.issueComments)
+    .where(
+      and(
+        eq(schema.issueComments.issueId, issue.id),
+        sql`${schema.issueComments.deletedAt} IS NULL`,
+      ),
+    )
+
+  const recipients = new Set<string>([issue.creatorUserId])
+
+  if (issue.assigneeUserId) {
+    recipients.add(issue.assigneeUserId)
+  }
+
+  for (const row of commentRows) {
+    recipients.add(row.authorUserId)
+  }
+
+  return Array.from(recipients)
+}
+
+function extractMentionedUserIdsFromComment(
+  body: string,
+  members: Array<typeof schema.users.$inferSelect>,
+): string[] {
+  const mentionedUserIds = new Set<string>()
+  const sortedMembers = [...members].sort((a, b) => b.name.length - a.name.length)
+
+  for (const member of sortedMembers) {
+    const name = member.name.trim()
+    if (!name) {
+      continue
+    }
+
+    const matcher = new RegExp(
+      `(^|[\\s([{])@${escapeRegExp(name)}(?=$|[\\s\\])}.,!?;:])`,
+      "i",
+    )
+
+    if (matcher.test(body)) {
+      mentionedUserIds.add(member.id)
+    }
+  }
+
+  return Array.from(mentionedUserIds)
+}
+
 export async function listTeamsForViewer(
   db: TicketsDatabase,
   context: ViewerContext
@@ -444,6 +635,8 @@ export async function listIssuesForViewerTeam(
   const whereClause = and(
     eq(schema.issues.workspaceId, context.workspaceId),
     eq(schema.issues.teamId, team.id),
+    sql`${schema.issues.deletedAt} IS NULL`,
+    sql`${schema.issues.archivedAt} IS NULL`,
     buildIssueFilter(filter, context.userId)
   )
 
@@ -607,6 +800,29 @@ export async function createIssueForViewer(
     createdAt: timestamp,
   })
 
+  const mentionedUserIds = Array.from(
+    new Set(extractMentionedUserIdsFromMarkdown(input.description)),
+  )
+
+  if (mentionedUserIds.length > 0) {
+    const teamMembers = await listTeamUserRecords(db, input.teamId)
+    const validMemberIds = new Set(teamMembers.map((member) => member.id))
+    const validMentionIds = mentionedUserIds.filter((userId) => validMemberIds.has(userId))
+
+    await notifyIssueMentions(
+      db,
+      {
+        id: issueId,
+        workspaceId: context.workspaceId,
+        teamId: input.teamId,
+        identifier,
+        title: input.title,
+      },
+      context.userId,
+      validMentionIds,
+    )
+  }
+
   return { id: issueId, identifier }
 }
 
@@ -622,7 +838,8 @@ export async function getIssueByIdForViewer(
   const issue = await db.query.issues.findFirst({
     where: and(
       eq(schema.issues.id, issueId),
-      eq(schema.issues.workspaceId, context.workspaceId)
+      eq(schema.issues.workspaceId, context.workspaceId),
+      sql`${schema.issues.deletedAt} IS NULL`,
     ),
   })
 
@@ -680,38 +897,28 @@ export async function updateIssueDescriptionForViewer(
   issueId: string,
   description: string
 ): Promise<void> {
-  if (!context.workspaceId) {
-    throw new Error("No active workspace")
-  }
+  const issue = await verifyIssueAccess(db, context, issueId)
 
-  // Verify the issue belongs to a team the user is a member of
-  const issue = await db.query.issues.findFirst({
-    where: and(
-      eq(schema.issues.id, issueId),
-      eq(schema.issues.workspaceId, context.workspaceId),
-    ),
-  })
-
-  if (!issue) {
-    throw new Error("Issue not found")
-  }
-
-  const membership = await db
-    .select({ teamId: schema.teamMemberships.teamId })
-    .from(schema.teamMemberships)
-    .where(
-      and(
-        eq(schema.teamMemberships.teamId, issue.teamId),
-        eq(schema.teamMemberships.userId, context.userId),
-      )
-    )
-    .limit(1)
-
-  if (membership.length === 0) {
-    throw new Error("Not authorized to update this issue")
+  if ((issue.description ?? "") === description) {
+    return
   }
 
   const timestamp = nowIso()
+  const teamMembers = await listTeamUserRecords(db, issue.teamId)
+  const validMemberIds = new Set(teamMembers.map((member) => member.id))
+  const previousMentionIds = new Set(
+    extractMentionedUserIdsFromMarkdown(issue.description).filter((userId) =>
+      validMemberIds.has(userId),
+    ),
+  )
+  const nextMentionIds = new Set(
+    extractMentionedUserIdsFromMarkdown(description).filter((userId) =>
+      validMemberIds.has(userId),
+    ),
+  )
+  const addedMentionIds = Array.from(nextMentionIds).filter(
+    (userId) => !previousMentionIds.has(userId),
+  )
 
   await db
     .update(schema.issues)
@@ -719,7 +926,7 @@ export async function updateIssueDescriptionForViewer(
     .where(
       and(
         eq(schema.issues.id, issueId),
-        eq(schema.issues.workspaceId, context.workspaceId)
+        eq(schema.issues.workspaceId, issue.workspaceId)
       )
     )
 
@@ -731,6 +938,13 @@ export async function updateIssueDescriptionForViewer(
     data: {},
     createdAt: timestamp,
   })
+
+  await notifyIssueMentions(
+    db,
+    issue,
+    context.userId,
+    addedMentionIds,
+  )
 }
 
 async function verifyIssueAccess(
@@ -778,6 +992,11 @@ export async function updateIssueStatusForViewer(
   status: IssueStatus
 ): Promise<void> {
   const issue = await verifyIssueAccess(db, context, issueId)
+
+  if (issue.status === status) {
+    return
+  }
+
   const timestamp = nowIso()
 
   const updates: Record<string, unknown> = { status, updatedAt: timestamp }
@@ -796,6 +1015,25 @@ export async function updateIssueStatusForViewer(
     type: "status_change",
     data: { from: issue.status, to: status },
     createdAt: timestamp,
+  })
+
+  const { metadata } = await buildIssueNotificationMetadata(db, issue)
+  const genericRecipients = await listIssueParticipantUserIds(db, issue)
+
+  await createNotificationsForEvent(db, {
+    workspaceId: issue.workspaceId,
+    actorUserId: context.userId,
+    recipients: genericRecipients,
+    type: "issue_status_changed",
+    title: `${issue.identifier} moved to ${status}`,
+    body: issue.title,
+    entityType: "issue",
+    entityId: issue.id,
+    metadata: {
+      ...metadata,
+      statusFrom: issue.status,
+      statusTo: status,
+    },
   })
 }
 
@@ -829,7 +1067,12 @@ export async function updateIssueAssigneeForViewer(
   issueId: string,
   assigneeUserId: string | null
 ): Promise<void> {
-  await verifyIssueAccess(db, context, issueId)
+  const issue = await verifyIssueAccess(db, context, issueId)
+
+  if (issue.assigneeUserId === assigneeUserId) {
+    return
+  }
+
   const timestamp = nowIso()
 
   await db
@@ -845,6 +1088,8 @@ export async function updateIssueAssigneeForViewer(
     data: { assigneeUserId },
     createdAt: timestamp,
   })
+
+  await notifyIssueAssignment(db, issue, context.userId, assigneeUserId)
 }
 
 export async function updateIssueCycleForViewer(
@@ -859,6 +1104,77 @@ export async function updateIssueCycleForViewer(
     .update(schema.issues)
     .set({ cycleId, updatedAt: nowIso() })
     .where(eq(schema.issues.id, issueId))
+}
+
+export async function updateCycleStatusForViewer(
+  db: TicketsDatabase,
+  context: ViewerContext,
+  cycleId: string,
+  status: CycleStatus,
+): Promise<void> {
+  if (!context.workspaceId) {
+    throw new Error("No active workspace")
+  }
+
+  const cycle = await db.query.cycles.findFirst({
+    where: eq(schema.cycles.id, cycleId),
+  })
+
+  if (!cycle) {
+    throw new Error("Cycle not found")
+  }
+
+  const team = await db
+    .select({ team: schema.teams })
+    .from(schema.teams)
+    .innerJoin(schema.teamMemberships, eq(schema.teamMemberships.teamId, schema.teams.id))
+    .where(
+      and(
+        eq(schema.teams.id, cycle.teamId),
+        eq(schema.teams.workspaceId, context.workspaceId),
+        eq(schema.teamMemberships.userId, context.userId),
+      ),
+    )
+    .limit(1)
+
+  const teamRow = team[0]?.team
+
+  if (!teamRow) {
+    throw new Error("Not authorized to update this cycle")
+  }
+
+  const isValidTransition =
+    (cycle.status === "upcoming" && status === "active") ||
+    (cycle.status === "active" && status === "completed")
+
+  if (!isValidTransition) {
+    throw new Error(`Invalid cycle status transition: ${cycle.status} -> ${status}`)
+  }
+
+  const timestamp = nowIso()
+
+  await db
+    .update(schema.cycles)
+    .set({ status, updatedAt: timestamp })
+    .where(eq(schema.cycles.id, cycleId))
+
+  const teamMembers = await listTeamUserRecords(db, cycle.teamId)
+
+  await createNotificationsForEvent(db, {
+    workspaceId: context.workspaceId,
+    actorUserId: context.userId,
+    recipients: teamMembers.map((member) => member.id),
+    type: status === "active" ? "cycle_started" : "cycle_completed",
+    title: `${cycle.name} ${status === "active" ? "started" : "completed"}`,
+    body: teamRow.name,
+    entityType: "cycle",
+    entityId: cycle.id,
+    metadata: {
+      teamSlug: teamRow.slug,
+      teamName: teamRow.name,
+      cycleName: cycle.name,
+    },
+  })
 }
 
 export async function updateIssueLabelsForViewer(
@@ -1014,7 +1330,7 @@ export async function createIssueCommentForViewer(
   issueId: string,
   body: string
 ): Promise<{ id: string }> {
-  await verifyIssueAccess(db, context, issueId)
+  const issue = await verifyIssueAccess(db, context, issueId)
   const timestamp = nowIso()
   const commentId = crypto.randomUUID()
 
@@ -1036,5 +1352,139 @@ export async function createIssueCommentForViewer(
     createdAt: timestamp,
   })
 
+  const teamMembers = await listTeamUserRecords(db, issue.teamId)
+  const mentionedUserIds = extractMentionedUserIdsFromComment(body, teamMembers)
+  const genericRecipients = await listIssueParticipantUserIds(db, issue)
+  const genericRecipientsWithoutMentions = genericRecipients.filter(
+    (recipientId) => !mentionedUserIds.includes(recipientId),
+  )
+  const { metadata } = await buildIssueNotificationMetadata(db, issue)
+
+  await Promise.all([
+    createNotificationsForEvent(db, {
+      workspaceId: issue.workspaceId,
+      actorUserId: context.userId,
+      recipients: genericRecipientsWithoutMentions,
+      type: "issue_commented",
+      title: `New comment on ${issue.identifier}`,
+      body: issue.title,
+      entityType: "issue",
+      entityId: issue.id,
+      metadata: {
+        ...metadata,
+        commentPreview: body.slice(0, 140),
+      },
+    }),
+    notifyIssueMentions(db, issue, context.userId, mentionedUserIds, body),
+  ])
+
   return { id: commentId }
+}
+
+export async function archiveIssueForViewer(
+  db: TicketsDatabase,
+  context: ViewerContext,
+  issueId: string
+): Promise<void> {
+  await verifyIssueAccess(db, context, issueId)
+  const timestamp = nowIso()
+
+  await db
+    .update(schema.issues)
+    .set({ archivedAt: timestamp, updatedAt: timestamp })
+    .where(eq(schema.issues.id, issueId))
+}
+
+export async function deleteIssueForViewer(
+  db: TicketsDatabase,
+  context: ViewerContext,
+  issueId: string
+): Promise<void> {
+  await verifyIssueAccess(db, context, issueId)
+  const timestamp = nowIso()
+
+  await db
+    .update(schema.issues)
+    .set({ deletedAt: timestamp, updatedAt: timestamp })
+    .where(eq(schema.issues.id, issueId))
+}
+
+export async function toggleIssueFavoriteForViewer(
+  db: TicketsDatabase,
+  context: ViewerContext,
+  issueId: string
+): Promise<{ favorited: boolean }> {
+  await verifyIssueAccess(db, context, issueId)
+
+  const existing = await db.query.issueFavorites.findFirst({
+    where: and(
+      eq(schema.issueFavorites.userId, context.userId),
+      eq(schema.issueFavorites.issueId, issueId),
+    ),
+  })
+
+  if (existing) {
+    await db
+      .delete(schema.issueFavorites)
+      .where(
+        and(
+          eq(schema.issueFavorites.userId, context.userId),
+          eq(schema.issueFavorites.issueId, issueId),
+        )
+      )
+    return { favorited: false }
+  }
+
+  await db.insert(schema.issueFavorites).values({
+    userId: context.userId,
+    issueId,
+    createdAt: nowIso(),
+  })
+
+  return { favorited: true }
+}
+
+export async function getIssueFavoriteForViewer(
+  db: TicketsDatabase,
+  context: ViewerContext,
+  issueId: string
+): Promise<{ favorited: boolean }> {
+  if (!context.workspaceId) {
+    return { favorited: false }
+  }
+
+  const existing = await db.query.issueFavorites.findFirst({
+    where: and(
+      eq(schema.issueFavorites.userId, context.userId),
+      eq(schema.issueFavorites.issueId, issueId),
+    ),
+  })
+
+  return { favorited: !!existing }
+}
+
+export async function listProjectsForViewer(
+  db: TicketsDatabase,
+  context: ViewerContext
+): Promise<TicketProject[]> {
+  if (!context.workspaceId) {
+    return []
+  }
+
+  const rows = await db
+    .select()
+    .from(schema.projects)
+    .where(eq(schema.projects.workspaceId, context.workspaceId))
+    .orderBy(asc(schema.projects.name))
+
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    description: row.description,
+    status: row.status,
+    leadUserId: row.leadUserId,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  }))
 }

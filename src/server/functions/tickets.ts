@@ -1,20 +1,26 @@
 import { createServerFn } from "@tanstack/react-start"
 import { db } from "@/db/connection"
-import type { IssuePriority, IssueStatus } from "@/components/tickets/types"
+import type { CycleStatus, IssuePriority, IssueStatus } from "@/components/tickets/types"
 
 import {
+  archiveIssueForViewer,
   createIssueCommentForViewer,
   createIssueForViewer,
+  deleteIssueForViewer,
   getAccessibleTeamBySlug,
+  getIssueFavoriteForViewer,
   getIssueByIdForViewer,
   getWorkspaceForViewer,
+  toggleIssueFavoriteForViewer,
   listCyclesForViewerTeam,
   listIssueActivityForViewer,
   listIssueCommentsForViewer,
   listIssuesForViewerTeam,
   listLabelsForViewer,
+  listProjectsForViewer,
   listTeamMembersForViewer,
   listTeamsForViewer,
+  updateCycleStatusForViewer,
   updateIssueAssigneeForViewer,
   updateIssueCycleForViewer,
   updateIssueDescriptionForViewer,
@@ -33,6 +39,11 @@ export const getWorkspace = createServerFn({ method: "GET" }).handler(async () =
 export const getTeams = createServerFn({ method: "GET" }).handler(async () => {
   const viewerContext = await getViewerContext()
   return listTeamsForViewer(db, viewerContext)
+})
+
+export const getProjects = createServerFn({ method: "GET" }).handler(async () => {
+  const viewerContext = await getViewerContext()
+  return listProjectsForViewer(db, viewerContext)
 })
 
 export const getTeamBySlug = createServerFn({ method: "GET" })
@@ -125,6 +136,13 @@ export const updateIssueCycle = createServerFn({ method: "POST" })
     return updateIssueCycleForViewer(db, viewerContext, data.issueId, data.cycleId)
   })
 
+export const updateCycleStatus = createServerFn({ method: "POST" })
+  .inputValidator((data: { cycleId: string; status: string }) => data)
+  .handler(async ({ data }) => {
+    const viewerContext = await getViewerContext()
+    return updateCycleStatusForViewer(db, viewerContext, data.cycleId, data.status as CycleStatus)
+  })
+
 export const updateIssueLabels = createServerFn({ method: "POST" })
   .inputValidator((data: { issueId: string; labelIds: string[] }) => data)
   .handler(async ({ data }) => {
@@ -170,4 +188,32 @@ export const createIssueComment = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     return createIssueCommentForViewer(db, viewerContext, data.issueId, data.body)
+  })
+
+export const archiveIssue = createServerFn({ method: "POST" })
+  .inputValidator((data: { issueId: string }) => data)
+  .handler(async ({ data }) => {
+    const viewerContext = await getViewerContext()
+    return archiveIssueForViewer(db, viewerContext, data.issueId)
+  })
+
+export const deleteIssue = createServerFn({ method: "POST" })
+  .inputValidator((data: { issueId: string }) => data)
+  .handler(async ({ data }) => {
+    const viewerContext = await getViewerContext()
+    return deleteIssueForViewer(db, viewerContext, data.issueId)
+  })
+
+export const toggleIssueFavorite = createServerFn({ method: "POST" })
+  .inputValidator((data: { issueId: string }) => data)
+  .handler(async ({ data }) => {
+    const viewerContext = await getViewerContext()
+    return toggleIssueFavoriteForViewer(db, viewerContext, data.issueId)
+  })
+
+export const getIssueFavorite = createServerFn({ method: "GET" })
+  .inputValidator((data: { issueId: string }) => data)
+  .handler(async ({ data }) => {
+    const viewerContext = await getViewerContext()
+    return getIssueFavoriteForViewer(db, viewerContext, data.issueId)
   })

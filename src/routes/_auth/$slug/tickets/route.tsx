@@ -5,6 +5,7 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
 import { TicketSidebar } from "@/components/tickets/ticket-sidebar"
+import { CommandPaletteProvider } from "@/components/tickets/command-palette-provider"
 import {
   teamsQueryOptions,
   workspaceQueryOptions,
@@ -22,19 +23,21 @@ export const Route = createFileRoute("/_auth/$slug/tickets")({
 
 function TicketsLayout() {
   return (
-    <SidebarProvider
-      style={
-        {
-          "--sidebar-width": "330px",
-        } as React.CSSProperties
-      }
-    >
-      <Sidebar side="left" collapsible="offcanvas">
-        <TicketSidebar />
-      </Sidebar>
-      <SidebarInset>
-        <Outlet />
-      </SidebarInset>
-    </SidebarProvider>
+    <CommandPaletteProvider>
+      <SidebarProvider
+        style={
+          {
+            "--sidebar-width": "330px",
+          } as React.CSSProperties
+        }
+      >
+        <Sidebar side="left" collapsible="offcanvas">
+          <TicketSidebar />
+        </Sidebar>
+        <SidebarInset>
+          <Outlet />
+        </SidebarInset>
+      </SidebarProvider>
+    </CommandPaletteProvider>
   )
 }

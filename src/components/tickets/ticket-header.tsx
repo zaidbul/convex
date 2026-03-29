@@ -4,12 +4,36 @@ import {
   LayoutGrid,
   PanelRight,
 } from "lucide-react"
+import { useQuery } from "@tanstack/react-query"
+import { useNavigate, useParams } from "@tanstack/react-router"
+import { NotificationList } from "@/components/notifications/notification-list"
+import { navigateToNotification } from "@/components/notifications/notification-navigation"
 import { Button } from "@/components/ui/button"
+import {
+  Popover,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import {
+  useMarkNotificationAsReadMutation,
+} from "@/query/mutations/tickets"
+import {
+  recentNotificationsQueryOptions,
+  unreadNotificationCountQueryOptions,
+} from "@/query/options/tickets"
 import { FilterPills } from "./filter-pills"
 import type { IssueFilter, Team } from "./types"
 
 export function TicketHeader({ team, activeFilter, onFilterChange }: { team: Team; activeFilter?: IssueFilter; onFilterChange?: (filter: IssueFilter) => void }) {
+  const { slug } = useParams({ strict: false }) as { slug?: string }
+  const navigate = useNavigate()
+  const { data: unreadCount = 0 } = useQuery(unreadNotificationCountQueryOptions())
+  const { data: recentNotifications = [] } = useQuery(recentNotificationsQueryOptions(10))
+  const markAsRead = useMarkNotificationAsReadMutation()
+
   return (
     <div className="sticky top-0 z-10 flex flex-col bg-surface-low">
       {/* Row 1: Team name + actions */}
@@ -23,9 +47,56 @@ export function TicketHeader({ team, activeFilter, onFilterChange }: { team: Tea
           {team.name}
         </h1>
         <div className="ml-auto">
-          <Button variant="ghost" size="icon" className="size-7" disabled title="Coming soon">
-            <Bell className="size-4 text-on-surface-variant" strokeWidth={1.5} />
-          </Button>
+          <Popover>
+            <PopoverTrigger
+              render={
+                <Button variant="ghost" size="icon" className="relative size-7" title="Notifications">
+                  <Bell className="size-4 text-on-surface-variant" strokeWidth={1.5} />
+                  {unreadCount > 0 && (
+                    <span className="absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-primary px-1 text-[10px] font-medium leading-4 text-primary-foreground">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </Button>
+              }
+            />
+            <PopoverContent align="end" className="w-[380px] gap-3 p-0">
+              <PopoverHeader className="border-b border-outline-variant/10 px-4 py-3">
+                <div className="flex items-center justify-between gap-3">
+                  <PopoverTitle className="text-sm">Notifications</PopoverTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      navigate({
+                        to: "/$slug/tickets",
+                        params: { slug: slug! },
+                        search: {},
+                      })
+                    }
+                  >
+                    Open inbox
+                  </Button>
+                </div>
+              </PopoverHeader>
+              <div className="max-h-[420px] overflow-y-auto px-3 pb-3">
+                <NotificationList
+                  notifications={recentNotifications}
+                  compact
+                  emptyMessage="No recent notifications."
+                  onMarkAsRead={(notificationId) => markAsRead.mutate({ notificationId })}
+                  onSelect={(notification) => {
+                    if (!notification.readAt) {
+                      markAsRead.mutate({ notificationId: notification.id })
+                    }
+                    if (slug) {
+                      navigateToNotification(navigate, slug, notification)
+                    }
+                  }}
+                />
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 

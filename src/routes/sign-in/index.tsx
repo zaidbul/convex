@@ -26,6 +26,7 @@ export const Route = createFileRoute("/sign-in/")({
       throw redirect({
         to: "/$slug/tickets",
         params: { slug: authState.orgSlug },
+        search: {},
       })
     }
     if (authState.userId) {

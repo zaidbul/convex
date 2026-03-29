@@ -1,10 +1,11 @@
-import { ChevronRight, Flame, Plus } from "lucide-react"
+import { CheckCircle2, ChevronRight, Flame, Play } from "lucide-react"
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import { Button } from "@/components/ui/button"
+import { useUpdateCycleStatusMutation } from "@/query/mutations/tickets"
 import { IssueRow } from "./issue-row"
 import type { Cycle, Issue } from "./types"
 
@@ -26,6 +27,22 @@ export function CycleGroup({
   cycle: Cycle
   issues: Issue[]
 }) {
+  const updateCycleStatus = useUpdateCycleStatusMutation()
+  const action =
+    cycle.status === "upcoming"
+      ? {
+          label: "Start",
+          icon: Play,
+          nextStatus: "active" as const,
+        }
+      : cycle.status === "active"
+        ? {
+            label: "Complete",
+            icon: CheckCircle2,
+            nextStatus: "completed" as const,
+          }
+        : null
+
   return (
     <Collapsible defaultOpen className="group/cycle">
       <div className="flex items-center gap-2 px-4 py-2">
@@ -46,9 +63,23 @@ export function CycleGroup({
           </span>
         </CollapsibleTrigger>
 
-        <Button variant="ghost" size="icon" className="size-6 shrink-0" disabled title="Coming soon">
-          <Plus className="size-3.5 text-on-surface-variant" strokeWidth={1.5} />
-        </Button>
+        {action ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 shrink-0 gap-1.5 px-2 text-xs"
+            onClick={() =>
+              updateCycleStatus.mutate({
+                cycleId: cycle.id,
+                status: action.nextStatus,
+              })
+            }
+            disabled={updateCycleStatus.isPending}
+          >
+            <action.icon className="size-3.5" strokeWidth={1.5} />
+            {action.label}
+          </Button>
+        ) : null}
       </div>
 
       <CollapsibleContent>

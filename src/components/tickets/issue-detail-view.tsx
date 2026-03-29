@@ -1,7 +1,10 @@
 import { useCallback, useRef, useState } from "react"
-import { useSuspenseQuery } from "@tanstack/react-query"
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { IssueEditor } from "@/components/editor/IssueEditor"
-import { issueDetailQueryOptions } from "@/query/options/tickets"
+import {
+  issueDetailQueryOptions,
+  teamMembersQueryOptions,
+} from "@/query/options/tickets"
 import { useUpdateIssueTitleMutation } from "@/query/mutations/tickets"
 import { IssueDetailHeader } from "./issue-detail-header"
 import { IssuePropertiesPanel } from "./issue-properties-panel"
@@ -16,6 +19,7 @@ export function IssueDetailView({
   team: Team
 }) {
   const { data: issue } = useSuspenseQuery(issueDetailQueryOptions(issueId))
+  const { data: teamMembers = [] } = useQuery(teamMembersQueryOptions(team.id))
   const [title, setTitle] = useState(issue?.title ?? "")
   const updateTitle = useUpdateIssueTitleMutation()
   const titleDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -52,6 +56,7 @@ export function IssueDetailView({
               title={title}
               onTitleChange={handleTitleChange}
               initialMarkdown={issue.description}
+              members={teamMembers}
               autoSave={true}
             />
 

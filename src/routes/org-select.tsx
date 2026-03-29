@@ -34,6 +34,7 @@ export const Route = createFileRoute("/org-select")({
       throw redirect({
         to: "/$slug/tickets",
         params: { slug: authState.orgSlug },
+        search: {},
       })
     }
   },
@@ -59,7 +60,7 @@ function OrgSelectPage() {
     try {
       await setActive?.({ organization: orgId })
       if (orgSlug) {
-        navigate({ to: "/$slug/tickets", params: { slug: orgSlug } })
+        navigate({ to: "/$slug/tickets", params: { slug: orgSlug }, search: {} })
       }
     } finally {
       setSwitching(null)
@@ -78,6 +79,7 @@ function OrgSelectPage() {
         navigate({
           to: "/$slug/tickets",
           params: { slug },
+          search: {},
         })
       }
     } finally {
