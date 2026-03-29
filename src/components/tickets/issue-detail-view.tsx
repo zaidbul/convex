@@ -1,5 +1,14 @@
-import { useCallback, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
+import { Settings2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 import { IssueEditor } from "@/components/editor/IssueEditor"
 import {
   issueDetailQueryOptions,
@@ -24,15 +33,27 @@ export function IssueDetailView({
   const updateTitle = useUpdateIssueTitleMutation()
   const titleDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  const clearPendingTitleSave = useCallback(() => {
+    if (titleDebounceRef.current) {
+      clearTimeout(titleDebounceRef.current)
+      titleDebounceRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    setTitle(issue?.title ?? "")
+    return clearPendingTitleSave
+  }, [issueId, clearPendingTitleSave])
+
   const handleTitleChange = useCallback(
     (newTitle: string) => {
       setTitle(newTitle)
-      if (titleDebounceRef.current) clearTimeout(titleDebounceRef.current)
+      clearPendingTitleSave()
       titleDebounceRef.current = setTimeout(() => {
         updateTitle.mutate({ issueId, title: newTitle })
       }, 400)
     },
-    [issueId, updateTitle],
+    [clearPendingTitleSave, issueId, updateTitle],
   )
 
   if (!issue) {
@@ -51,6 +72,28 @@ export function IssueDetailView({
         {/* Main content: Editor + Activity */}
         <div className="flex-1 overflow-y-auto">
           <div className="mx-auto max-w-3xl px-8 py-6">
+            {/* Mobile properties trigger */}
+            <div className="mb-4 lg:hidden">
+              <Sheet>
+                <SheetTrigger
+                  render={
+                    <Button variant="outline" size="sm" className="gap-1.5" />
+                  }
+                >
+                  <Settings2 className="size-3.5" />
+                  Properties
+                </SheetTrigger>
+                <SheetContent side="right">
+                  <SheetHeader>
+                    <SheetTitle>Properties</SheetTitle>
+                  </SheetHeader>
+                  <div className="overflow-y-auto flex-1">
+                    <IssuePropertiesPanel issue={issue} teamSlug={team.slug} />
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
+
             <IssueEditor
               issueId={issue.id}
               title={title}
@@ -64,7 +107,7 @@ export function IssueDetailView({
           </div>
         </div>
 
-        {/* Right: Properties Panel */}
+        {/* Right: Properties Panel (desktop) */}
         <div className="hidden w-[330px] shrink-0 border-l border-outline-variant/10 overflow-y-auto lg:block">
           <IssuePropertiesPanel issue={issue} teamSlug={team.slug} />
         </div>

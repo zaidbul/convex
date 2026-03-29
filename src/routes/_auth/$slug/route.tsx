@@ -1,21 +1,22 @@
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router"
-import { useAuth } from "@clerk/tanstack-react-start"
-import { useEffect } from "react"
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router"
 
 export const Route = createFileRoute("/_auth/$slug")({
+  beforeLoad: ({ context, params }) => {
+    if (!context.session.userId) {
+      throw redirect({ to: "/sign-in" })
+    }
+
+    if (context.session.orgSlug && context.session.orgSlug !== params.slug) {
+      throw redirect({
+        to: "/$slug/tickets",
+        params: { slug: context.session.orgSlug },
+        search: {},
+      })
+    }
+  },
   component: SlugLayout,
 })
 
 function SlugLayout() {
-  const { orgSlug } = useAuth()
-  const { slug } = Route.useParams()
-  const navigate = useNavigate()
-
-  useEffect(() => {
-    if (orgSlug && orgSlug !== slug) {
-      navigate({ to: "/$slug/tickets", params: { slug: orgSlug }, search: {} })
-    }
-  }, [orgSlug, slug, navigate])
-
   return <Outlet />
 }

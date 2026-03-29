@@ -37,7 +37,7 @@ export function useCreateIssueMutation() {
       dueDate?: string | null
     }) => createIssue({ data: input }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["issues"] })
+      queryClient.invalidateQueries({ queryKey: ["issues"], refetchType: "active" })
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] })
       queryClient.invalidateQueries({ queryKey: ["my-issues"] })
@@ -65,7 +65,7 @@ export function useUpdateIssueStatusMutation() {
     mutationFn: (input: { issueId: string; status: string }) =>
       updateIssueStatus({ data: input }),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["issues"] })
+      queryClient.invalidateQueries({ queryKey: ["issues"], refetchType: "active" })
       queryClient.invalidateQueries({ queryKey: ["issue", variables.issueId] })
       queryClient.invalidateQueries({ queryKey: ["issue-activity", variables.issueId] })
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
@@ -81,7 +81,7 @@ export function useUpdateIssuePriorityMutation() {
     mutationFn: (input: { issueId: string; priority: string }) =>
       updateIssuePriority({ data: input }),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["issues"] })
+      queryClient.invalidateQueries({ queryKey: ["issues"], refetchType: "active" })
       queryClient.invalidateQueries({ queryKey: ["issue", variables.issueId] })
       queryClient.invalidateQueries({ queryKey: ["issue-activity", variables.issueId] })
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
@@ -96,7 +96,7 @@ export function useUpdateIssueAssigneeMutation() {
     mutationFn: (input: { issueId: string; assigneeUserId: string | null }) =>
       updateIssueAssignee({ data: input }),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["issues"] })
+      queryClient.invalidateQueries({ queryKey: ["issues"], refetchType: "active" })
       queryClient.invalidateQueries({ queryKey: ["issue", variables.issueId] })
       queryClient.invalidateQueries({ queryKey: ["issue-activity", variables.issueId] })
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
@@ -112,8 +112,9 @@ export function useUpdateIssueCycleMutation() {
     mutationFn: (input: { issueId: string; cycleId: string | null }) =>
       updateIssueCycle({ data: input }),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["issues"] })
+      queryClient.invalidateQueries({ queryKey: ["issues"], refetchType: "active" })
       queryClient.invalidateQueries({ queryKey: ["issue", variables.issueId] })
+      queryClient.invalidateQueries({ queryKey: ["issue-activity", variables.issueId] })
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
     },
   })
@@ -126,7 +127,7 @@ export function useUpdateIssueDueDateMutation() {
     mutationFn: (input: { issueId: string; dueDate: string | null }) =>
       updateIssueDueDate({ data: input }),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["issues"] })
+      queryClient.invalidateQueries({ queryKey: ["issues"], refetchType: "active" })
       queryClient.invalidateQueries({ queryKey: ["issue", variables.issueId] })
     },
   })
@@ -139,7 +140,7 @@ export function useUpdateIssueLabelsMutation() {
     mutationFn: (input: { issueId: string; labelIds: string[] }) =>
       updateIssueLabels({ data: input }),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["issues"] })
+      queryClient.invalidateQueries({ queryKey: ["issues"], refetchType: "active" })
       queryClient.invalidateQueries({ queryKey: ["issue", variables.issueId] })
       queryClient.invalidateQueries({ queryKey: ["issue-activity", variables.issueId] })
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
@@ -154,7 +155,7 @@ export function useUpdateIssueTitleMutation() {
     mutationFn: (input: { issueId: string; title: string }) =>
       updateIssueTitle({ data: input }),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["issues"] })
+      queryClient.invalidateQueries({ queryKey: ["issues"], refetchType: "active" })
       queryClient.invalidateQueries({ queryKey: ["issue", variables.issueId] })
     },
   })
@@ -195,7 +196,7 @@ export function useArchiveIssueMutation() {
     mutationFn: (input: { issueId: string }) =>
       archiveIssue({ data: input }),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["issues"] })
+      queryClient.invalidateQueries({ queryKey: ["issues"], refetchType: "active" })
       queryClient.invalidateQueries({ queryKey: ["issue", variables.issueId] })
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
     },
@@ -209,7 +210,7 @@ export function useDeleteIssueMutation() {
     mutationFn: (input: { issueId: string }) =>
       deleteIssue({ data: input }),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["issues"] })
+      queryClient.invalidateQueries({ queryKey: ["issues"], refetchType: "active" })
       queryClient.invalidateQueries({ queryKey: ["issue", variables.issueId] })
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
     },

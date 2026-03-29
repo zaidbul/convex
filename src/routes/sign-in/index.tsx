@@ -129,10 +129,19 @@ function SignInPage() {
             await signIn.finalize()
             navigate({ to: "/org-select" })
           }
-        } catch (err: any) {
+        } catch (err: unknown) {
+          const message =
+            err instanceof Error ? err.message : undefined
+          const clerkErrors =
+            err != null &&
+            typeof err === "object" &&
+            "errors" in err &&
+            Array.isArray((err as Record<string, unknown>).errors)
+              ? ((err as Record<string, unknown>).errors as Array<Record<string, unknown>>)
+              : undefined
           setClerkError(
-            err.errors?.[0]?.long_message ||
-              err.message ||
+            (clerkErrors?.[0]?.long_message as string | undefined) ||
+              message ||
               "Invalid email or password. Please try again."
           )
         } finally {
@@ -166,8 +175,11 @@ function SignInPage() {
             await signIn.finalize()
             navigate({ to: "/org-select" })
           }
-        } catch (err: any) {
-          setClerkError(err.message || "Invalid code. Please try again.")
+        } catch (err: unknown) {
+          setClerkError(
+            (err instanceof Error ? err.message : undefined) ||
+              "Invalid code. Please try again."
+          )
         } finally {
           setIsSubmitting(false)
         }
@@ -200,9 +212,10 @@ function SignInPage() {
             await signIn.finalize()
             navigate({ to: "/org-select" })
           }
-        } catch (err: any) {
+        } catch (err: unknown) {
           setClerkError(
-            err.message || "Failed to reset password. Please try again."
+            (err instanceof Error ? err.message : undefined) ||
+              "Failed to reset password. Please try again."
           )
         } finally {
           setIsSubmitting(false)
@@ -242,8 +255,11 @@ function SignInPage() {
         return
       }
       setStep("forgotPassword")
-    } catch (err: any) {
-      setClerkError(err.message || "Failed to send reset code. Please try again.")
+    } catch (err: unknown) {
+      setClerkError(
+        (err instanceof Error ? err.message : undefined) ||
+          "Failed to send reset code. Please try again."
+      )
     } finally {
       setIsSubmitting(false)
     }
@@ -266,8 +282,11 @@ function SignInPage() {
             "Something went wrong. Please try again."
         )
       }
-    } catch (err: any) {
-      setClerkError(err.message || "Something went wrong. Please try again.")
+    } catch (err: unknown) {
+      setClerkError(
+        (err instanceof Error ? err.message : undefined) ||
+          "Something went wrong. Please try again."
+      )
     }
   }
 

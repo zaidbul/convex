@@ -4,39 +4,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import type { NotificationListItem } from "@/server/functions/notifications-data"
 
-export type NotificationItem = {
-  id: string
-  type:
-    | "issue_assigned"
-    | "issue_status_changed"
-    | "issue_commented"
-    | "issue_mentioned"
-    | "cycle_started"
-    | "cycle_completed"
-  title: string
-  body: string | null
-  entityType: "issue" | "cycle"
-  entityId: string
-  readAt: string | null
-  createdAt: string
-  actor: {
-    id: string
-    name: string
-    initials: string
-    avatarUrl?: string
-  } | null
-  metadata: {
-    teamSlug?: string
-    teamName?: string
-    issueIdentifier?: string
-    issueTitle?: string
-    cycleName?: string
-    commentPreview?: string
-    statusFrom?: string
-    statusTo?: string
-  }
-}
+export type NotificationItem = NotificationListItem
 
 export const notificationTypeOptions = [
   { value: "all", label: "All" },

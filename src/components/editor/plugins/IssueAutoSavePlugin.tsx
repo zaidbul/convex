@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $convertToMarkdownString, type Transformer } from "@lexical/markdown";
-import { useDebouncedCallback } from "@tanstack/react-pacer";
+import { useDebouncer } from "@tanstack/react-pacer";
 import { useUpdateIssueDescriptionMutation } from "@/query/mutations/tickets";
 
 type IssueAutoSavePluginProps = {
@@ -25,6 +25,7 @@ export function IssueAutoSavePlugin(props: IssueAutoSavePluginProps): null {
   const lastSavedRef = React.useRef<string | null>(null);
   const isSavingRef = React.useRef<boolean>(false);
   const isInitialLoadCompleteRef = React.useRef<boolean>(false);
+  const idleTimerRef = React.useRef<number | null>(null);
 
   // Mark initial load complete after a short delay
   React.useEffect(() => {
@@ -59,7 +60,13 @@ export function IssueAutoSavePlugin(props: IssueAutoSavePluginProps): null {
         });
         lastSavedRef.current = currentMarkdown;
         onStatusChange?.("saved");
-        window.setTimeout(() => onStatusChange?.("idle"), 1200);
+        if (idleTimerRef.current) {
+          window.clearTimeout(idleTimerRef.current);
+        }
+        idleTimerRef.current = window.setTimeout(() => {
+          idleTimerRef.current = null;
+          onStatusChange?.("idle");
+        }, 1200);
       } catch {
         onStatusChange?.("error");
       } finally {
@@ -84,7 +91,7 @@ export function IssueAutoSavePlugin(props: IssueAutoSavePluginProps): null {
     return performSaveRef.current(...args);
   }, []);
 
-  const debouncedSave = useDebouncedCallback(stablePerformSave, {
+  const debouncedSave = useDebouncer(stablePerformSave, {
     wait: debounceMs,
   });
 
@@ -101,7 +108,7 @@ export function IssueAutoSavePlugin(props: IssueAutoSavePluginProps): null {
       return;
     }
 
-    debouncedSave(markdownNow);
+    debouncedSave.maybeExecute(markdownNow);
   }, [debouncedSave, editor, transformers, onStatusChange]);
 
   React.useEffect(() => {
@@ -113,7 +120,11 @@ export function IssueAutoSavePlugin(props: IssueAutoSavePluginProps): null {
   // Flush pending save on unmount
   React.useEffect(() => {
     return () => {
-      (debouncedSave as any).flush?.();
+      if (idleTimerRef.current) {
+        window.clearTimeout(idleTimerRef.current);
+        idleTimerRef.current = null;
+      }
+      debouncedSave.flush();
     };
   }, [debouncedSave]);
 

@@ -17,13 +17,12 @@ export const TRIGGER_IMAGE_UPLOAD_COMMAND: LexicalCommand<void> = createCommand(
 );
 
 // Supported image MIME types
-const SUPPORTED_IMAGE_TYPES = [
+export const SUPPORTED_IMAGE_TYPES = [
   "image/png",
   "image/jpeg",
   "image/jpg",
   "image/gif",
   "image/webp",
-  "image/svg+xml",
 ];
 
 // 2 MB max file size (base64 encoding adds ~33% overhead, must fit in HTTP body limits)

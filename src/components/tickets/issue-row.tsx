@@ -33,14 +33,18 @@ export function IssueRow({ issue }: { issue: Issue }) {
   const navigate = useNavigate()
   const params = useParams({ strict: false }) as { slug?: string; teamSlug?: string }
 
-  const issueUrl = `${window.location.origin}/${params.slug}/tickets/${params.teamSlug}/issue/${issue.id}`
+  const issueUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/${params.slug}/tickets/${params.teamSlug}/issue/${issue.id}`
+      : ""
 
   function handleClick() {
+    if (!params.slug || !params.teamSlug) return
     navigate({
       to: "/$slug/tickets/$teamSlug/issue/$issueId",
       params: {
-        slug: params.slug!,
-        teamSlug: params.teamSlug!,
+        slug: params.slug,
+        teamSlug: params.teamSlug,
         issueId: issue.id,
       },
     })

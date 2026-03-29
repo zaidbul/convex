@@ -1,10 +1,16 @@
-import type { issueStatuses, issuePriorities, cycleStatuses } from "@/db/schema"
+import type {
+  cycleStatuses,
+  issueActivityTypes,
+  issuePriorities,
+  issueStatuses,
+} from "@/db/schema"
 
 export type IssueStatus = (typeof issueStatuses)[number]
 
 export type IssuePriority = (typeof issuePriorities)[number]
 
 export type CycleStatus = (typeof cycleStatuses)[number]
+export type IssueActivityType = (typeof issueActivityTypes)[number]
 
 export interface User {
   id: string
@@ -66,7 +72,7 @@ export interface IssueDetail extends Issue {
 
 export interface ActivityEntry {
   id: string
-  type: string
+  type: IssueActivityType
   actor: User | null
   data: Record<string, string | number | boolean | null | string[]>
   createdAt: string

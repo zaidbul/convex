@@ -1,8 +1,27 @@
+import { useState } from "react"
 import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router"
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { Eye, Pencil, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import {
   Empty,
   EmptyDescription,
@@ -27,6 +46,10 @@ function ViewsIndexPage() {
   const { data: views } = useSuspenseQuery(savedViewsQueryOptions())
   const updateSavedView = useUpdateSavedViewMutation()
   const deleteSavedView = useDeleteSavedViewMutation()
+
+  const [renameTarget, setRenameTarget] = useState<{ id: string; name: string } | null>(null)
+  const [renameValue, setRenameValue] = useState("")
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
 
   return (
     <div className="flex h-screen flex-col bg-surface-low">
@@ -85,21 +108,9 @@ function ViewsIndexPage() {
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    onClick={async () => {
-                      const nextName = window.prompt("Rename saved view", view.name)
-                      if (!nextName?.trim() || nextName.trim() === view.name) {
-                        return
-                      }
-
-                      try {
-                        await updateSavedView.mutateAsync({
-                          viewId: view.id,
-                          name: nextName.trim(),
-                        })
-                        toast.success("Saved view renamed")
-                      } catch {
-                        toast.error("Failed to rename saved view")
-                      }
+                    onClick={() => {
+                      setRenameTarget({ id: view.id, name: view.name })
+                      setRenameValue(view.name)
                     }}
                   >
                     <Pencil className="size-3.5" />
@@ -108,21 +119,8 @@ function ViewsIndexPage() {
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    onClick={async () => {
-                      if (!window.confirm(`Delete "${view.name}"?`)) {
-                        return
-                      }
-
-                      try {
-                        await deleteSavedView.mutateAsync({ viewId: view.id })
-                        toast.success("Saved view deleted")
-                        navigate({
-                          to: "/$slug/tickets/views",
-                          params: { slug: slug! },
-                        })
-                      } catch {
-                        toast.error("Failed to delete saved view")
-                      }
+                    onClick={() => {
+                      setDeleteTarget({ id: view.id, name: view.name })
                     }}
                   >
                     <Trash2 className="size-3.5" />
@@ -133,6 +131,99 @@ function ViewsIndexPage() {
           </div>
         )}
       </div>
+
+      {/* Rename dialog */}
+      <Dialog
+        open={renameTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setRenameTarget(null)
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename saved view</DialogTitle>
+            <DialogDescription>Enter a new name for this view.</DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault()
+              if (!renameTarget || !renameValue.trim() || renameValue.trim() === renameTarget.name) {
+                setRenameTarget(null)
+                return
+              }
+              try {
+                await updateSavedView.mutateAsync({
+                  viewId: renameTarget.id,
+                  name: renameValue.trim(),
+                })
+                toast.success("Saved view renamed")
+              } catch {
+                toast.error("Failed to rename saved view")
+              }
+              setRenameTarget(null)
+            }}
+          >
+            <input
+              autoFocus
+              type="text"
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              className="w-full rounded-lg border border-outline-variant/20 bg-surface px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+            />
+            <DialogFooter className="mt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setRenameTarget(null)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={!renameValue.trim()}>
+                Rename
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirmation */}
+      <AlertDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
+      >
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete saved view?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete &ldquo;{deleteTarget?.name}&rdquo;. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={async () => {
+                if (!deleteTarget) return
+                try {
+                  await deleteSavedView.mutateAsync({ viewId: deleteTarget.id })
+                  toast.success("Saved view deleted")
+                  navigate({
+                    to: "/$slug/tickets/views",
+                    params: { slug: slug! },
+                  })
+                } catch {
+                  toast.error("Failed to delete saved view")
+                }
+                setDeleteTarget(null)
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

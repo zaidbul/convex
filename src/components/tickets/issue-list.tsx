@@ -28,14 +28,16 @@ export function IssueList({
     (issue) => !issue.cycleId || !cycles.find((c) => c.id === issue.cycleId)
   )
 
-  if (cycles.length === 0 && issues.length === 0) {
+  if (issues.length === 0) {
     return (
       <div className="flex flex-1 items-center justify-center px-6 py-10">
         <Empty className="max-w-xl border-outline-variant/30 bg-surface px-8 py-12">
           <EmptyHeader>
             <EmptyTitle>No issues yet</EmptyTitle>
             <EmptyDescription>
-              This team does not have any cycles or issues in the database yet.
+              {cycles.length > 0
+                ? "This team has active cycles but no issues yet. Create an issue to get started."
+                : "This team does not have any cycles or issues in the database yet."}
             </EmptyDescription>
           </EmptyHeader>
         </Empty>

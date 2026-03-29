@@ -19,6 +19,7 @@ export function usePreview(): UsePreviewReturn {
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isMountedRef = useRef(true);
 
   const cleanup = useCallback(() => {
     if (pollRef.current) {
@@ -98,9 +99,11 @@ export function usePreview(): UsePreviewReturn {
         }
 
         const data = await res.json();
+        if (!isMountedRef.current) return;
         setPreviewId(data.id);
         pollStatus(data.id);
       } catch (err) {
+        if (!isMountedRef.current) return;
         setError(
           err instanceof Error ? err.message : "Failed to create preview"
         );
@@ -125,7 +128,13 @@ export function usePreview(): UsePreviewReturn {
     setError(null);
   }, [cleanup, previewId]);
 
-  useEffect(() => cleanup, [cleanup]);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      cleanup();
+    };
+  }, [cleanup]);
 
   return { status, previewId, baseUrl, error, start, stop };
 }

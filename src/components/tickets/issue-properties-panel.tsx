@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Check, ChevronDown, Circle, Plus, User as UserIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -246,18 +247,31 @@ function CycleDropdown({ issue, teamSlug }: { issue: IssueDetail; teamSlug: stri
 
 function DueDateField({ issue }: { issue: IssueDetail }) {
   const updateDueDate = useUpdateIssueDueDateMutation()
+  const [localDate, setLocalDate] = useState(issue.dueDate ?? "")
+
+  useEffect(() => {
+    setLocalDate(issue.dueDate ?? "")
+  }, [issue.dueDate])
+
+  const commitDate = () => {
+    const next = localDate || null
+    if (next !== (issue.dueDate ?? null)) {
+      updateDueDate.mutate({ issueId: issue.id, dueDate: next })
+    }
+  }
 
   return (
     <div className="flex items-center gap-2">
       <Input
         type="date"
-        value={issue.dueDate ?? ""}
-        onChange={(event) =>
-          updateDueDate.mutate({
-            issueId: issue.id,
-            dueDate: event.target.value || null,
-          })
-        }
+        value={localDate}
+        onChange={(event) => setLocalDate(event.target.value)}
+        onBlur={commitDate}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            commitDate()
+          }
+        }}
         className="h-8 w-[148px]"
       />
       {issue.dueDate ? (
@@ -265,12 +279,13 @@ function DueDateField({ issue }: { issue: IssueDetail }) {
           type="button"
           variant="ghost"
           size="sm"
-          onClick={() =>
+          onClick={() => {
+            setLocalDate("")
             updateDueDate.mutate({
               issueId: issue.id,
               dueDate: null,
             })
-          }
+          }}
         >
           Clear
         </Button>

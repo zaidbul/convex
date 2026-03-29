@@ -34,6 +34,7 @@ export function FilterPills({
         const isActive = filter.value === activeFilter
         return (
           <button
+            type="button"
             key={filter.value}
             onClick={() => handleClick(filter.value)}
             className={cn(

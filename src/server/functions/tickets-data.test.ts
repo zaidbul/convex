@@ -4,6 +4,7 @@ import { join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { createClient } from "@libsql/client/node"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
+import { asc, eq } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/libsql"
 import { migrate } from "drizzle-orm/libsql/migrator"
 import * as schema from "@/db/schema"
@@ -14,13 +15,18 @@ import {
   getIssueByIdForViewer,
   getSavedViewForViewer,
   getWorkspaceForViewer,
+  listIssueActivityForViewer,
+  listIssueCommentsForViewer,
   listCyclesForViewerTeam,
   listIssuesForViewerTeam,
   listSavedViewsForViewer,
+  listTeamMembersForViewer,
   listTeamsForViewer,
   syncViewerContext,
   type TicketsDatabase,
+  updateIssueCycleForViewer,
   updateIssueDueDateForViewer,
+  updateIssueStatusForViewer,
   updateSavedViewForViewer,
 } from "./tickets-data"
 
@@ -255,6 +261,17 @@ describe("ticket schema and data helpers", () => {
     expect(tables.rows).toHaveLength(1)
   })
 
+  test("creates the composite issue indexes", async () => {
+    const indexes = await testDb.db.run(
+      "select name from sqlite_master where type = 'index' and tbl_name = 'issues' and name in ('issues_team_visible_order_idx', 'issues_team_status_visible_order_idx') order by name"
+    )
+
+    expect(indexes.rows).toEqual([
+      { name: "issues_team_status_visible_order_idx" },
+      { name: "issues_team_visible_order_idx" },
+    ])
+  })
+
   test("syncViewerContext upserts user, workspace, and membership", async () => {
     const context = await syncViewerContext(testDb.db, {
       auth: {
@@ -295,7 +312,7 @@ describe("ticket schema and data helpers", () => {
         role: "member",
         createdAt: timestamp,
         updatedAt: timestamp,
-      })
+      }).execute()
     ).rejects.toThrow()
 
     await expect(
@@ -304,7 +321,7 @@ describe("ticket schema and data helpers", () => {
         userId: "user_1",
         createdAt: timestamp,
         updatedAt: timestamp,
-      })
+      }).execute()
     ).rejects.toThrow()
 
     await expect(
@@ -318,7 +335,7 @@ describe("ticket schema and data helpers", () => {
         nextIssueNumber: 1,
         createdAt: timestamp,
         updatedAt: timestamp,
-      })
+      }).execute()
     ).rejects.toThrow()
 
     await expect(
@@ -342,7 +359,7 @@ describe("ticket schema and data helpers", () => {
         updatedAt: timestamp,
         completedAt: null,
         cancelledAt: null,
-      })
+      }).execute()
     ).rejects.toThrow()
 
     await expect(
@@ -350,7 +367,7 @@ describe("ticket schema and data helpers", () => {
         issueId: "issue_1",
         labelId: "label_1",
         createdAt: timestamp,
-      })
+      }).execute()
     ).rejects.toThrow()
   })
 
@@ -463,6 +480,181 @@ describe("ticket schema and data helpers", () => {
     )
 
     expect(labelMatches.map((issue) => issue.identifier)).toEqual(["PLT-1"])
+  })
+
+  test("keeps terminal timestamps in sync with status transitions", async () => {
+    await seedWorkspaceGraph(testDb.db)
+    const viewer = { userId: "user_1", workspaceId: "org_1" as const }
+
+    await updateIssueStatusForViewer(testDb.db, viewer, "issue_1", "done")
+    let issue = await testDb.db.query.issues.findFirst({
+      where: eq(schema.issues.id, "issue_1"),
+    })
+    expect(issue?.completedAt).toBeTruthy()
+    expect(issue?.cancelledAt).toBeNull()
+
+    await updateIssueStatusForViewer(testDb.db, viewer, "issue_1", "todo")
+    issue = await testDb.db.query.issues.findFirst({
+      where: eq(schema.issues.id, "issue_1"),
+    })
+    expect(issue?.completedAt).toBeNull()
+    expect(issue?.cancelledAt).toBeNull()
+
+    await updateIssueStatusForViewer(testDb.db, viewer, "issue_1", "cancelled")
+    issue = await testDb.db.query.issues.findFirst({
+      where: eq(schema.issues.id, "issue_1"),
+    })
+    expect(issue?.completedAt).toBeNull()
+    expect(issue?.cancelledAt).toBeTruthy()
+
+    await updateIssueStatusForViewer(testDb.db, viewer, "issue_1", "backlog")
+    issue = await testDb.db.query.issues.findFirst({
+      where: eq(schema.issues.id, "issue_1"),
+    })
+    expect(issue?.completedAt).toBeNull()
+    expect(issue?.cancelledAt).toBeNull()
+
+    await updateIssueStatusForViewer(testDb.db, viewer, "issue_1", "done")
+    issue = await testDb.db.query.issues.findFirst({
+      where: eq(schema.issues.id, "issue_1"),
+    })
+    expect(issue?.completedAt).toBeTruthy()
+    expect(issue?.cancelledAt).toBeNull()
+
+    await updateIssueStatusForViewer(testDb.db, viewer, "issue_1", "cancelled")
+    issue = await testDb.db.query.issues.findFirst({
+      where: eq(schema.issues.id, "issue_1"),
+    })
+    expect(issue?.completedAt).toBeNull()
+    expect(issue?.cancelledAt).toBeTruthy()
+
+    await updateIssueStatusForViewer(testDb.db, viewer, "issue_1", "done")
+    issue = await testDb.db.query.issues.findFirst({
+      where: eq(schema.issues.id, "issue_1"),
+    })
+    expect(issue?.completedAt).toBeTruthy()
+    expect(issue?.cancelledAt).toBeNull()
+  })
+
+  test("scopes team members to accessible teams", async () => {
+    await seedWorkspaceGraph(testDb.db)
+
+    const visibleMembers = await listTeamMembersForViewer(
+      testDb.db,
+      { userId: "user_1", workspaceId: "org_1" },
+      "team_1",
+    )
+
+    const hiddenMembers = await listTeamMembersForViewer(
+      testDb.db,
+      { userId: "user_1", workspaceId: "org_1" },
+      "team_2",
+    )
+
+    expect(visibleMembers.map((member) => member.id)).toEqual(["user_1"])
+    expect(hiddenMembers).toEqual([])
+  })
+
+  test("rejects issue activity and comment reads outside the viewer's team membership", async () => {
+    await seedWorkspaceGraph(testDb.db)
+    const timestamp = nowIso()
+
+    await testDb.db.insert(schema.issueActivity).values({
+      id: "activity_1",
+      issueId: "issue_1",
+      actorUserId: "user_1",
+      type: "comment",
+      data: { commentId: "comment_1" },
+      createdAt: timestamp,
+    })
+
+    await testDb.db.insert(schema.issueComments).values({
+      id: "comment_1",
+      issueId: "issue_1",
+      authorUserId: "user_1",
+      body: "Private discussion",
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      deletedAt: null,
+    })
+
+    const unauthorizedViewer = { userId: "user_2", workspaceId: "org_1" as const }
+
+    await expect(
+      listIssueActivityForViewer(testDb.db, unauthorizedViewer, "issue_1"),
+    ).rejects.toThrow("Not authorized")
+
+    await expect(
+      listIssueCommentsForViewer(testDb.db, unauthorizedViewer, "issue_1"),
+    ).rejects.toThrow("Not authorized")
+  })
+
+  test("logs cycle activity for assign, reassign, and remove flows", async () => {
+    await seedWorkspaceGraph(testDb.db)
+    const viewer = { userId: "user_1", workspaceId: "org_1" as const }
+    const timestamp = nowIso()
+
+    await testDb.db.insert(schema.cycles).values({
+      id: "cycle_2",
+      teamId: "team_1",
+      name: "Cycle 2",
+      number: 2,
+      startDate: "2026-03-30",
+      endDate: "2026-04-05",
+      status: "upcoming",
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    })
+
+    await updateIssueCycleForViewer(testDb.db, viewer, "issue_2", "cycle_1")
+    await updateIssueCycleForViewer(testDb.db, viewer, "issue_1", "cycle_2")
+    await updateIssueCycleForViewer(testDb.db, viewer, "issue_1", null)
+
+    const issue2Activity = await testDb.db.query.issueActivity.findMany({
+      where: eq(schema.issueActivity.issueId, "issue_2"),
+      orderBy: [asc(schema.issueActivity.createdAt)],
+    })
+    const issue1Activity = await testDb.db.query.issueActivity.findMany({
+      where: eq(schema.issueActivity.issueId, "issue_1"),
+      orderBy: [asc(schema.issueActivity.createdAt)],
+    })
+
+    expect(issue2Activity.at(-1)).toMatchObject({
+      type: "cycle_change",
+      data: { from: null, to: "Cycle 1" },
+    })
+    expect(issue1Activity.slice(-2)).toEqual([
+      expect.objectContaining({
+        type: "cycle_change",
+        data: { from: "Cycle 1", to: "Cycle 2" },
+      }),
+      expect.objectContaining({
+        type: "cycle_change",
+        data: { from: "Cycle 2", to: null },
+      }),
+    ])
+  })
+
+  test("rejects assigning an issue to a cycle from another team", async () => {
+    await seedWorkspaceGraph(testDb.db)
+    const viewer = { userId: "user_1", workspaceId: "org_1" as const }
+    const timestamp = nowIso()
+
+    await testDb.db.insert(schema.cycles).values({
+      id: "cycle_other_team",
+      teamId: "team_2",
+      name: "Design cycle",
+      number: 1,
+      startDate: "2026-03-23",
+      endDate: "2026-03-29",
+      status: "active",
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    })
+
+    await expect(
+      updateIssueCycleForViewer(testDb.db, viewer, "issue_2", "cycle_other_team"),
+    ).rejects.toThrow("Cycle not found")
   })
 
   test("creates, updates, and scopes saved views to the owner", async () => {

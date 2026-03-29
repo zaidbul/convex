@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $convertToMarkdownString, type Transformer } from "@lexical/markdown";
-import { useDebouncedCallback } from "@tanstack/react-pacer";
+import { useDebouncer } from "@tanstack/react-pacer";
 import { useUpdateNoteMutation } from "@/query/mutations/notes";
 
 type NoteAutoSavePluginProps = {
@@ -28,6 +28,7 @@ export function NoteAutoSavePlugin(props: NoteAutoSavePluginProps): null {
   const lastSavedTitleRef = React.useRef<string | null>(null);
   const isSavingRef = React.useRef<boolean>(false);
   const isInitialLoadCompleteRef = React.useRef<boolean>(false);
+  const idleTimerRef = React.useRef<number | null>(null);
 
   React.useEffect(() => {
     const timer = setTimeout(() => {
@@ -65,7 +66,13 @@ export function NoteAutoSavePlugin(props: NoteAutoSavePluginProps): null {
         lastSavedContentRef.current = currentMarkdown;
         lastSavedTitleRef.current = currentTitle;
         onStatusChange?.("saved");
-        window.setTimeout(() => onStatusChange?.("idle"), 1200);
+        if (idleTimerRef.current) {
+          window.clearTimeout(idleTimerRef.current);
+        }
+        idleTimerRef.current = window.setTimeout(() => {
+          idleTimerRef.current = null;
+          onStatusChange?.("idle");
+        }, 1200);
       } catch {
         onStatusChange?.("error");
       } finally {
@@ -90,7 +97,7 @@ export function NoteAutoSavePlugin(props: NoteAutoSavePluginProps): null {
     return performSaveRef.current(...args);
   }, []);
 
-  const debouncedSave = useDebouncedCallback(stablePerformSave, {
+  const debouncedSave = useDebouncer(stablePerformSave, {
     wait: debounceMs,
   });
 
@@ -111,7 +118,7 @@ export function NoteAutoSavePlugin(props: NoteAutoSavePluginProps): null {
       return;
     }
 
-    debouncedSave(currentTitle, markdownNow);
+    debouncedSave.maybeExecute(currentTitle, markdownNow);
   }, [debouncedSave, editor, transformers, title, onStatusChange]);
 
   React.useEffect(() => {
@@ -127,7 +134,11 @@ export function NoteAutoSavePlugin(props: NoteAutoSavePluginProps): null {
 
   React.useEffect(() => {
     return () => {
-      (debouncedSave as any).flush?.();
+      if (idleTimerRef.current) {
+        window.clearTimeout(idleTimerRef.current);
+        idleTimerRef.current = null;
+      }
+      debouncedSave.flush();
     };
   }, [debouncedSave]);
 

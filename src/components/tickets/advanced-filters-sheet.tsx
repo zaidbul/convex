@@ -335,9 +335,11 @@ export function AdvancedFiltersSheet({
         </SheetBody>
 
         <SheetFooter>
-          <Button type="button" variant="outline" onClick={onSaveView}>
-            Save as new view
-          </Button>
+          {onSaveView ? (
+            <Button type="button" variant="outline" onClick={onSaveView}>
+              Save as new view
+            </Button>
+          ) : null}
           {onUpdateView ? (
             <Button type="button" onClick={onUpdateView}>
               Update view

@@ -33,6 +33,21 @@ function ActivityDescription({ entry }: { entry: ActivityEntry }) {
       const to = priorityConfig[entry.data.to as IssuePriority]?.label ?? entry.data.to
       return <><span className="font-medium">{actorName}</span> changed priority from {from} to {to}</>
     }
+    case "cycle_change": {
+      const from = typeof entry.data.from === "string" ? entry.data.from : null
+      const to = typeof entry.data.to === "string" ? entry.data.to : null
+
+      if (from && to) {
+        return <><span className="font-medium">{actorName}</span> changed cycle from {from} to {to}</>
+      }
+      if (to) {
+        return <><span className="font-medium">{actorName}</span> set cycle to {to}</>
+      }
+      if (from) {
+        return <><span className="font-medium">{actorName}</span> removed cycle {from}</>
+      }
+      return <><span className="font-medium">{actorName}</span> updated the cycle</>
+    }
     case "assignee_change": {
       if (entry.data.assigneeUserId) {
         return <><span className="font-medium">{actorName}</span> assigned the issue</>
@@ -134,6 +149,7 @@ function CommentInput({ issueId }: { issueId: string }) {
           className="size-6"
           onClick={handleSubmit}
           disabled={!body.trim() || createComment.isPending}
+          aria-label="Submit comment"
         >
           <Send className="size-3.5" />
         </Button>

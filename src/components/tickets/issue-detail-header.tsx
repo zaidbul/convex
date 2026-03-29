@@ -22,7 +22,10 @@ export function IssueDetailHeader({
   const slug = (params as { slug?: string }).slug
   const navigate = useNavigate()
 
-  const issueUrl = `${window.location.origin}/${slug}/tickets/${team.slug}/issue/${issue.id}`
+  const issueUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/${slug}/tickets/${team.slug}/issue/${issue.id}`
+      : ""
 
   const { data: favoriteData } = useQuery(issueFavoriteQueryOptions(issue.id))
   const toggleFavorite = useToggleIssueFavoriteMutation()
@@ -35,7 +38,7 @@ export function IssueDetailHeader({
       <div className="flex items-center gap-1 text-sm min-w-0 flex-1">
         <Link
           to="/$slug/tickets/$teamSlug/issues"
-          params={{ slug: slug!, teamSlug: team.slug }}
+          params={{ slug: slug ?? "", teamSlug: team.slug }}
           search={{ filter: undefined }}
           className="shrink-0 flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
         >
@@ -95,7 +98,7 @@ export function IssueDetailHeader({
           onActionComplete={() => {
             navigate({
               to: "/$slug/tickets/$teamSlug/issues",
-              params: { slug: slug!, teamSlug: team.slug },
+              params: { slug: slug ?? "", teamSlug: team.slug },
               search: { filter: undefined },
             })
           }}

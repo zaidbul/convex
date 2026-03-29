@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, gte, inArray, lte, or, sql } from "drizzle-orm"
+import { and, asc, desc, eq, exists, gt, gte, inArray, lte, or, sql } from "drizzle-orm"
 import type { LibSQLDatabase } from "drizzle-orm/libsql"
 import * as schema from "@/db/schema"
 import type {
@@ -590,6 +590,31 @@ async function getAccessibleTeamRecord(
   return row[0]?.team ?? null
 }
 
+async function getAccessibleTeamRecordById(
+  db: TicketsDatabase,
+  context: ViewerContext,
+  teamId: string,
+) {
+  if (!context.workspaceId) {
+    return null
+  }
+
+  const row = await db
+    .select({ team: schema.teams })
+    .from(schema.teams)
+    .innerJoin(schema.teamMemberships, eq(schema.teamMemberships.teamId, schema.teams.id))
+    .where(
+      and(
+        eq(schema.teams.id, teamId),
+        eq(schema.teams.workspaceId, context.workspaceId),
+        eq(schema.teamMemberships.userId, context.userId),
+      ),
+    )
+    .limit(1)
+
+  return row[0]?.team ?? null
+}
+
 export async function listCyclesForViewerTeam(
   db: TicketsDatabase,
   context: ViewerContext,
@@ -809,6 +834,7 @@ export async function createIssueForViewer(
     throw new Error("No active workspace")
   }
 
+  const workspaceId = context.workspaceId
   const timestamp = nowIso()
   const issueId = crypto.randomUUID()
 
@@ -820,7 +846,7 @@ export async function createIssueForViewer(
     .where(
       and(
         eq(schema.teams.id, input.teamId),
-        eq(schema.teams.workspaceId, context.workspaceId),
+        eq(schema.teams.workspaceId, workspaceId),
         eq(schema.teamMemberships.userId, context.userId),
       )
     )
@@ -830,53 +856,58 @@ export async function createIssueForViewer(
     throw new Error("Team not found or not accessible")
   }
 
-  // Atomically read+increment nextIssueNumber and insert the issue
-  const [teamRow] = await db
-    .update(schema.teams)
-    .set({ nextIssueNumber: sql`${schema.teams.nextIssueNumber} + 1` })
-    .where(
-      and(
-        eq(schema.teams.id, input.teamId),
-        eq(schema.teams.workspaceId, context.workspaceId)
+  // Wrap counter increment + issue insert + activity insert in a transaction
+  // so a crash can't leave an orphaned sequence number
+  const { identifier } = await db.transaction(async (tx) => {
+    const [teamRow] = await tx
+      .update(schema.teams)
+      .set({ nextIssueNumber: sql`${schema.teams.nextIssueNumber} + 1` })
+      .where(
+        and(
+          eq(schema.teams.id, input.teamId),
+          eq(schema.teams.workspaceId, workspaceId)
+        )
       )
-    )
-    .returning({
-      identifier: schema.teams.identifier,
-      sequenceNumber: schema.teams.nextIssueNumber,
+      .returning({
+        identifier: schema.teams.identifier,
+        sequenceNumber: schema.teams.nextIssueNumber,
+      })
+
+    if (!teamRow) {
+      throw new Error("Team not found or not accessible")
+    }
+
+    // nextIssueNumber was already incremented, so the previous value is sequenceNumber - 1
+    const seqNum = teamRow.sequenceNumber - 1
+    const ident = `${teamRow.identifier}-${seqNum}`
+
+    await tx.insert(schema.issues).values({
+      id: issueId,
+      workspaceId,
+      teamId: input.teamId,
+      creatorUserId: context.userId,
+      identifier: ident,
+      sequenceNumber: seqNum,
+      title: input.title,
+      description: input.description ?? null,
+      status: input.status,
+      priority: input.priority,
+      priorityScore: priorityScoreMap[input.priority],
+      dueDate: input.dueDate ?? null,
+      createdAt: timestamp,
+      updatedAt: timestamp,
     })
 
-  if (!teamRow) {
-    throw new Error("Team not found or not accessible")
-  }
+    await tx.insert(schema.issueActivity).values({
+      id: crypto.randomUUID(),
+      issueId,
+      actorUserId: context.userId,
+      type: "created",
+      data: {},
+      createdAt: timestamp,
+    })
 
-  // nextIssueNumber was already incremented, so the previous value is sequenceNumber - 1
-  const seqNum = teamRow.sequenceNumber - 1
-  const identifier = `${teamRow.identifier}-${seqNum}`
-
-  await db.insert(schema.issues).values({
-    id: issueId,
-    workspaceId: context.workspaceId,
-    teamId: input.teamId,
-    creatorUserId: context.userId,
-    identifier,
-    sequenceNumber: seqNum,
-    title: input.title,
-    description: input.description ?? null,
-    status: input.status,
-    priority: input.priority,
-    priorityScore: priorityScoreMap[input.priority],
-    dueDate: input.dueDate ?? null,
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  })
-
-  await db.insert(schema.issueActivity).values({
-    id: crypto.randomUUID(),
-    issueId,
-    actorUserId: context.userId,
-    type: "created",
-    data: {},
-    createdAt: timestamp,
+    return { identifier: ident }
   })
 
   const mentionedUserIds = Array.from(
@@ -892,7 +923,7 @@ export async function createIssueForViewer(
       db,
       {
         id: issueId,
-        workspaceId: context.workspaceId,
+        workspaceId,
         teamId: input.teamId,
         identifier,
         title: input.title,
@@ -1080,8 +1111,8 @@ export async function updateIssueStatusForViewer(
   const timestamp = nowIso()
 
   const updates: Record<string, unknown> = { status, updatedAt: timestamp }
-  if (status === "done") updates.completedAt = timestamp
-  else if (status === "cancelled") updates.cancelledAt = timestamp
+  updates.completedAt = status === "done" ? timestamp : null
+  updates.cancelledAt = status === "cancelled" ? timestamp : null
 
   await db
     .update(schema.issues)
@@ -1178,12 +1209,48 @@ export async function updateIssueCycleForViewer(
   issueId: string,
   cycleId: string | null
 ): Promise<void> {
-  await verifyIssueAccess(db, context, issueId)
+  const issue = await verifyIssueAccess(db, context, issueId)
+
+  if ((issue.cycleId ?? null) === cycleId) {
+    return
+  }
+
+  const timestamp = nowIso()
+  const nextCycle = cycleId
+    ? await db.query.cycles.findFirst({
+        where: and(
+          eq(schema.cycles.id, cycleId),
+          eq(schema.cycles.teamId, issue.teamId),
+        ),
+      })
+    : null
+
+  if (cycleId && !nextCycle) {
+    throw new Error("Cycle not found")
+  }
+
+  const previousCycle = issue.cycleId
+    ? await db.query.cycles.findFirst({
+        where: eq(schema.cycles.id, issue.cycleId),
+      })
+    : null
 
   await db
     .update(schema.issues)
-    .set({ cycleId, updatedAt: nowIso() })
+    .set({ cycleId, updatedAt: timestamp })
     .where(eq(schema.issues.id, issueId))
+
+  await db.insert(schema.issueActivity).values({
+    id: crypto.randomUUID(),
+    issueId,
+    actorUserId: context.userId,
+    type: "cycle_change",
+    data: {
+      from: previousCycle?.name ?? null,
+      to: nextCycle?.name ?? null,
+    },
+    createdAt: timestamp,
+  })
 }
 
 export async function updateIssueDueDateForViewer(
@@ -1284,27 +1351,31 @@ export async function updateIssueLabelsForViewer(
   await verifyIssueAccess(db, context, issueId)
   const timestamp = nowIso()
 
-  await db
-    .delete(schema.issueLabels)
-    .where(eq(schema.issueLabels.issueId, issueId))
+  // Wrap delete + insert in a transaction so a crash between them
+  // can't permanently lose all labels
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(schema.issueLabels)
+      .where(eq(schema.issueLabels.issueId, issueId))
 
-  if (labelIds.length > 0) {
-    await db.insert(schema.issueLabels).values(
-      labelIds.map((labelId) => ({
-        issueId,
-        labelId,
-        createdAt: timestamp,
-      }))
-    )
-  }
+    if (labelIds.length > 0) {
+      await tx.insert(schema.issueLabels).values(
+        labelIds.map((labelId) => ({
+          issueId,
+          labelId,
+          createdAt: timestamp,
+        }))
+      )
+    }
 
-  await db.insert(schema.issueActivity).values({
-    id: crypto.randomUUID(),
-    issueId,
-    actorUserId: context.userId,
-    type: "label_change",
-    data: { labelIds },
-    createdAt: timestamp,
+    await tx.insert(schema.issueActivity).values({
+      id: crypto.randomUUID(),
+      issueId,
+      actorUserId: context.userId,
+      type: "label_change",
+      data: { labelIds },
+      createdAt: timestamp,
+    })
   })
 }
 
@@ -1327,7 +1398,8 @@ export async function listTeamMembersForViewer(
   context: ViewerContext,
   teamId: string
 ): Promise<TicketUser[]> {
-  if (!context.workspaceId) {
+  const team = await getAccessibleTeamRecordById(db, context, teamId)
+  if (!team) {
     return []
   }
 
@@ -1335,7 +1407,7 @@ export async function listTeamMembersForViewer(
     .select({ user: schema.users })
     .from(schema.teamMemberships)
     .innerJoin(schema.users, eq(schema.teamMemberships.userId, schema.users.id))
-    .where(eq(schema.teamMemberships.teamId, teamId))
+    .where(eq(schema.teamMemberships.teamId, team.id))
     .orderBy(asc(schema.users.name))
 
   return rows.map((row) => mapUser(row.user))
@@ -1392,12 +1464,21 @@ export async function listSavedViewsForViewer(
     })
     .from(schema.savedViews)
     .innerJoin(schema.teams, eq(schema.savedViews.teamId, schema.teams.id))
-    .innerJoin(schema.teamMemberships, eq(schema.teamMemberships.teamId, schema.teams.id))
     .where(
       and(
         eq(schema.savedViews.workspaceId, context.workspaceId),
         eq(schema.savedViews.ownerUserId, context.userId),
-        eq(schema.teamMemberships.userId, context.userId),
+        exists(
+          db
+            .select({ one: sql`1` })
+            .from(schema.teamMemberships)
+            .where(
+              and(
+                eq(schema.teamMemberships.teamId, schema.teams.id),
+                eq(schema.teamMemberships.userId, context.userId),
+              ),
+            ),
+        ),
       ),
     )
     .orderBy(desc(schema.savedViews.updatedAt), asc(schema.savedViews.name))
@@ -1414,8 +1495,12 @@ export async function getSavedViewForViewer(
     return null
   }
 
-  const row = await getAccessibleOwnedSavedViewRecord(db, context, viewId)
-  return mapSavedView(row.view, row.team)
+  try {
+    const row = await getAccessibleOwnedSavedViewRecord(db, context, viewId)
+    return mapSavedView(row.view, row.team)
+  } catch {
+    return null
+  }
 }
 
 export async function createSavedViewForViewer(
@@ -1562,6 +1647,8 @@ export async function listIssueActivityForViewer(
     return []
   }
 
+  await verifyIssueAccess(db, context, issueId)
+
   const rows = await db
     .select({
       activity: schema.issueActivity,
@@ -1589,6 +1676,8 @@ export async function listIssueCommentsForViewer(
   if (!context.workspaceId) {
     return []
   }
+
+  await verifyIssueAccess(db, context, issueId)
 
   const rows = await db
     .select({

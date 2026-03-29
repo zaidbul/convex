@@ -2,6 +2,15 @@ import { useEffect, useState } from "react"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { toast } from "sonner"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { TeamIssuesScreen } from "@/components/tickets/team-issues-screen"
 import type { IssueQueryFilters } from "@/components/tickets/types"
 import {
@@ -28,6 +37,9 @@ function SavedViewPage() {
     advancedFilters: savedView?.advancedFilters,
   }))
 
+  const [saveAsDialogOpen, setSaveAsDialogOpen] = useState(false)
+  const [saveAsName, setSaveAsName] = useState("")
+
   useEffect(() => {
     if (!savedView) {
       return
@@ -43,21 +55,24 @@ function SavedViewPage() {
     return null
   }
 
-  const handleSaveAsNew = async () => {
-    const name = window.prompt("Name this saved view", `${savedView.name} copy`)
-    if (!name?.trim()) {
-      return
-    }
+  const handleSaveAsNew = () => {
+    setSaveAsName(`${savedView.name} copy`)
+    setSaveAsDialogOpen(true)
+  }
+
+  const handleSaveAsSubmit = async () => {
+    if (!saveAsName.trim()) return
 
     try {
       const view = await createSavedView.mutateAsync({
         teamId: savedView.teamId,
-        name: name.trim(),
+        name: saveAsName.trim(),
         presetFilter: filters.presetFilter,
         advancedFilters: filters.advancedFilters,
       })
 
       toast.success(`Saved view ${view.name}`)
+      setSaveAsDialogOpen(false)
       navigate({
         to: "/$slug/tickets/views/$viewId",
         params: { slug, viewId: view.id },
@@ -81,16 +96,53 @@ function SavedViewPage() {
   }
 
   return (
-    <TeamIssuesScreen
-      teamSlug={savedView.teamSlug}
-      filters={filters}
-      savedViewName={savedView.name}
-      onPresetChange={(presetFilter) => setFilters({ presetFilter })}
-      onAdvancedFiltersChange={(advancedFilters) =>
-        setFilters(advancedFilters ? { advancedFilters } : { presetFilter: "active" })
-      }
-      onSaveView={handleSaveAsNew}
-      onUpdateView={handleUpdateView}
-    />
+    <>
+      <TeamIssuesScreen
+        teamSlug={savedView.teamSlug}
+        filters={filters}
+        savedViewName={savedView.name}
+        onPresetChange={(presetFilter) => setFilters({ presetFilter })}
+        onAdvancedFiltersChange={(advancedFilters) =>
+          setFilters(advancedFilters ? { advancedFilters } : { presetFilter: "active" })
+        }
+        onSaveView={handleSaveAsNew}
+        onUpdateView={handleUpdateView}
+      />
+
+      <Dialog open={saveAsDialogOpen} onOpenChange={setSaveAsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save as new view</DialogTitle>
+            <DialogDescription>Enter a name for this saved view.</DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              handleSaveAsSubmit()
+            }}
+          >
+            <input
+              autoFocus
+              type="text"
+              value={saveAsName}
+              onChange={(e) => setSaveAsName(e.target.value)}
+              className="w-full rounded-lg border border-outline-variant/20 bg-surface px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+            />
+            <DialogFooter className="mt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setSaveAsDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={!saveAsName.trim()}>
+                Save
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

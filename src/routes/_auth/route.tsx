@@ -1,25 +1,19 @@
-import { createFileRoute, Outlet } from "@tanstack/react-router"
-import { useAuth } from "@clerk/tanstack-react-start"
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router"
 
 export const Route = createFileRoute("/_auth")({
+  beforeLoad: ({ context }) => {
+    if (!context.session.userId) {
+      throw redirect({ to: "/sign-in" })
+    }
+
+    if (!context.session.orgSlug) {
+      throw redirect({ to: "/org-select" })
+    }
+  },
   component: AuthLayout,
 })
 
 function AuthLayout() {
-  const { isSignedIn, isLoaded, orgSlug } = useAuth()
-
-  if (!isLoaded) return null
-
-  if (!isSignedIn) {
-    window.location.href = "/sign-in"
-    return null
-  }
-
-  if (!orgSlug) {
-    window.location.href = "/org-select"
-    return null
-  }
-
   return (
     <div className="min-h-screen bg-background">
       <Outlet />

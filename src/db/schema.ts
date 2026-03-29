@@ -39,6 +39,7 @@ export const issueActivityTypes = [
   "status_change",
   "priority_change",
   "assignee_change",
+  "cycle_change",
   "label_change",
   "description_change",
   "comment",
@@ -239,6 +240,23 @@ export const issues = sqliteTable(
   (table) => ({
     workspaceIdIdx: index("issues_workspace_id_idx").on(table.workspaceId),
     teamIdIdx: index("issues_team_id_idx").on(table.teamId),
+    teamVisibleOrderIdx: index("issues_team_visible_order_idx").on(
+      table.teamId,
+      table.archivedAt,
+      table.deletedAt,
+      table.priorityScore,
+      table.updatedAt,
+      table.createdAt
+    ),
+    teamStatusVisibleOrderIdx: index("issues_team_status_visible_order_idx").on(
+      table.teamId,
+      table.status,
+      table.archivedAt,
+      table.deletedAt,
+      table.priorityScore,
+      table.updatedAt,
+      table.createdAt
+    ),
     cycleIdIdx: index("issues_cycle_id_idx").on(table.cycleId),
     assigneeUserIdIdx: index("issues_assignee_user_id_idx").on(table.assigneeUserId),
     creatorUserIdIdx: index("issues_creator_user_id_idx").on(table.creatorUserId),
@@ -294,9 +312,7 @@ export const issueLabels = sqliteTable(
     labelId: text("label_id")
       .notNull()
       .references(() => labels.id, { onDelete: "cascade" }),
-    createdAt: text("created_at")
-      .notNull()
-      .default(sql`CURRENT_TIMESTAMP`),
+    createdAt: text("created_at").notNull(),
   },
   (table) => ({
     pk: primaryKey({

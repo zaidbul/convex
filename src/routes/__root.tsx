@@ -53,6 +53,8 @@ export const Route = createRootRouteWithContext<{
   }),
   component: RootComponent,
   errorComponent: RootErrorComponent,
+  notFoundComponent: RootNotFoundComponent,
+  pendingComponent: RootPendingComponent,
   shellComponent: RootDocument,
 })
 
@@ -100,6 +102,36 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <Scripts />
       </body>
     </html>
+  )
+}
+
+function RootNotFoundComponent() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-surface-low px-6">
+      <div className="w-full max-w-lg rounded-2xl border border-outline-variant/20 bg-surface p-6 shadow-sm text-center">
+        <p className="text-4xl font-semibold text-foreground">404</p>
+        <h1 className="mt-2 text-lg font-medium text-foreground">
+          Page not found
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          The page you're looking for doesn't exist or has been moved.
+        </p>
+        <a
+          href="/"
+          className="mt-5 inline-flex h-10 items-center justify-center rounded-lg bg-foreground px-4 text-sm font-medium text-background"
+        >
+          Go home
+        </a>
+      </div>
+    </div>
+  )
+}
+
+function RootPendingComponent() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-surface-low">
+      <div className="size-6 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+    </div>
   )
 }
 
