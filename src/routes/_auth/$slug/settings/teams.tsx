@@ -19,7 +19,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
@@ -29,8 +28,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import {
   Table,
   TableBody,
@@ -46,19 +43,11 @@ import {
 } from "@/query/mutations/settings"
 import { teamsWithStatsQueryOptions } from "@/query/options/settings"
 import type { TeamWithMemberCount } from "@/server/functions/settings-data"
-
-const TEAM_COLORS = [
-  "#6366f1", // indigo
-  "#8b5cf6", // violet
-  "#ec4899", // pink
-  "#ef4444", // red
-  "#f97316", // orange
-  "#eab308", // yellow
-  "#22c55e", // green
-  "#06b6d4", // cyan
-  "#3b82f6", // blue
-  "#6b7280", // gray
-]
+import {
+  createEmptyTeamForm,
+  TeamForm,
+  type TeamFormState,
+} from "@/components/settings/team-form"
 
 export const Route = createFileRoute("/_auth/$slug/settings/teams")({
   loader: async ({ context }) => {
@@ -66,12 +55,6 @@ export const Route = createFileRoute("/_auth/$slug/settings/teams")({
   },
   component: TeamsSettingsPage,
 })
-
-type TeamFormState = {
-  name: string
-  identifier: string
-  color: string
-}
 
 function TeamsSettingsPage() {
   const { data: teams } = useSuspenseQuery(teamsWithStatsQueryOptions())
@@ -82,10 +65,10 @@ function TeamsSettingsPage() {
   const [createOpen, setCreateOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<TeamWithMemberCount | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<TeamWithMemberCount | null>(null)
-  const [form, setForm] = useState<TeamFormState>({ name: "", identifier: "", color: TEAM_COLORS[0] })
+  const [form, setForm] = useState<TeamFormState>(createEmptyTeamForm())
 
   const openCreate = () => {
-    setForm({ name: "", identifier: "", color: TEAM_COLORS[0] })
+    setForm(createEmptyTeamForm())
     setCreateOpen(true)
   }
 
@@ -284,85 +267,5 @@ function TeamsSettingsPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  )
-}
-
-function TeamForm({
-  form,
-  onChange,
-  onSubmit,
-  submitLabel,
-  disabled,
-}: {
-  form: TeamFormState
-  onChange: (form: TeamFormState) => void
-  onSubmit: () => void
-  submitLabel: string
-  disabled: boolean
-}) {
-  return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault()
-        onSubmit()
-      }}
-      className="space-y-4"
-    >
-      <div className="space-y-2">
-        <Label htmlFor="team-name">Name</Label>
-        <Input
-          id="team-name"
-          value={form.name}
-          onChange={(e) => onChange({ ...form, name: e.target.value })}
-          placeholder="e.g. Engineering"
-          className="rounded-lg"
-          autoFocus
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="team-identifier">Identifier</Label>
-        <Input
-          id="team-identifier"
-          value={form.identifier}
-          onChange={(e) =>
-            onChange({
-              ...form,
-              identifier: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 5),
-            })
-          }
-          placeholder="e.g. ENG"
-          className="max-w-24 rounded-lg font-mono"
-          maxLength={5}
-        />
-        <p className="text-xs text-muted-foreground">
-          Used as the prefix for issue IDs (e.g. ENG-42).
-        </p>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Color</Label>
-        <div className="flex flex-wrap gap-2">
-          {TEAM_COLORS.map((color) => (
-            <button
-              key={color}
-              type="button"
-              onClick={() => onChange({ ...form, color })}
-              className="size-7 rounded-md border-2 transition-colors"
-              style={{
-                backgroundColor: color,
-                borderColor: form.color === color ? "var(--color-foreground)" : "transparent",
-              }}
-            />
-          ))}
-        </div>
-      </div>
-
-      <DialogFooter>
-        <Button type="submit" disabled={disabled || !form.name.trim() || !form.identifier.trim()}>
-          {submitLabel}
-        </Button>
-      </DialogFooter>
-    </form>
   )
 }

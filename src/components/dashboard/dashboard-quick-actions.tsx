@@ -44,7 +44,7 @@ export function DashboardQuickActions({
             onClick={() => {
               if (firstTeam) {
                 navigate({
-                  to: "/$slug/tickets/$teamSlug/issues",
+                  to: "/$slug/tickets/$teamSlug/cycles/current",
                   params: { slug, teamSlug: firstTeam.slug },
                 })
               }

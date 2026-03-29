@@ -149,7 +149,10 @@ export const notificationsQueryOptions = (input?: {
       input?.limit ?? 25,
       input?.offset ?? 0,
     ],
-    queryFn: () => listNotifications({ data: input ?? {} }),
+    queryFn: () =>
+      listNotifications({
+        data: (input ?? {}) as Parameters<typeof listNotifications>[0]["data"],
+      }),
     refetchInterval: 30_000,
   })
 

@@ -44,19 +44,21 @@ function IssuesPage() {
 
   const updateSearch = (nextFilters: typeof filters) =>
     navigate({
-      search: () => ({
+      to: ".",
+      search: {
         ...serializeIssueQueryFilters(nextFilters, { omitActivePreset: true }),
         view: viewMode === "board" ? "board" : undefined,
-      }),
-    } as unknown as Parameters<typeof navigate>[0])
+      },
+    })
 
   const handleViewModeChange = (mode: ViewMode) =>
     navigate({
-      search: (prev: Record<string, unknown>) => ({
-        ...prev,
+      to: ".",
+      search: {
+        ...search,
         view: mode === "board" ? "board" : undefined,
-      }),
-    } as unknown as Parameters<typeof navigate>[0])
+      },
+    })
 
   const handleSaveView = () => {
     setSaveViewName("")

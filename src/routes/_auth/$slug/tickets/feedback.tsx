@@ -14,12 +14,7 @@ export const Route = createFileRoute("/_auth/$slug/tickets/feedback")({
     suggestionId: typeof search.suggestionId === "string" ? search.suggestionId : undefined,
   }),
   loader: async ({ context, location }) => {
-    const rawSearch =
-      (typeof location.search === "object" && location.search
-        ? location.search
-        : {}) as Record<string, unknown>
-    const suggestionId =
-      typeof rawSearch.suggestionId === "string" ? rawSearch.suggestionId : undefined
+    const { suggestionId } = location.search as { suggestionId?: string }
 
     await Promise.all([
       context.queryClient.ensureQueryData(feedbackImportsQueryOptions()),
@@ -40,9 +35,10 @@ function FeedbackHubPage() {
   const { data: items } = useSuspenseQuery(feedbackItemsQueryOptions())
   const { data: clusters } = useSuspenseQuery(feedbackClustersQueryOptions())
   const { data: suggestions } = useSuspenseQuery(feedbackSuggestionsQueryOptions())
-  const { data: selectedSuggestion } = useQuery(
-    feedbackSuggestionQueryOptions(search.suggestionId ?? "")
-  )
+  const { data: selectedSuggestion } = useQuery({
+    ...feedbackSuggestionQueryOptions(search.suggestionId ?? ""),
+    enabled: !!search.suggestionId,
+  })
 
   return (
     <FeedbackHubScreen

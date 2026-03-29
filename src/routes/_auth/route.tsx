@@ -7,7 +7,7 @@ export const Route = createFileRoute("/_auth")({
     }
 
     if (!context.session.orgSlug) {
-      throw redirect({ to: "/org-select" })
+      throw redirect({ to: "/org-select", search: { intent: undefined } })
     }
   },
   component: AuthLayout,

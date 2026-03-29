@@ -131,7 +131,7 @@ export function IssueActionsDropdown({
   align = "end",
   side = "bottom",
 }: IssueActionsProps & {
-  trigger: React.ReactNode
+  trigger: React.ReactElement
   align?: "start" | "end"
   side?: "bottom" | "top"
 }) {
@@ -140,7 +140,7 @@ export function IssueActionsDropdown({
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger render={trigger as React.JSX.Element}>
+        <DropdownMenuTrigger render={trigger}>
         </DropdownMenuTrigger>
         <DropdownMenuContent align={align} side={side} sideOffset={4}>
           <DropdownMenuGroup>

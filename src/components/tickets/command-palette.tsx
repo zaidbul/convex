@@ -31,6 +31,8 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const slug = (params as { slug?: string }).slug
   const queryClient = useQueryClient()
 
+  if (!slug) return null
+
   const teams = queryClient.getQueryData<Team[]>(["teams"]) ?? []
 
   const allIssues = useMemo(() => {
@@ -75,7 +77,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                       navigate({
                         to: "/$slug/tickets/$teamSlug/issue/$issueId",
                         params: {
-                          slug: slug!,
+                          slug: slug,
                           teamSlug: issue.teamSlug,
                           issueId: issue.id,
                         },
@@ -104,7 +106,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                       runAction(() =>
                         navigate({
                           to: "/$slug/tickets/$teamSlug/issues",
-                          params: { slug: slug!, teamSlug: team.slug },
+                          params: { slug: slug, teamSlug: team.slug },
                           search: { filter: undefined },
                         })
                       )
@@ -125,7 +127,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 runAction(() =>
                   navigate({
                     to: "/$slug/tickets/feedback",
-                    params: { slug: slug! },
+                    params: { slug: slug },
                     search: { suggestionId: undefined },
                   })
                 )
@@ -139,7 +141,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 runAction(() =>
                   navigate({
                     to: "/$slug/tickets/views",
-                    params: { slug: slug! },
+                    params: { slug: slug },
                   })
                 )
               }
@@ -152,7 +154,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 runAction(() =>
                   navigate({
                     to: "/$slug/settings",
-                    params: { slug: slug! },
+                    params: { slug: slug },
                   })
                 )
               }

@@ -65,14 +65,21 @@ export function IssueRow({ issue }: { issue: Issue }) {
       issueUrl={issueUrl}
     >
       <div
+        role="button"
+        tabIndex={0}
         className={cn(
           "group flex h-11 items-center gap-2 px-4 hover:bg-surface-container/60 transition-colors cursor-pointer",
           isSelected && "bg-surface-container/80 border-l-2 border-primary",
         )}
         onClick={handleClick}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault()
+            handleClick()
+          }
+        }}
       >
         {/* Kebab menu - visible on hover */}
-        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <div onClick={(e) => e.stopPropagation()} className="shrink-0">
           <IssueActionsDropdown
             issueId={issue.id}

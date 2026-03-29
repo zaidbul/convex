@@ -55,7 +55,7 @@ function SavedViewPage() {
   }, [savedView])
 
   if (!savedView) {
-    return null
+    return <div className="flex h-screen items-center justify-center text-muted-foreground">View not found</div>
   }
 
   const handleSaveAsNew = () => {

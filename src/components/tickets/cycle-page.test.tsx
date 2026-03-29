@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { render, screen } from "@testing-library/react"
+import { fireEvent, render, screen } from "@testing-library/react"
 import { describe, expect, test, vi } from "vitest"
 import { CyclePageBody } from "./cycle-page"
 import type { Cycle, Issue, Team } from "./types"
@@ -21,6 +21,10 @@ vi.mock("./issue-row", () => ({
 
 vi.mock("./cycle-issue-picker", () => ({
   CycleIssuePicker: () => <button type="button">Add issue</button>,
+}))
+
+vi.mock("./create-cycle-dialog", () => ({
+  CreateCycleDialog: () => null,
 }))
 
 const team: Team = {
@@ -96,6 +100,7 @@ describe("CyclePageBody", () => {
         allCycleIssues={allCycleIssues}
         visibleIssues={[allCycleIssues[1]!]}
         filters={{ presetFilter: "active" }}
+        onCreateCycle={() => undefined}
       />
     )
 
@@ -107,6 +112,8 @@ describe("CyclePageBody", () => {
   })
 
   test("renders a non-error empty state when the selected cycle is missing", () => {
+    const onCreateCycle = vi.fn()
+
     render(
       <CyclePageBody
         team={team}
@@ -116,9 +123,14 @@ describe("CyclePageBody", () => {
         allCycleIssues={[]}
         visibleIssues={[]}
         filters={{}}
+        onCreateCycle={onCreateCycle}
       />
     )
 
     expect(screen.getByText("No upcoming cycle")).toBeTruthy()
+    fireEvent.click(
+      screen.getByRole("button", { name: "Create upcoming cycle" })
+    )
+    expect(onCreateCycle).toHaveBeenCalledTimes(1)
   })
 })

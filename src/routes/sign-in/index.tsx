@@ -32,7 +32,7 @@ export const Route = createFileRoute("/sign-in/")({
       })
     }
     if (authState.userId) {
-      throw redirect({ to: "/org-select" })
+      throw redirect({ to: "/org-select", search: { intent: undefined } })
     }
   },
   component: SignInPage,

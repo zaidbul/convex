@@ -12,10 +12,17 @@ import {
   updateFeedbackSuggestionForViewer,
 } from "./feedback-data"
 import { getViewerContext } from "./viewer-context"
-import type { CreateFeedbackImportInput } from "./feedback-domain"
+import {
+  createFeedbackImportSchema,
+  listFeedbackSuggestionsSchema,
+  feedbackSuggestionIdSchema,
+  updateFeedbackSuggestionSchema,
+  createIssueFromSuggestionSchema,
+  runFeedbackAnalysisSchema,
+} from "./validation-schemas"
 
 export const createFeedbackImport = createServerFn({ method: "POST" })
-  .inputValidator((data: CreateFeedbackImportInput) => data)
+  .inputValidator(createFeedbackImportSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     return createFeedbackImportForViewer(db, viewerContext, data)
@@ -37,27 +44,21 @@ export const listFeedbackClusters = createServerFn({ method: "GET" }).handler(as
 })
 
 export const listFeedbackSuggestions = createServerFn({ method: "GET" })
-  .inputValidator((data: { limit?: number } | undefined) => data)
+  .inputValidator(listFeedbackSuggestionsSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     return listFeedbackSuggestionsForViewer(db, viewerContext, data)
   })
 
 export const getFeedbackSuggestion = createServerFn({ method: "GET" })
-  .inputValidator((data: { suggestionId: string }) => data)
+  .inputValidator(feedbackSuggestionIdSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     return getFeedbackSuggestionForViewer(db, viewerContext, data.suggestionId)
   })
 
 export const updateFeedbackSuggestion = createServerFn({ method: "POST" })
-  .inputValidator(
-    (data: {
-      suggestionId: string
-      status?: "new" | "reviewing" | "accepted" | "issue_created" | "dismissed"
-      selectedTeamId?: string | null
-    }) => data
-  )
+  .inputValidator(updateFeedbackSuggestionSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     return updateFeedbackSuggestionForViewer(db, viewerContext, data.suggestionId, {
@@ -67,29 +68,22 @@ export const updateFeedbackSuggestion = createServerFn({ method: "POST" })
   })
 
 export const createIssueFromSuggestion = createServerFn({ method: "POST" })
-  .inputValidator(
-    (data: {
-      suggestionId: string
-      teamId?: string
-      title?: string
-      description?: string
-    }) => data
-  )
+  .inputValidator(createIssueFromSuggestionSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     return createIssueFromFeedbackSuggestionForViewer(db, viewerContext, data)
   })
 
 export const runFeedbackAnalysisInternal = createServerFn({ method: "POST" })
-  .inputValidator((data: { workspaceId?: string; force?: boolean } | undefined) => data)
+  .inputValidator(runFeedbackAnalysisSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
-    if (!viewerContext.workspaceId && !data?.workspaceId) {
+    if (!viewerContext.workspaceId) {
       throw new Error("No active workspace")
     }
 
     return runFeedbackAnalysis(db, {
-      workspaceId: data?.workspaceId ?? viewerContext.workspaceId ?? undefined,
+      workspaceId: viewerContext.workspaceId,
       trigger: "manual",
       force: data?.force,
     })

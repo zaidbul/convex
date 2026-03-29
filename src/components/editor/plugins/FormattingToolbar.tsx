@@ -132,15 +132,15 @@ function FloatingTextFormatToolbar({
   }
 
   useEffect(() => {
-    if (popupCharStylesEditorRef?.current) {
-      document.addEventListener("mousemove", mouseMoveListener);
-      document.addEventListener("mouseup", mouseUpListener);
+    if (typeof document === "undefined") return;
 
-      return () => {
-        document.removeEventListener("mousemove", mouseMoveListener);
-        document.removeEventListener("mouseup", mouseUpListener);
-      };
-    }
+    document.addEventListener("mousemove", mouseMoveListener);
+    document.addEventListener("mouseup", mouseUpListener);
+
+    return () => {
+      document.removeEventListener("mousemove", mouseMoveListener);
+      document.removeEventListener("mouseup", mouseUpListener);
+    };
   }, [popupCharStylesEditorRef]);
 
   const $updateTextFormatFloatingToolbar = useCallback(() => {
@@ -533,6 +533,7 @@ type FormattingToolbarProps = {
 
 export function FormattingToolbar({ anchorElem }: FormattingToolbarProps) {
   const [editor] = useLexicalComposerContext();
-  const anchor = anchorElem ?? document.body;
-  return useFloatingTextFormatToolbar(editor, anchor);
+  const anchor =
+    anchorElem ?? (typeof document !== "undefined" ? document.body : undefined);
+  return useFloatingTextFormatToolbar(editor, anchor!);
 }

@@ -23,7 +23,7 @@ import {
 } from "./tickets-data"
 
 const migrationsFolder = fileURLToPath(
-  new URL("../../../drizzle", import.meta.url),
+  new URL("../../../drizzle", import.meta.url)
 )
 
 type SeededContext = {
@@ -225,10 +225,23 @@ describe("notification delivery", () => {
   })
 
   test("assignment notifications go only to the assignee and exclude the actor", async () => {
-    await updateIssueAssigneeForViewer(testDb.db, aliceContext, "issue_1", "user_3")
+    await updateIssueAssigneeForViewer(
+      testDb.db,
+      aliceContext,
+      "issue_1",
+      "user_3"
+    )
 
-    const bobNotifications = await listNotificationsForViewer(testDb.db, bobContext, {})
-    const caraNotifications = await listNotificationsForViewer(testDb.db, caraContext, {})
+    const bobNotifications = await listNotificationsForViewer(
+      testDb.db,
+      bobContext,
+      {}
+    )
+    const caraNotifications = await listNotificationsForViewer(
+      testDb.db,
+      caraContext,
+      {}
+    )
 
     expect(bobNotifications.items).toHaveLength(0)
     expect(caraNotifications.items).toHaveLength(1)
@@ -240,18 +253,26 @@ describe("notification delivery", () => {
       testDb.db,
       aliceContext,
       "issue_1",
-      "Ping @[Bob Example](mention:user_2) and @[Cara Example](mention:user_3)",
+      "Ping @[Bob Example](mention:user_2) and @[Cara Example](mention:user_3)"
     )
 
     await updateIssueDescriptionForViewer(
       testDb.db,
       aliceContext,
       "issue_1",
-      "Ping @[Bob Example](mention:user_2) and @[Cara Example](mention:user_3) again",
+      "Ping @[Bob Example](mention:user_2) and @[Cara Example](mention:user_3) again"
     )
 
-    const bobNotifications = await listNotificationsForViewer(testDb.db, bobContext, {})
-    const caraNotifications = await listNotificationsForViewer(testDb.db, caraContext, {})
+    const bobNotifications = await listNotificationsForViewer(
+      testDb.db,
+      bobContext,
+      {}
+    )
+    const caraNotifications = await listNotificationsForViewer(
+      testDb.db,
+      caraContext,
+      {}
+    )
 
     expect(bobNotifications.items).toHaveLength(1)
     expect(caraNotifications.items).toHaveLength(1)
@@ -263,44 +284,99 @@ describe("notification delivery", () => {
       testDb.db,
       aliceContext,
       "issue_1",
-      "@Cara Example please review this now.",
+      "@Cara Example please review this now."
     )
 
-    const bobNotifications = await listNotificationsForViewer(testDb.db, bobContext, {})
-    const caraNotifications = await listNotificationsForViewer(testDb.db, caraContext, {})
+    const bobNotifications = await listNotificationsForViewer(
+      testDb.db,
+      bobContext,
+      {}
+    )
+    const caraNotifications = await listNotificationsForViewer(
+      testDb.db,
+      caraContext,
+      {}
+    )
 
-    expect(bobNotifications.items.map((item) => item.type)).toContain("issue_commented")
+    expect(bobNotifications.items.map((item) => item.type)).toContain(
+      "issue_commented"
+    )
     expect(caraNotifications.items).toHaveLength(1)
     expect(caraNotifications.items[0]?.type).toBe("issue_mentioned")
   })
 
   test("cycle transitions validate status changes and fan out notifications to team members", async () => {
-    await updateCycleStatusForViewer(testDb.db, aliceContext, "cycle_1", "active")
+    await updateCycleStatusForViewer(
+      testDb.db,
+      aliceContext,
+      "cycle_1",
+      "active"
+    )
 
-    const bobNotifications = await listNotificationsForViewer(testDb.db, bobContext, {})
-    const caraNotifications = await listNotificationsForViewer(testDb.db, caraContext, {})
+    const bobNotifications = await listNotificationsForViewer(
+      testDb.db,
+      bobContext,
+      {}
+    )
+    const caraNotifications = await listNotificationsForViewer(
+      testDb.db,
+      caraContext,
+      {}
+    )
 
     expect(bobNotifications.items[0]?.type).toBe("cycle_started")
     expect(caraNotifications.items[0]?.type).toBe("cycle_started")
 
     await expect(
-      updateCycleStatusForViewer(testDb.db, aliceContext, "cycle_1", "upcoming"),
+      updateCycleStatusForViewer(testDb.db, aliceContext, "cycle_1", "upcoming")
     ).rejects.toThrow("Invalid cycle status transition")
   })
 
+  test("rejects starting an upcoming cycle when another active cycle already exists", async () => {
+    const timestamp = nowIso()
+
+    await testDb.db.insert(schema.cycles).values({
+      id: "cycle_2",
+      teamId: "team_1",
+      name: "Cycle 2",
+      number: 2,
+      startDate: "2026-03-30",
+      endDate: "2026-04-05",
+      status: "active",
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    })
+
+    await expect(
+      updateCycleStatusForViewer(testDb.db, aliceContext, "cycle_1", "active")
+    ).rejects.toThrow("This team already has an active cycle")
+  })
+
   test("unread counts and read mutations update notification state", async () => {
-    await updateIssueAssigneeForViewer(testDb.db, aliceContext, "issue_1", "user_3")
+    await updateIssueAssigneeForViewer(
+      testDb.db,
+      aliceContext,
+      "issue_1",
+      "user_3"
+    )
     await updateIssueDescriptionForViewer(
       testDb.db,
       aliceContext,
       "issue_1",
-      "Ping @[Bob Example](mention:user_2)",
+      "Ping @[Bob Example](mention:user_2)"
     )
 
-    const unreadBefore = await getUnreadNotificationCountForViewer(testDb.db, bobContext)
-    const notifications = await listNotificationsForViewer(testDb.db, bobContext, {
-      scope: "unread",
-    })
+    const unreadBefore = await getUnreadNotificationCountForViewer(
+      testDb.db,
+      bobContext
+    )
+    const notifications = await listNotificationsForViewer(
+      testDb.db,
+      bobContext,
+      {
+        scope: "unread",
+      }
+    )
 
     expect(unreadBefore).toBeGreaterThan(0)
     expect(notifications.items.every((item) => item.readAt === null)).toBe(true)
@@ -308,15 +384,21 @@ describe("notification delivery", () => {
     await markNotificationAsReadForViewer(
       testDb.db,
       bobContext,
-      notifications.items[0]!.id,
+      notifications.items[0]!.id
     )
 
-    const unreadAfterSingle = await getUnreadNotificationCountForViewer(testDb.db, bobContext)
+    const unreadAfterSingle = await getUnreadNotificationCountForViewer(
+      testDb.db,
+      bobContext
+    )
     expect(unreadAfterSingle).toBe(unreadBefore - 1)
 
     await markAllNotificationsAsReadForViewer(testDb.db, bobContext)
 
-    const unreadAfterAll = await getUnreadNotificationCountForViewer(testDb.db, bobContext)
+    const unreadAfterAll = await getUnreadNotificationCountForViewer(
+      testDb.db,
+      bobContext
+    )
     expect(unreadAfterAll).toBe(0)
   })
 })

@@ -126,6 +126,7 @@ function PanelContent({ issueId, teamSlug }: { issueId: string; teamSlug: string
             onChange={(e) => handleTitleChange(e.target.value)}
             className="w-full bg-transparent text-sm font-medium text-on-surface outline-none placeholder:text-on-surface-variant/50"
             placeholder="Issue title"
+            aria-label="Issue title"
           />
         </div>
 

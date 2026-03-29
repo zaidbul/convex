@@ -43,7 +43,7 @@ export function IssueDetailView({
   useEffect(() => {
     setTitle(issue?.title ?? "")
     return clearPendingTitleSave
-  }, [issueId, clearPendingTitleSave])
+  }, [issueId, issue?.title, clearPendingTitleSave])
 
   const handleTitleChange = useCallback(
     (newTitle: string) => {

@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { Eye, Pencil, Trash2 } from "lucide-react"
 import { toast } from "sonner"
@@ -43,7 +43,7 @@ export const Route = createFileRoute("/_auth/$slug/tickets/views/")({
 
 function ViewsIndexPage() {
   const navigate = useNavigate()
-  const { slug } = useParams({ strict: false }) as { slug?: string }
+  const { slug } = Route.useParams()
   const { data: views } = useSuspenseQuery(savedViewsQueryOptions())
   const updateSavedView = useUpdateSavedViewMutation()
   const deleteSavedView = useDeleteSavedViewMutation()
@@ -85,7 +85,7 @@ function ViewsIndexPage() {
               >
                 <Link
                   to="/$slug/tickets/views/$viewId"
-                  params={{ slug: slug!, viewId: view.id }}
+                  params={{ slug, viewId: view.id }}
                   className="min-w-0 flex-1"
                 >
                   <div className="flex items-center gap-3">
@@ -212,7 +212,7 @@ function ViewsIndexPage() {
                   toast.success("Saved view deleted")
                   navigate({
                     to: "/$slug/tickets/views",
-                    params: { slug: slug! },
+                    params: { slug },
                   })
                 } catch {
                   toast.error("Failed to delete saved view")

@@ -86,7 +86,7 @@ export const users = sqliteTable(
   },
   (table) => ({
     clerkUserIdUnique: uniqueIndex("users_clerk_user_id_uq").on(table.clerkUserId),
-    emailUnique: uniqueIndex("users_email_uq").on(table.email),
+    emailIdx: index("users_email_idx").on(table.email),
   })
 )
 
@@ -645,6 +645,9 @@ export const feedbackAnalysisRuns = sqliteTable(
       table.workspaceId,
       table.startedAt
     ),
+    workspaceRunningUq: uniqueIndex("feedback_analysis_runs_workspace_running_uq")
+      .on(table.workspaceId)
+      .where(sql`status = 'running'`),
   })
 )
 

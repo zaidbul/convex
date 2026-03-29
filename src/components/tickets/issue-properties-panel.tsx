@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Check, ChevronDown, Circle, Plus, User as UserIcon } from "lucide-react"
+import {
+  Check,
+  Circle,
+  Plus,
+  User as UserIcon,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -40,6 +45,7 @@ import {
   useUpdateIssueDueDateMutation,
   useUpdateIssueLabelsMutation,
 } from "@/query/mutations/tickets"
+import { CreateCycleDialog } from "./create-cycle-dialog"
 import { statusConfig, priorityConfig, labelColorMap } from "./constants"
 import type { IssueDetail } from "./types"
 
@@ -51,8 +57,8 @@ function PropertyRow({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex items-center justify-between py-1.5 px-3 text-sm hover:bg-accent/50 rounded-md -mx-1">
-      <span className="text-muted-foreground text-xs">{label}</span>
+    <div className="-mx-1 flex items-center justify-between rounded-md px-3 py-1.5 text-sm hover:bg-accent/50">
+      <span className="text-xs text-muted-foreground">{label}</span>
       <div className="flex-shrink-0">{children}</div>
     </div>
   )
@@ -61,10 +67,9 @@ function PropertyRow({
 function SectionHeader({ label }: { label: string }) {
   return (
     <div className="flex items-center justify-between px-2 pt-4 pb-1">
-      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+      <span className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
         {label}
       </span>
-      <ChevronDown className="size-3 text-muted-foreground" />
     </div>
   )
 }
@@ -75,7 +80,7 @@ function StatusDropdown({ issue }: { issue: IssueDetail }) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex items-center gap-1.5 text-sm hover:text-foreground transition-colors">
+      <DropdownMenuTrigger className="flex items-center gap-1.5 text-sm transition-colors hover:text-foreground">
         <span className={cn("size-2 rounded-full", current.color)} />
         <span>{current.label}</span>
       </DropdownMenuTrigger>
@@ -90,9 +95,7 @@ function StatusDropdown({ issue }: { issue: IssueDetail }) {
             >
               <span className={cn("size-2 rounded-full", config.color)} />
               <span>{config.label}</span>
-              {issue.status === status && (
-                <Check className="size-3 ml-auto" />
-              )}
+              {issue.status === status && <Check className="ml-auto size-3" />}
             </DropdownMenuItem>
           )
         })}
@@ -109,11 +112,13 @@ function PriorityDropdown({ issue }: { issue: IssueDetail }) {
     <DropdownMenu>
       <DropdownMenuTrigger
         className={cn(
-          "flex items-center gap-1.5 text-sm hover:text-foreground transition-colors",
-          issue.priority === "none" ? "text-muted-foreground" : current.color,
+          "flex items-center gap-1.5 text-sm transition-colors hover:text-foreground",
+          issue.priority === "none" ? "text-muted-foreground" : current.color
         )}
       >
-        <span>{issue.priority === "none" ? "Set priority" : current.label}</span>
+        <span>
+          {issue.priority === "none" ? "Set priority" : current.label}
+        </span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44">
         {issuePriorities.map((priority) => {
@@ -121,12 +126,14 @@ function PriorityDropdown({ issue }: { issue: IssueDetail }) {
           return (
             <DropdownMenuItem
               key={priority}
-              onClick={() => updatePriority.mutate({ issueId: issue.id, priority })}
+              onClick={() =>
+                updatePriority.mutate({ issueId: issue.id, priority })
+              }
               className={cn("gap-2", config.color)}
             >
               <span>{config.label}</span>
               {issue.priority === priority && (
-                <Check className="size-3 ml-auto" />
+                <Check className="ml-auto size-3" />
               )}
             </DropdownMenuItem>
           )
@@ -143,7 +150,7 @@ function AssigneeDropdown({ issue }: { issue: IssueDetail }) {
 
   return (
     <Popover>
-      <PopoverTrigger className="flex items-center gap-1.5 text-sm hover:text-foreground transition-colors">
+      <PopoverTrigger className="flex items-center gap-1.5 text-sm transition-colors hover:text-foreground">
         {assignee ? (
           <>
             <Avatar className="size-4">
@@ -166,7 +173,10 @@ function AssigneeDropdown({ issue }: { issue: IssueDetail }) {
             <CommandGroup>
               <CommandItem
                 onSelect={() =>
-                  updateAssignee.mutate({ issueId: issue.id, assigneeUserId: null })
+                  updateAssignee.mutate({
+                    issueId: issue.id,
+                    assigneeUserId: null,
+                  })
                 }
                 className="gap-2"
               >
@@ -177,7 +187,10 @@ function AssigneeDropdown({ issue }: { issue: IssueDetail }) {
                 <CommandItem
                   key={member.id}
                   onSelect={() =>
-                    updateAssignee.mutate({ issueId: issue.id, assigneeUserId: member.id })
+                    updateAssignee.mutate({
+                      issueId: issue.id,
+                      assigneeUserId: member.id,
+                    })
                   }
                   className="gap-2"
                 >
@@ -189,7 +202,7 @@ function AssigneeDropdown({ issue }: { issue: IssueDetail }) {
                   </Avatar>
                   <span>{member.name}</span>
                   {assignee?.id === member.id && (
-                    <Check className="size-3 ml-auto" />
+                    <Check className="ml-auto size-3" />
                   )}
                 </CommandItem>
               ))}
@@ -201,47 +214,76 @@ function AssigneeDropdown({ issue }: { issue: IssueDetail }) {
   )
 }
 
-function CycleDropdown({ issue, teamSlug }: { issue: IssueDetail; teamSlug: string }) {
+function CycleDropdown({
+  issue,
+  teamSlug,
+}: {
+  issue: IssueDetail
+  teamSlug: string
+}) {
+  const [createCycleOpen, setCreateCycleOpen] = useState(false)
   const updateCycle = useUpdateIssueCycleMutation()
   const { data: cycles = [] } = useQuery(cyclesQueryOptions(teamSlug))
   const currentCycle = cycles.find((c) => c.id === issue.cycleId)
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger className="flex items-center gap-1.5 text-sm hover:text-foreground transition-colors">
-        {currentCycle ? (
-          <>
-            <Circle className="size-3 text-primary" />
-            <span>{currentCycle.name}</span>
-          </>
-        ) : (
-          <span className="text-muted-foreground">No cycle</span>
-        )}
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-44">
-        <DropdownMenuItem
-          onClick={() => updateCycle.mutate({ issueId: issue.id, cycleId: null })}
-          className="gap-2"
-        >
-          <span className="text-muted-foreground">No cycle</span>
-          {!issue.cycleId && <Check className="size-3 ml-auto" />}
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        {cycles.map((cycle) => (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger className="flex items-center gap-1.5 text-sm transition-colors hover:text-foreground">
+          {currentCycle ? (
+            <>
+              <Circle className="size-3 text-primary" />
+              <span>{currentCycle.name}</span>
+            </>
+          ) : (
+            <span className="text-muted-foreground">No cycle</span>
+          )}
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-52">
           <DropdownMenuItem
-            key={cycle.id}
-            onClick={() => updateCycle.mutate({ issueId: issue.id, cycleId: cycle.id })}
+            onClick={() =>
+              updateCycle.mutate({ issueId: issue.id, cycleId: null })
+            }
             className="gap-2"
           >
-            <Circle className="size-3 text-primary" />
-            <span>{cycle.name}</span>
-            {issue.cycleId === cycle.id && (
-              <Check className="size-3 ml-auto" />
-            )}
+            <span className="text-muted-foreground">No cycle</span>
+            {!issue.cycleId && <Check className="ml-auto size-3" />}
           </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+          <DropdownMenuSeparator />
+          {cycles.length === 0 ? (
+            <DropdownMenuItem
+              onClick={() => setCreateCycleOpen(true)}
+              className="gap-2"
+            >
+              <Plus className="size-3.5 text-muted-foreground" />
+              <span>Create cycle</span>
+            </DropdownMenuItem>
+          ) : (
+            cycles.map((cycle) => (
+              <DropdownMenuItem
+                key={cycle.id}
+                onClick={() =>
+                  updateCycle.mutate({ issueId: issue.id, cycleId: cycle.id })
+                }
+                className="gap-2"
+              >
+                <Circle className="size-3 text-primary" />
+                <span>{cycle.name}</span>
+                {issue.cycleId === cycle.id && (
+                  <Check className="ml-auto size-3" />
+                )}
+              </DropdownMenuItem>
+            ))
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <CreateCycleDialog
+        open={createCycleOpen}
+        onOpenChange={setCreateCycleOpen}
+        teamId={issue.teamId}
+        teamSlug={teamSlug}
+      />
+    </>
   )
 }
 
@@ -315,8 +357,8 @@ function LabelsSection({ issue }: { issue: IssueDetail }) {
               key={label.id}
               variant="outline"
               className={cn(
-                "rounded-full border-0 px-2 py-0 text-[10px] font-medium h-5",
-                labelColorMap[label.color] ?? "bg-muted text-muted-foreground",
+                "h-5 rounded-full border-0 px-2 py-0 text-[10px] font-medium",
+                labelColorMap[label.color] ?? "bg-muted text-muted-foreground"
               )}
             >
               {label.name}
@@ -325,7 +367,7 @@ function LabelsSection({ issue }: { issue: IssueDetail }) {
         </div>
       )}
       <Popover>
-        <PopoverTrigger className="flex items-center gap-1.5 px-2 py-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <PopoverTrigger className="flex items-center gap-1.5 px-2 py-1 text-sm text-muted-foreground transition-colors hover:text-foreground">
           <Plus className="size-3" />
           <span>Add label</span>
         </PopoverTrigger>
@@ -344,12 +386,12 @@ function LabelsSection({ issue }: { issue: IssueDetail }) {
                     <div
                       className={cn(
                         "size-3 rounded-full",
-                        labelColorMap[label.color] ?? "bg-muted",
+                        labelColorMap[label.color] ?? "bg-muted"
                       )}
                     />
                     <span>{label.name}</span>
                     {currentLabelIds.has(label.id) && (
-                      <Check className="size-3 ml-auto" />
+                      <Check className="ml-auto size-3" />
                     )}
                   </CommandItem>
                 ))}
@@ -372,7 +414,7 @@ export function IssuePropertiesPanel({
   return (
     <div className="p-3">
       <SectionHeader label="Properties" />
-      <div className="space-y-0.5 mt-1">
+      <div className="mt-1 space-y-0.5">
         <PropertyRow label="Status">
           <StatusDropdown issue={issue} />
         </PropertyRow>
@@ -400,7 +442,7 @@ export function IssuePropertiesPanel({
         <button
           type="button"
           disabled
-          className="flex items-center gap-1.5 px-2 py-1 text-sm text-muted-foreground transition-colors opacity-50 cursor-not-allowed"
+          className="flex cursor-not-allowed items-center gap-1.5 px-2 py-1 text-sm text-muted-foreground opacity-50 transition-colors"
         >
           <Plus className="size-3" />
           <span>Add to project</span>
@@ -408,7 +450,7 @@ export function IssuePropertiesPanel({
       </div>
 
       <SectionHeader label="Relations" />
-      <div className="mt-1 px-2 text-xs text-muted-foreground py-1">
+      <div className="mt-1 px-2 py-1 text-xs text-muted-foreground">
         No relations
       </div>
     </div>

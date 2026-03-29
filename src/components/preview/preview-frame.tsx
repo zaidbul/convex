@@ -2,7 +2,7 @@ import type { ViewportPreset } from "./types";
 import { VIEWPORT_PRESETS } from "./types";
 
 const SANDBOX_ATTRS =
-  "allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation";
+  "allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation";
 
 interface PreviewFrameProps {
   url: string;

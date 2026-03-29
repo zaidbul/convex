@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start"
 import { db } from "@/db/connection"
-import { workspaceMembershipRoles } from "@/db/schema"
 import { getViewerContext } from "./viewer-context"
 import {
   createTeamForViewer,
@@ -12,6 +11,14 @@ import {
   updateTeamForViewer,
   updateWorkspaceNameForViewer,
 } from "./settings-data"
+import {
+  updateWorkspaceNameSchema,
+  createTeamSettingsSchema,
+  updateTeamSettingsSchema,
+  deleteTeamSchema,
+  updateMemberRoleSchema,
+  removeMemberSchema,
+} from "./validation-schemas"
 
 // ── Queries ──────────────────────────────────────────────────────────
 
@@ -28,46 +35,42 @@ export const getTeamsWithStats = createServerFn({ method: "GET" }).handler(async
 // ── Mutations ────────────────────────────────────────────────────────
 
 export const updateWorkspaceName = createServerFn({ method: "POST" })
-  .inputValidator((data: { name: string }) => data)
+  .inputValidator(updateWorkspaceNameSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     await updateWorkspaceNameForViewer(db, viewerContext, data.name.trim())
   })
 
 export const createTeam = createServerFn({ method: "POST" })
-  .inputValidator((data: { name: string; identifier: string; color: string }) => data)
+  .inputValidator(createTeamSettingsSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     return createTeamForViewer(db, viewerContext, data)
   })
 
 export const updateTeam = createServerFn({ method: "POST" })
-  .inputValidator(
-    (data: { teamId: string; name: string; identifier: string; color: string }) => data
-  )
+  .inputValidator(updateTeamSettingsSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     await updateTeamForViewer(db, viewerContext, data)
   })
 
 export const deleteTeam = createServerFn({ method: "POST" })
-  .inputValidator((data: { teamId: string }) => data)
+  .inputValidator(deleteTeamSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     await deleteTeamForViewer(db, viewerContext, data.teamId)
   })
 
 export const updateMemberRole = createServerFn({ method: "POST" })
-  .inputValidator(
-    (data: { userId: string; role: (typeof workspaceMembershipRoles)[number] }) => data
-  )
+  .inputValidator(updateMemberRoleSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     await updateMemberRoleForViewer(db, viewerContext, data.userId, data.role)
   })
 
 export const removeMember = createServerFn({ method: "POST" })
-  .inputValidator((data: { userId: string }) => data)
+  .inputValidator(removeMemberSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     await removeMemberForViewer(db, viewerContext, data.userId)

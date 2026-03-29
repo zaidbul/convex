@@ -9,6 +9,7 @@ import { drizzle } from "drizzle-orm/libsql"
 import { migrate } from "drizzle-orm/libsql/migrator"
 import * as schema from "@/db/schema"
 import {
+  createCycleForViewer,
   createSavedViewForViewer,
   deleteSavedViewForViewer,
   getAccessibleTeamBySlug,
@@ -306,68 +307,83 @@ describe("ticket schema and data helpers", () => {
     const timestamp = nowIso()
 
     await expect(
-      testDb.db.insert(schema.workspaceMemberships).values({
-        workspaceId: "org_1",
-        userId: "user_1",
-        role: "member",
-        createdAt: timestamp,
-        updatedAt: timestamp,
-      }).execute()
+      testDb.db
+        .insert(schema.workspaceMemberships)
+        .values({
+          workspaceId: "org_1",
+          userId: "user_1",
+          role: "member",
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        })
+        .execute()
     ).rejects.toThrow()
 
     await expect(
-      testDb.db.insert(schema.teamMemberships).values({
-        teamId: "team_1",
-        userId: "user_1",
-        createdAt: timestamp,
-        updatedAt: timestamp,
-      }).execute()
+      testDb.db
+        .insert(schema.teamMemberships)
+        .values({
+          teamId: "team_1",
+          userId: "user_1",
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        })
+        .execute()
     ).rejects.toThrow()
 
     await expect(
-      testDb.db.insert(schema.teams).values({
-        id: "team_3",
-        workspaceId: "org_1",
-        name: "Duplicate Identifier",
-        slug: "duplicate-identifier",
-        identifier: "PLT",
-        color: "orange",
-        nextIssueNumber: 1,
-        createdAt: timestamp,
-        updatedAt: timestamp,
-      }).execute()
+      testDb.db
+        .insert(schema.teams)
+        .values({
+          id: "team_3",
+          workspaceId: "org_1",
+          name: "Duplicate Identifier",
+          slug: "duplicate-identifier",
+          identifier: "PLT",
+          color: "orange",
+          nextIssueNumber: 1,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        })
+        .execute()
     ).rejects.toThrow()
 
     await expect(
-      testDb.db.insert(schema.issues).values({
-        id: "issue_dup",
-        workspaceId: "org_1",
-        teamId: "team_1",
-  
-        cycleId: null,
-        creatorUserId: "user_1",
-        assigneeUserId: null,
-        identifier: "PLT-99",
-        sequenceNumber: 1,
-        title: "Duplicate Sequence",
-        description: null,
-        status: "todo",
-        priority: "low",
-        priorityScore: 1,
-        dueDate: null,
-        createdAt: timestamp,
-        updatedAt: timestamp,
-        completedAt: null,
-        cancelledAt: null,
-      }).execute()
+      testDb.db
+        .insert(schema.issues)
+        .values({
+          id: "issue_dup",
+          workspaceId: "org_1",
+          teamId: "team_1",
+
+          cycleId: null,
+          creatorUserId: "user_1",
+          assigneeUserId: null,
+          identifier: "PLT-99",
+          sequenceNumber: 1,
+          title: "Duplicate Sequence",
+          description: null,
+          status: "todo",
+          priority: "low",
+          priorityScore: 1,
+          dueDate: null,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+          completedAt: null,
+          cancelledAt: null,
+        })
+        .execute()
     ).rejects.toThrow()
 
     await expect(
-      testDb.db.insert(schema.issueLabels).values({
-        issueId: "issue_1",
-        labelId: "label_1",
-        createdAt: timestamp,
-      }).execute()
+      testDb.db
+        .insert(schema.issueLabels)
+        .values({
+          issueId: "issue_1",
+          labelId: "label_1",
+          createdAt: timestamp,
+        })
+        .execute()
     ).rejects.toThrow()
   })
 
@@ -381,15 +397,23 @@ describe("ticket schema and data helpers", () => {
 
     expect(visibleTeams.map((team) => team.slug)).toEqual(["platform"])
 
-    const allowedTeam = await getAccessibleTeamBySlug(testDb.db, {
-      userId: "user_1",
-      workspaceId: "org_1",
-    }, "platform")
+    const allowedTeam = await getAccessibleTeamBySlug(
+      testDb.db,
+      {
+        userId: "user_1",
+        workspaceId: "org_1",
+      },
+      "platform"
+    )
 
-    const blockedTeam = await getAccessibleTeamBySlug(testDb.db, {
-      userId: "user_1",
-      workspaceId: "org_1",
-    }, "design")
+    const blockedTeam = await getAccessibleTeamBySlug(
+      testDb.db,
+      {
+        userId: "user_1",
+        workspaceId: "org_1",
+      },
+      "design"
+    )
 
     expect(allowedTeam?.slug).toBe("platform")
     expect(blockedTeam).toBeNull()
@@ -420,9 +444,18 @@ describe("ticket schema and data helpers", () => {
     await seedWorkspaceGraph(testDb.db)
     const viewer = { userId: "user_1", workspaceId: "org_1" as const }
 
-    await updateIssueDueDateForViewer(testDb.db, viewer, "issue_2", "2026-03-29")
+    await updateIssueDueDateForViewer(
+      testDb.db,
+      viewer,
+      "issue_2",
+      "2026-03-29"
+    )
 
-    const updatedIssue = await getIssueByIdForViewer(testDb.db, viewer, "issue_2")
+    const updatedIssue = await getIssueByIdForViewer(
+      testDb.db,
+      viewer,
+      "issue_2"
+    )
     expect(updatedIssue?.dueDate).toBe("2026-03-29")
 
     const dueDateMatches = await listIssuesForViewerTeam(
@@ -440,10 +473,13 @@ describe("ticket schema and data helpers", () => {
           dueFrom: "2026-03-28",
           dueTo: "2026-03-29",
         },
-      },
+      }
     )
 
-    expect(dueDateMatches.map((issue) => issue.identifier)).toEqual(["PLT-1", "PLT-2"])
+    expect(dueDateMatches.map((issue) => issue.identifier)).toEqual([
+      "PLT-1",
+      "PLT-2",
+    ])
 
     const orMatches = await listIssuesForViewerTeam(
       testDb.db,
@@ -458,10 +494,13 @@ describe("ticket schema and data helpers", () => {
           labelIds: [],
           cycleIds: [],
         },
-      },
+      }
     )
 
-    expect(orMatches.map((issue) => issue.identifier)).toEqual(["PLT-1", "PLT-2"])
+    expect(orMatches.map((issue) => issue.identifier)).toEqual([
+      "PLT-1",
+      "PLT-2",
+    ])
 
     const labelMatches = await listIssuesForViewerTeam(
       testDb.db,
@@ -476,7 +515,7 @@ describe("ticket schema and data helpers", () => {
           labelIds: ["label_2"],
           cycleIds: [],
         },
-      },
+      }
     )
 
     expect(labelMatches.map((issue) => issue.identifier)).toEqual(["PLT-1"])
@@ -542,13 +581,13 @@ describe("ticket schema and data helpers", () => {
     const visibleMembers = await listTeamMembersForViewer(
       testDb.db,
       { userId: "user_1", workspaceId: "org_1" },
-      "team_1",
+      "team_1"
     )
 
     const hiddenMembers = await listTeamMembersForViewer(
       testDb.db,
       { userId: "user_1", workspaceId: "org_1" },
-      "team_2",
+      "team_2"
     )
 
     expect(visibleMembers.map((member) => member.id)).toEqual(["user_1"])
@@ -578,14 +617,17 @@ describe("ticket schema and data helpers", () => {
       deletedAt: null,
     })
 
-    const unauthorizedViewer = { userId: "user_2", workspaceId: "org_1" as const }
+    const unauthorizedViewer = {
+      userId: "user_2",
+      workspaceId: "org_1" as const,
+    }
 
     await expect(
-      listIssueActivityForViewer(testDb.db, unauthorizedViewer, "issue_1"),
+      listIssueActivityForViewer(testDb.db, unauthorizedViewer, "issue_1")
     ).rejects.toThrow("Not authorized")
 
     await expect(
-      listIssueCommentsForViewer(testDb.db, unauthorizedViewer, "issue_1"),
+      listIssueCommentsForViewer(testDb.db, unauthorizedViewer, "issue_1")
     ).rejects.toThrow("Not authorized")
   })
 
@@ -635,6 +677,89 @@ describe("ticket schema and data helpers", () => {
     ])
   })
 
+  test("creates an upcoming cycle for an authorized team and increments its number", async () => {
+    await seedWorkspaceGraph(testDb.db)
+    const viewer = { userId: "user_1", workspaceId: "org_1" as const }
+
+    await testDb.db
+      .update(schema.cycles)
+      .set({ status: "completed", updatedAt: nowIso() })
+      .where(eq(schema.cycles.id, "cycle_1"))
+
+    const created = await createCycleForViewer(testDb.db, viewer, {
+      teamId: "team_1",
+      name: "Cycle 2",
+      startDate: "2026-03-30",
+      endDate: "2026-04-05",
+    })
+
+    expect(created).toMatchObject({
+      name: "Cycle 2",
+      number: 2,
+      status: "upcoming",
+      startDate: "2026-03-30",
+      endDate: "2026-04-05",
+    })
+  })
+
+  test("rejects creating a cycle for another team or workspace", async () => {
+    await seedWorkspaceGraph(testDb.db)
+    const unauthorizedViewer = {
+      userId: "user_1",
+      workspaceId: "org_1" as const,
+    }
+
+    await expect(
+      createCycleForViewer(testDb.db, unauthorizedViewer, {
+        teamId: "team_2",
+        name: "Design Cycle",
+        startDate: "2026-03-30",
+        endDate: "2026-04-05",
+      })
+    ).rejects.toThrow("Team not found or not accessible")
+  })
+
+  test("rejects creating a cycle when the end date is before the start date", async () => {
+    await seedWorkspaceGraph(testDb.db)
+    const viewer = { userId: "user_1", workspaceId: "org_1" as const }
+
+    await expect(
+      createCycleForViewer(testDb.db, viewer, {
+        teamId: "team_1",
+        name: "Broken cycle",
+        startDate: "2026-04-05",
+        endDate: "2026-03-30",
+      })
+    ).rejects.toThrow("Cycle end date must be on or after the start date")
+  })
+
+  test("rejects creating a second upcoming cycle for the same team", async () => {
+    await seedWorkspaceGraph(testDb.db)
+    const viewer = { userId: "user_1", workspaceId: "org_1" as const }
+    const timestamp = nowIso()
+
+    await testDb.db.insert(schema.cycles).values({
+      id: "cycle_upcoming",
+      teamId: "team_1",
+      name: "Cycle 2",
+      number: 2,
+      startDate: "2026-03-30",
+      endDate: "2026-04-05",
+      status: "upcoming",
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    })
+
+    await expect(
+      createCycleForViewer(testDb.db, viewer, {
+        teamId: "team_1",
+        name: "Cycle 3",
+        startDate: "2026-04-06",
+        endDate: "2026-04-12",
+      })
+    ).rejects.toThrow("This team already has an upcoming cycle")
+  })
+
   test("rejects assigning an issue to a cycle from another team", async () => {
     await seedWorkspaceGraph(testDb.db)
     const viewer = { userId: "user_1", workspaceId: "org_1" as const }
@@ -653,7 +778,12 @@ describe("ticket schema and data helpers", () => {
     })
 
     await expect(
-      updateIssueCycleForViewer(testDb.db, viewer, "issue_2", "cycle_other_team"),
+      updateIssueCycleForViewer(
+        testDb.db,
+        viewer,
+        "issue_2",
+        "cycle_other_team"
+      )
     ).rejects.toThrow("Cycle not found")
   })
 
@@ -679,12 +809,18 @@ describe("ticket schema and data helpers", () => {
     expect(created.advancedFilters?.statuses).toEqual(["backlog"])
 
     const ownerViews = await listSavedViewsForViewer(testDb.db, ownerContext)
-    expect(ownerViews.map((view) => view.name)).toEqual(["High priority backlog"])
+    expect(ownerViews.map((view) => view.name)).toEqual([
+      "High priority backlog",
+    ])
 
     const otherViews = await listSavedViewsForViewer(testDb.db, otherContext)
     expect(otherViews).toEqual([])
 
-    const loaded = await getSavedViewForViewer(testDb.db, ownerContext, created.id)
+    const loaded = await getSavedViewForViewer(
+      testDb.db,
+      ownerContext,
+      created.id
+    )
     expect(loaded?.teamSlug).toBe("platform")
 
     const updated = await updateSavedViewForViewer(
@@ -695,7 +831,7 @@ describe("ticket schema and data helpers", () => {
         name: "My active work",
         presetFilter: "my-issues",
         advancedFilters: null,
-      },
+      }
     )
 
     expect(updated.name).toBe("My active work")

@@ -43,13 +43,20 @@ export function IssueBoardCard({ issue }: { issue: Issue }) {
         issueIdentifier={issue.identifier}
         issueUrl={issueUrl}
       >
-        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <div
+          role="button"
+          tabIndex={0}
           className={cn(
             "rounded-lg border border-outline-variant/15 bg-surface p-3 shadow-xs transition-colors hover:border-outline-variant/30",
             isSelected && "ring-2 ring-primary/50 border-primary/30",
           )}
           onClick={handleClick}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault()
+              handleClick()
+            }
+          }}
         >
           {/* Identifier + priority */}
           <div className="flex items-center justify-between gap-2">

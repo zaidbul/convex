@@ -1,12 +1,18 @@
+import { useState } from "react"
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { IssueList } from "@/components/tickets/issue-list"
 import { IssueBoard } from "@/components/tickets/issue-board"
+import { CreateCycleDialog } from "@/components/tickets/create-cycle-dialog"
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
-import { cyclesQueryOptions, issuesQueryOptions, teamQueryOptions } from "@/query/options/tickets"
+import {
+  cyclesQueryOptions,
+  issuesQueryOptions,
+  teamQueryOptions,
+} from "@/query/options/tickets"
 import { getFilterPillSelection } from "./filter-state"
 import type { ViewMode } from "./filter-state"
 import { IssuePanelProvider, useIssuePanel } from "./issue-panel-provider"
@@ -32,14 +38,19 @@ function IssueContent({
   savedViewName?: string
   viewMode?: ViewMode
   onPresetChange: (filter: IssueFilter) => void
-  onAdvancedFiltersChange: (filters?: IssueQueryFilters["advancedFilters"]) => void
+  onAdvancedFiltersChange: (
+    filters?: IssueQueryFilters["advancedFilters"]
+  ) => void
   onViewModeChange?: (mode: ViewMode) => void
   onSaveView?: () => void
   onUpdateView?: () => void
 }) {
+  const [createCycleOpen, setCreateCycleOpen] = useState(false)
   const { data: team } = useSuspenseQuery(teamQueryOptions(teamSlug))
   const { data: cycles } = useSuspenseQuery(cyclesQueryOptions(teamSlug))
-  const { data: issues } = useSuspenseQuery(issuesQueryOptions(teamSlug, filters))
+  const { data: issues } = useSuspenseQuery(
+    issuesQueryOptions(teamSlug, filters)
+  )
   const { panelOpen } = useIssuePanel()
 
   const listOrBoard =
@@ -62,12 +73,11 @@ function IssueContent({
         onViewModeChange={onViewModeChange}
         onSaveView={onSaveView}
         onUpdateView={onUpdateView}
+        onCreateCycle={() => setCreateCycleOpen(true)}
       />
       {panelOpen ? (
         <ResizablePanelGroup className="flex-1 overflow-hidden">
-          <ResizablePanel minSize={30}>
-            {listOrBoard}
-          </ResizablePanel>
+          <ResizablePanel minSize={30}>{listOrBoard}</ResizablePanel>
           <ResizableHandle />
           <ResizablePanel defaultSize={35} minSize={25} maxSize={60}>
             <IssueSidePanel teamSlug={teamSlug} />
@@ -76,24 +86,31 @@ function IssueContent({
       ) : (
         listOrBoard
       )}
+      <CreateCycleDialog
+        open={createCycleOpen}
+        onOpenChange={setCreateCycleOpen}
+        teamId={team.id}
+        teamSlug={teamSlug}
+        teamName={team.name}
+      />
     </div>
   )
 }
 
-export function TeamIssuesScreen(
-  props: {
-    teamSlug: string
-    filters: IssueQueryFilters
-    defaultFilter?: IssueFilter
-    savedViewName?: string
-    viewMode?: ViewMode
-    onPresetChange: (filter: IssueFilter) => void
-    onAdvancedFiltersChange: (filters?: IssueQueryFilters["advancedFilters"]) => void
-    onViewModeChange?: (mode: ViewMode) => void
-    onSaveView?: () => void
-    onUpdateView?: () => void
-  },
-) {
+export function TeamIssuesScreen(props: {
+  teamSlug: string
+  filters: IssueQueryFilters
+  defaultFilter?: IssueFilter
+  savedViewName?: string
+  viewMode?: ViewMode
+  onPresetChange: (filter: IssueFilter) => void
+  onAdvancedFiltersChange: (
+    filters?: IssueQueryFilters["advancedFilters"]
+  ) => void
+  onViewModeChange?: (mode: ViewMode) => void
+  onSaveView?: () => void
+  onUpdateView?: () => void
+}) {
   return (
     <IssuePanelProvider>
       <IssueContent {...props} />

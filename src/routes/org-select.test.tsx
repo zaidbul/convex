@@ -10,9 +10,13 @@ const useOrganizationMock = vi.fn()
 const useOrganizationListMock = vi.fn()
 const useClerkMock = vi.fn()
 const hardNavigateMock = vi.fn()
+const routeSearchMock = vi.fn(() => ({}))
 
 vi.mock("@tanstack/react-router", () => ({
-  createFileRoute: () => (options: Record<string, unknown>) => ({ options }),
+  createFileRoute: () => (options: Record<string, unknown>) => ({
+    options,
+    useSearch: () => routeSearchMock(),
+  }),
 }))
 
 vi.mock("@clerk/tanstack-react-start", () => ({
@@ -95,6 +99,8 @@ describe("OrgSelectPage", () => {
     useOrganizationListMock.mockReset()
     useClerkMock.mockReset()
     hardNavigateMock.mockReset()
+    routeSearchMock.mockReset()
+    routeSearchMock.mockReturnValue({})
   })
 
   test("redirects signed-out users to sign-in", async () => {
@@ -237,6 +243,39 @@ describe("OrgSelectPage", () => {
     expect(screen.getAllByText("Beta").length).toBeGreaterThan(0)
     expect(createOrganization).not.toHaveBeenCalled()
     expect(setActive).not.toHaveBeenCalled()
+    expect(hardNavigateMock).not.toHaveBeenCalled()
+  })
+
+  test("opens the create form immediately for the create intent", () => {
+    const createOrganization = vi.fn()
+    const setActive = vi.fn()
+
+    routeSearchMock.mockReturnValue({ intent: "create" })
+    useAuthMock.mockReturnValue({
+      isLoaded: true,
+      isSignedIn: true,
+      orgSlug: "acme",
+    })
+    useUserMock.mockReturnValue({ isLoaded: true, user: makeUser() })
+    useOrganizationMock.mockReturnValue({
+      organization: {
+        id: "org_1",
+        name: "Acme",
+        slug: "acme",
+      },
+    })
+    useOrganizationListMock.mockReturnValue({
+      isLoaded: true,
+      userMemberships: { data: [makeMembership("org_1", "Acme", "acme")] },
+      setActive,
+      createOrganization,
+    })
+    useClerkMock.mockReturnValue({ signOut: vi.fn() })
+
+    render(<OrgSelectPage />)
+
+    expect(screen.getByText("Create a workspace")).not.toBeNull()
+    expect(screen.getByPlaceholderText("Workspace name")).not.toBeNull()
     expect(hardNavigateMock).not.toHaveBeenCalled()
   })
 

@@ -64,6 +64,13 @@
       "when": 1774775677261,
       "tag": "0008_thin_the_order",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1774779560280,
+      "tag": "0009_dapper_norrin_radd",
+      "breakpoints": true
     }
   ]
 }

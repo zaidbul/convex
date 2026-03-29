@@ -5,15 +5,22 @@ import { routeTree } from "./routeTree.gen"
 
 let queryClientSingleton: QueryClient | undefined
 
+const queryClientOptions = {
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+    },
+  },
+}
+
 function getQueryClient() {
+  // SSR: create a fresh client per request to prevent cross-user data leakage
+  if (typeof window === "undefined") {
+    return new QueryClient(queryClientOptions)
+  }
+  // Client: reuse singleton
   if (!queryClientSingleton) {
-    queryClientSingleton = new QueryClient({
-      defaultOptions: {
-        queries: {
-          staleTime: 30_000,
-        },
-      },
-    })
+    queryClientSingleton = new QueryClient(queryClientOptions)
   }
   return queryClientSingleton
 }

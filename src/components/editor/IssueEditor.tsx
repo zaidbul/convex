@@ -7,19 +7,13 @@ import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 import { CheckListPlugin } from "@lexical/react/LexicalCheckListPlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
-import { AutoLinkPlugin, type LinkMatcher } from "@lexical/react/LexicalAutoLinkPlugin";
+import { AutoLinkPlugin } from "@lexical/react/LexicalAutoLinkPlugin";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $getRoot, $createParagraphNode, $createTextNode } from "lexical";
 import { $convertFromMarkdownString, $convertToMarkdownString } from "@lexical/markdown";
 import { CustomMarkdownShortcutPlugin } from "./plugins/CustomMarkdownShortcutPlugin";
 import { HorizontalRulePlugin } from "@lexical/react/LexicalHorizontalRulePlugin";
-import { HeadingNode, QuoteNode } from "@lexical/rich-text";
-import { ListNode, ListItemNode } from "@lexical/list";
-import { CodeNode, CodeHighlightNode } from "./lexical-code";
-import { AutoLinkNode, LinkNode } from "@lexical/link";
-import { HorizontalRuleNode } from "@lexical/react/LexicalHorizontalRuleNode";
-import { MentionNode } from "./nodes/MentionNode";
-import { ImageNode } from "./nodes/ImageNode";
+import { EDITOR_NODES, AUTO_LINK_MATCHERS } from "./editorConfig";
 import { CodeHighlightPlugin } from "./plugins/CodeHighlightPlugin";
 import { ImagePlugin } from "./plugins/ImagePlugin";
 import { AttachmentPlugin } from "./plugins/AttachmentPlugin";
@@ -34,41 +28,6 @@ import { SlashCommandPlugin } from "./plugins/SlashCommandPlugin";
 import { MentionsPlugin, type MemberUser } from "./plugins/MentionsPlugin";
 import { TRIGGER_IMAGE_UPLOAD_COMMAND } from "./plugins/AttachmentPlugin";
 
-const URL_REG_EXP = /https?:\/\/(?:www\.)?[a-zA-Z0-9\-_]+(?:\.[a-zA-Z0-9\-_]+)+(?:[/?#][^\s]*)?/g;
-const EMAIL_REG_EXP = /(?:mailto:)?[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
-
-const AUTO_LINK_MATCHERS: LinkMatcher[] = [
-  (text: string) => {
-    URL_REG_EXP.lastIndex = 0;
-    const match = URL_REG_EXP.exec(text);
-    if (!match) return null;
-    const url = match[0];
-    return { index: match.index, length: url.length, text: url, url };
-  },
-  (text: string) => {
-    EMAIL_REG_EXP.lastIndex = 0;
-    const match = EMAIL_REG_EXP.exec(text);
-    if (!match) return null;
-    const value = match[0];
-    const email = value.replace(/^mailto:/i, "");
-    const url = value.startsWith("mailto:") ? value : `mailto:${email}`;
-    return { index: match.index ?? 0, length: value.length, text: email, url };
-  },
-];
-
-const EDITOR_NODES = [
-  HeadingNode,
-  QuoteNode,
-  ListNode,
-  ListItemNode,
-  CodeNode,
-  CodeHighlightNode,
-  AutoLinkNode,
-  LinkNode,
-  HorizontalRuleNode,
-  MentionNode,
-  ImageNode,
-];
 
 function AttachmentButton() {
   const [editor] = useLexicalComposerContext();
@@ -210,7 +169,7 @@ export function IssueEditor(props: IssueEditorProps) {
 
   return (
     <LexicalDOMErrorBoundary>
-      <LexicalComposer initialConfig={initialConfig}>
+      <LexicalComposer key={issueId} initialConfig={initialConfig}>
         <div className="flex flex-col h-full">
           {/* Title Input */}
           <div className="px-1">

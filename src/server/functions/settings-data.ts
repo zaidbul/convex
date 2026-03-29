@@ -1,4 +1,4 @@
-import { and, asc, eq, sql } from "drizzle-orm"
+import { and, asc, eq, inArray, sql } from "drizzle-orm"
 import * as schema from "@/db/schema"
 import type { ViewerContext, TicketsDatabase } from "./tickets-data"
 
@@ -119,43 +119,54 @@ export async function listTeamsWithStatsForViewer(
     .where(eq(schema.teams.workspaceId, workspaceId))
     .orderBy(asc(schema.teams.name))
 
-  const results: TeamWithMemberCount[] = []
-  for (const team of teams) {
-    const [memberRow] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(schema.teamMemberships)
-      .where(eq(schema.teamMemberships.teamId, team.id))
+  if (teams.length === 0) return []
 
-    const [issueRow] = await db
-      .select({ count: sql<number>`count(*)` })
+  const teamIds = teams.map((t) => t.id)
+
+  const [memberCounts, issueCounts] = await Promise.all([
+    db
+      .select({
+        teamId: schema.teamMemberships.teamId,
+        count: sql<number>`count(*)`,
+      })
+      .from(schema.teamMemberships)
+      .where(inArray(schema.teamMemberships.teamId, teamIds))
+      .groupBy(schema.teamMemberships.teamId),
+    db
+      .select({
+        teamId: schema.issues.teamId,
+        count: sql<number>`count(*)`,
+      })
       .from(schema.issues)
       .where(
         and(
-          eq(schema.issues.teamId, team.id),
+          inArray(schema.issues.teamId, teamIds),
           sql`${schema.issues.deletedAt} IS NULL`
         )
       )
+      .groupBy(schema.issues.teamId),
+  ])
 
-    results.push({
-      id: team.id,
-      name: team.name,
-      slug: team.slug,
-      identifier: team.identifier,
-      color: team.color,
-      memberCount: Number(memberRow?.count ?? 0),
-      issueCount: Number(issueRow?.count ?? 0),
-      createdAt: team.createdAt,
-    })
-  }
+  const memberMap = new Map(memberCounts.map((r) => [r.teamId, Number(r.count)]))
+  const issueMap = new Map(issueCounts.map((r) => [r.teamId, Number(r.count)]))
 
-  return results
+  return teams.map((team) => ({
+    id: team.id,
+    name: team.name,
+    slug: team.slug,
+    identifier: team.identifier,
+    color: team.color,
+    memberCount: memberMap.get(team.id) ?? 0,
+    issueCount: issueMap.get(team.id) ?? 0,
+    createdAt: team.createdAt,
+  }))
 }
 
 export async function createTeamForViewer(
   db: TicketsDatabase,
   context: ViewerContext,
   input: { name: string; identifier: string; color: string }
-): Promise<{ id: string }> {
+): Promise<{ id: string; slug: string }> {
   const workspaceId = requireWorkspace(context)
   await requireAdminOrOwner(db, context)
 
@@ -183,7 +194,7 @@ export async function createTeamForViewer(
     updatedAt: timestamp,
   })
 
-  return { id: teamId }
+  return { id: teamId, slug }
 }
 
 export async function updateTeamForViewer(

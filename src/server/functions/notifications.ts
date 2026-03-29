@@ -6,27 +6,23 @@ import {
   listRecentNotificationsForViewer,
   markAllNotificationsAsReadForViewer,
   markNotificationAsReadForViewer,
-  type NotificationFilterType,
-  type NotificationScope,
 } from "./notifications-data"
 import { getViewerContext } from "./viewer-context"
+import {
+  listNotificationsSchema,
+  listRecentNotificationsSchema,
+  markNotificationAsReadSchema,
+} from "./validation-schemas"
 
 export const listNotifications = createServerFn({ method: "GET" })
-  .inputValidator(
-    (data: {
-      scope?: NotificationScope
-      type?: NotificationFilterType
-      limit?: number
-      offset?: number
-    }) => data,
-  )
+  .inputValidator(listNotificationsSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     return listNotificationsForViewer(db, viewerContext, data)
   })
 
 export const listRecentNotifications = createServerFn({ method: "GET" })
-  .inputValidator((data: { limit?: number }) => data)
+  .inputValidator(listRecentNotificationsSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     return listRecentNotificationsForViewer(db, viewerContext, data)
@@ -40,7 +36,7 @@ export const getUnreadNotificationCount = createServerFn({ method: "GET" }).hand
 )
 
 export const markNotificationAsRead = createServerFn({ method: "POST" })
-  .inputValidator((data: { notificationId: string }) => data)
+  .inputValidator(markNotificationAsReadSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     return markNotificationAsReadForViewer(db, viewerContext, data.notificationId)

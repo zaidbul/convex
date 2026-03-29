@@ -267,7 +267,7 @@ export async function listFeedbackSuggestionsForViewer(
 ): Promise<FeedbackSuggestionRecord[]> {
   if (!context.workspaceId) return []
 
-  const limit = input?.limit ?? 20
+  const limit = Math.min(Math.max(input?.limit ?? 20, 1), 100)
 
   const rows = await db.query.feedbackSuggestions.findMany({
     where: eq(schema.feedbackSuggestions.workspaceId, context.workspaceId),
@@ -519,15 +519,25 @@ async function analyzeWorkspaceFeedback(
   workspaceId: string,
   input: { trigger: AnalysisRunInput["trigger"]; force?: boolean }
 ): Promise<WorkspaceAnalysisResult> {
-  const activeRun = await db.query.feedbackAnalysisRuns.findFirst({
-    where: and(
-      eq(schema.feedbackAnalysisRuns.workspaceId, workspaceId),
-      eq(schema.feedbackAnalysisRuns.status, "running")
-    ),
-    orderBy: desc(schema.feedbackAnalysisRuns.startedAt),
-  })
+  const timestamp = nowIso()
+  const runId = crypto.randomUUID()
 
-  if (activeRun) {
+  // Atomically insert a "running" row; the partial unique index on
+  // (workspace_id) WHERE status='running' prevents duplicates.
+  const inserted = await db
+    .insert(schema.feedbackAnalysisRuns)
+    .values({
+      id: runId,
+      workspaceId,
+      status: "running",
+      trigger: input.trigger,
+      startedAt: timestamp,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    })
+    .onConflictDoNothing()
+
+  if (inserted.rowsAffected === 0) {
     return {
       workspaceId,
       itemsProcessed: 0,
@@ -535,19 +545,6 @@ async function analyzeWorkspaceFeedback(
       skipped: true,
     }
   }
-
-  const timestamp = nowIso()
-  const runId = crypto.randomUUID()
-
-  await db.insert(schema.feedbackAnalysisRuns).values({
-    id: runId,
-    workspaceId,
-    status: "running",
-    trigger: input.trigger,
-    startedAt: timestamp,
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  })
 
   try {
     const [teamRows, itemRows] = await Promise.all([

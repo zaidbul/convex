@@ -20,10 +20,14 @@ import {
 } from "@/lib/auth-routing"
 
 export const Route = createFileRoute("/org-select")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    intent: search.intent === "create" ? "create" : undefined,
+  }),
   component: OrgSelectPage,
 })
 
 export function OrgSelectPage() {
+  const search = Route.useSearch()
   const { isLoaded: isAuthLoaded, isSignedIn, orgSlug } = useAuth()
   const { isLoaded: isUserLoaded, user } = useUser()
   const { organization } = useOrganization()
@@ -40,9 +44,11 @@ export function OrgSelectPage() {
   const [resolverError, setResolverError] = useState<string | null>(null)
   const [isResolving, setIsResolving] = useState(false)
   const hasResolvedRef = React.useRef(false)
+  const hasOpenedCreateIntentRef = React.useRef(false)
   const memberships = userMemberships?.data ?? []
   const activeOrgSlug =
     orgSlug ?? (organization ? getOrganizationSlug(organization) : null)
+  const isCreateIntent = search.intent === "create"
 
   const activateOrganization = React.useCallback(
     async (orgId: string, orgSlugValue: string) => {
@@ -81,7 +87,7 @@ export function OrgSelectPage() {
       return
     }
 
-    if (activeOrgSlug) {
+    if (activeOrgSlug && !isCreateIntent) {
       hasResolvedRef.current = true
       hardNavigate(getOrganizationDashboardPath(activeOrgSlug))
       return
@@ -125,7 +131,7 @@ export function OrgSelectPage() {
       return
     }
 
-    if (memberships.length === 1) {
+    if (memberships.length === 1 && !isCreateIntent) {
       const nextOrg = memberships[0]?.organization
       if (!nextOrg) {
         return
@@ -152,6 +158,7 @@ export function OrgSelectPage() {
   }, [
     activateOrganization,
     createOrganization,
+    isCreateIntent,
     isAuthLoaded,
     isLoaded,
     isSignedIn,
@@ -161,6 +168,17 @@ export function OrgSelectPage() {
     organization,
     user,
   ])
+
+  React.useEffect(() => {
+    if (!isLoaded) {
+      return
+    }
+
+    if (isCreateIntent && memberships.length > 0 && !hasOpenedCreateIntentRef.current) {
+      hasOpenedCreateIntentRef.current = true
+      setShowCreate(true)
+    }
+  }, [isCreateIntent, isLoaded, memberships.length])
 
   async function handleSelectOrg(orgId: string, orgSlugValue: string) {
     setSwitching(orgId)
@@ -207,7 +225,7 @@ export function OrgSelectPage() {
 
   const shouldBlockOnLoad =
     !isAuthLoaded ||
-    (isAuthLoaded && (!isSignedIn || Boolean(activeOrgSlug))) ||
+    (isAuthLoaded && (!isSignedIn || (Boolean(activeOrgSlug) && !isCreateIntent))) ||
     (isSignedIn && (!isLoaded || (memberships.length === 0 && !isUserLoaded))) ||
     isResolving
 
@@ -239,10 +257,12 @@ export function OrgSelectPage() {
         {/* Header */}
         <div className="mb-8 text-center">
           <h1 className="font-display text-2xl font-bold text-foreground">
-            Select a workspace
+            {showCreate ? "Create a workspace" : "Select a workspace"}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            {memberships.length > 1
+            {showCreate
+              ? "Set up another workspace"
+              : memberships.length > 1
               ? "Choose a workspace to continue"
               : "Finishing your workspace setup"}
             {user?.firstName ? `, ${user.firstName}` : ""}

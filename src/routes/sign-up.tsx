@@ -32,7 +32,7 @@ export const Route = createFileRoute("/sign-up")({
       })
     }
     if (authState.userId) {
-      throw redirect({ to: "/org-select" })
+      throw redirect({ to: "/org-select", search: { intent: undefined } })
     }
   },
   component: SignUpPage,
@@ -146,10 +146,11 @@ export function SignUpPage() {
           }
 
           setClerkError("Failed to create account.")
-        } catch (err: any) {
+        } catch (err: unknown) {
+          const e = err as { errors?: { long_message?: string }[]; message?: string }
           setClerkError(
-            err.errors?.[0]?.long_message ||
-              err.message ||
+            e.errors?.[0]?.long_message ||
+              e.message ||
               "Something went wrong. Please try again."
           )
         } finally {
@@ -216,8 +217,9 @@ export function SignUpPage() {
             "Something went wrong. Please try again."
         )
       }
-    } catch (err: any) {
-      setClerkError(err.message || "Something went wrong. Please try again.")
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Something went wrong. Please try again."
+      setClerkError(message)
     }
   }
 

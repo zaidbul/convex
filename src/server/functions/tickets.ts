@@ -1,14 +1,9 @@
 import { createServerFn } from "@tanstack/react-start"
 import { db } from "@/db/connection"
-import type {
-  CycleStatus,
-  IssuePriority,
-  IssueFilter,
-  IssueQueryFilters,
-  IssueStatus,
-} from "@/components/tickets/types"
+import type { IssueFilter, IssueQueryFilters } from "@/components/tickets/types"
 
 import {
+  createCycleForViewer,
   archiveIssueForViewer,
   createSavedViewForViewer,
   createIssueCommentForViewer,
@@ -44,11 +39,35 @@ import {
   updateSavedViewForViewer,
 } from "./tickets-data"
 import { getViewerContext } from "./viewer-context"
+import {
+  teamSlugSchema,
+  issueIdSchema,
+  getIssuesSchema,
+  createIssueSchema,
+  createCycleSchema,
+  updateIssueDescriptionSchema,
+  updateIssueStatusSchema,
+  updateIssuePrioritySchema,
+  updateIssueAssigneeSchema,
+  updateIssueCycleSchema,
+  updateIssueDueDateSchema,
+  updateCycleStatusSchema,
+  updateIssueLabelsSchema,
+  updateIssueTitleSchema,
+  teamIdSchema,
+  viewIdSchema,
+  createSavedViewSchema,
+  updateSavedViewSchema,
+  issueCommentSchema,
+  myIssuesSchema,
+} from "./validation-schemas"
 
-export const getWorkspace = createServerFn({ method: "GET" }).handler(async () => {
-  const viewerContext = await getViewerContext()
-  return getWorkspaceForViewer(db, viewerContext)
-})
+export const getWorkspace = createServerFn({ method: "GET" }).handler(
+  async () => {
+    const viewerContext = await getViewerContext()
+    return getWorkspaceForViewer(db, viewerContext)
+  }
+)
 
 export const getTeams = createServerFn({ method: "GET" }).handler(async () => {
   const viewerContext = await getViewerContext()
@@ -56,7 +75,7 @@ export const getTeams = createServerFn({ method: "GET" }).handler(async () => {
 })
 
 export const getTeamBySlug = createServerFn({ method: "GET" })
-  .inputValidator((data: { teamSlug: string }) => data)
+  .inputValidator(teamSlugSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     const team = await getAccessibleTeamBySlug(db, viewerContext, data.teamSlug)
@@ -69,14 +88,14 @@ export const getTeamBySlug = createServerFn({ method: "GET" })
   })
 
 export const getCycles = createServerFn({ method: "GET" })
-  .inputValidator((data: { teamSlug: string }) => data)
+  .inputValidator(teamSlugSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     return listCyclesForViewerTeam(db, viewerContext, data.teamSlug)
   })
 
 export const getIssues = createServerFn({ method: "GET" })
-  .inputValidator((data: { teamSlug: string; filter?: string | IssueQueryFilters }) => data)
+  .inputValidator(getIssuesSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     const filters =
@@ -88,100 +107,143 @@ export const getIssues = createServerFn({ method: "GET" })
   })
 
 export const createIssue = createServerFn({ method: "POST" })
-  .inputValidator(
-    (data: {
-      teamId: string
-      title: string
-      description?: string
-      status?: string
-      priority?: string
-      dueDate?: string | null
-    }) => data
-  )
+  .inputValidator(createIssueSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     return createIssueForViewer(db, viewerContext, {
       teamId: data.teamId,
       title: data.title,
       description: data.description,
-      status: (data.status ?? "backlog") as IssueStatus,
-      priority: (data.priority ?? "none") as IssuePriority,
+      status: data.status ?? "backlog",
+      priority: data.priority ?? "none",
       dueDate: data.dueDate ?? null,
     })
   })
 
+export const createCycle = createServerFn({ method: "POST" })
+  .inputValidator(createCycleSchema)
+  .handler(async ({ data }) => {
+    const viewerContext = await getViewerContext()
+    return createCycleForViewer(db, viewerContext, data)
+  })
+
 export const getIssueById = createServerFn({ method: "GET" })
-  .inputValidator((data: { issueId: string }) => data)
+  .inputValidator(issueIdSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     return getIssueByIdForViewer(db, viewerContext, data.issueId)
   })
 
 export const updateIssueDescription = createServerFn({ method: "POST" })
-  .inputValidator((data: { issueId: string; description: string }) => data)
+  .inputValidator(updateIssueDescriptionSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
-    return updateIssueDescriptionForViewer(db, viewerContext, data.issueId, data.description)
+    return updateIssueDescriptionForViewer(
+      db,
+      viewerContext,
+      data.issueId,
+      data.description
+    )
   })
 
 export const updateIssueStatus = createServerFn({ method: "POST" })
-  .inputValidator((data: { issueId: string; status: string }) => data)
+  .inputValidator(updateIssueStatusSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
-    return updateIssueStatusForViewer(db, viewerContext, data.issueId, data.status as IssueStatus)
+    return updateIssueStatusForViewer(
+      db,
+      viewerContext,
+      data.issueId,
+      data.status
+    )
   })
 
 export const updateIssuePriority = createServerFn({ method: "POST" })
-  .inputValidator((data: { issueId: string; priority: string }) => data)
+  .inputValidator(updateIssuePrioritySchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
-    return updateIssuePriorityForViewer(db, viewerContext, data.issueId, data.priority as IssuePriority)
+    return updateIssuePriorityForViewer(
+      db,
+      viewerContext,
+      data.issueId,
+      data.priority
+    )
   })
 
 export const updateIssueAssignee = createServerFn({ method: "POST" })
-  .inputValidator((data: { issueId: string; assigneeUserId: string | null }) => data)
+  .inputValidator(updateIssueAssigneeSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
-    return updateIssueAssigneeForViewer(db, viewerContext, data.issueId, data.assigneeUserId)
+    return updateIssueAssigneeForViewer(
+      db,
+      viewerContext,
+      data.issueId,
+      data.assigneeUserId
+    )
   })
 
 export const updateIssueCycle = createServerFn({ method: "POST" })
-  .inputValidator((data: { issueId: string; cycleId: string | null }) => data)
+  .inputValidator(updateIssueCycleSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
-    return updateIssueCycleForViewer(db, viewerContext, data.issueId, data.cycleId)
+    return updateIssueCycleForViewer(
+      db,
+      viewerContext,
+      data.issueId,
+      data.cycleId
+    )
   })
 
 export const updateIssueDueDate = createServerFn({ method: "POST" })
-  .inputValidator((data: { issueId: string; dueDate: string | null }) => data)
+  .inputValidator(updateIssueDueDateSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
-    return updateIssueDueDateForViewer(db, viewerContext, data.issueId, data.dueDate)
+    return updateIssueDueDateForViewer(
+      db,
+      viewerContext,
+      data.issueId,
+      data.dueDate
+    )
   })
 
 export const updateCycleStatus = createServerFn({ method: "POST" })
-  .inputValidator((data: { cycleId: string; status: string }) => data)
+  .inputValidator(updateCycleStatusSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
-    return updateCycleStatusForViewer(db, viewerContext, data.cycleId, data.status as CycleStatus)
+    return updateCycleStatusForViewer(
+      db,
+      viewerContext,
+      data.cycleId,
+      data.status
+    )
   })
 
 export const updateIssueLabels = createServerFn({ method: "POST" })
-  .inputValidator((data: { issueId: string; labelIds: string[] }) => data)
+  .inputValidator(updateIssueLabelsSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
-    return updateIssueLabelsForViewer(db, viewerContext, data.issueId, data.labelIds)
+    return updateIssueLabelsForViewer(
+      db,
+      viewerContext,
+      data.issueId,
+      data.labelIds
+    )
   })
 
 export const updateIssueTitle = createServerFn({ method: "POST" })
-  .inputValidator((data: { issueId: string; title: string }) => data)
+  .inputValidator(updateIssueTitleSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
-    return updateIssueTitleForViewer(db, viewerContext, data.issueId, data.title)
+    return updateIssueTitleForViewer(
+      db,
+      viewerContext,
+      data.issueId,
+      data.title
+    )
   })
 
 export const getTeamMembers = createServerFn({ method: "GET" })
-  .inputValidator((data: { teamId: string }) => data)
+  .inputValidator(teamIdSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     return listTeamMembersForViewer(db, viewerContext, data.teamId)
@@ -192,27 +254,22 @@ export const getLabels = createServerFn({ method: "GET" }).handler(async () => {
   return listLabelsForViewer(db, viewerContext)
 })
 
-export const getSavedViews = createServerFn({ method: "GET" }).handler(async () => {
-  const viewerContext = await getViewerContext()
-  return listSavedViewsForViewer(db, viewerContext)
-})
+export const getSavedViews = createServerFn({ method: "GET" }).handler(
+  async () => {
+    const viewerContext = await getViewerContext()
+    return listSavedViewsForViewer(db, viewerContext)
+  }
+)
 
 export const getSavedView = createServerFn({ method: "GET" })
-  .inputValidator((data: { viewId: string }) => data)
+  .inputValidator(viewIdSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     return getSavedViewForViewer(db, viewerContext, data.viewId)
   })
 
 export const createSavedView = createServerFn({ method: "POST" })
-  .inputValidator(
-    (data: {
-      teamId: string
-      name: string
-      presetFilter?: string
-      advancedFilters?: IssueQueryFilters["advancedFilters"]
-    }) => data
-  )
+  .inputValidator(createSavedViewSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     return createSavedViewForViewer(db, viewerContext, {
@@ -224,74 +281,75 @@ export const createSavedView = createServerFn({ method: "POST" })
   })
 
 export const updateSavedView = createServerFn({ method: "POST" })
-  .inputValidator(
-    (data: {
-      viewId: string
-      name?: string
-      presetFilter?: string | null
-      advancedFilters?: IssueQueryFilters["advancedFilters"] | null
-    }) => data
-  )
+  .inputValidator(updateSavedViewSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     return updateSavedViewForViewer(db, viewerContext, data.viewId, {
       name: data.name,
-      presetFilter: data.presetFilter as IssueQueryFilters["presetFilter"] | null | undefined,
+      presetFilter: data.presetFilter as
+        | IssueQueryFilters["presetFilter"]
+        | null
+        | undefined,
       advancedFilters: data.advancedFilters,
     })
   })
 
 export const deleteSavedView = createServerFn({ method: "POST" })
-  .inputValidator((data: { viewId: string }) => data)
+  .inputValidator(viewIdSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     return deleteSavedViewForViewer(db, viewerContext, data.viewId)
   })
 
 export const getIssueActivity = createServerFn({ method: "GET" })
-  .inputValidator((data: { issueId: string }) => data)
+  .inputValidator(issueIdSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     return listIssueActivityForViewer(db, viewerContext, data.issueId)
   })
 
 export const getIssueComments = createServerFn({ method: "GET" })
-  .inputValidator((data: { issueId: string }) => data)
+  .inputValidator(issueIdSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     return listIssueCommentsForViewer(db, viewerContext, data.issueId)
   })
 
 export const createIssueComment = createServerFn({ method: "POST" })
-  .inputValidator((data: { issueId: string; body: string }) => data)
+  .inputValidator(issueCommentSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
-    return createIssueCommentForViewer(db, viewerContext, data.issueId, data.body)
+    return createIssueCommentForViewer(
+      db,
+      viewerContext,
+      data.issueId,
+      data.body
+    )
   })
 
 export const archiveIssue = createServerFn({ method: "POST" })
-  .inputValidator((data: { issueId: string }) => data)
+  .inputValidator(issueIdSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     return archiveIssueForViewer(db, viewerContext, data.issueId)
   })
 
 export const deleteIssue = createServerFn({ method: "POST" })
-  .inputValidator((data: { issueId: string }) => data)
+  .inputValidator(issueIdSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     return deleteIssueForViewer(db, viewerContext, data.issueId)
   })
 
 export const toggleIssueFavorite = createServerFn({ method: "POST" })
-  .inputValidator((data: { issueId: string }) => data)
+  .inputValidator(issueIdSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     return toggleIssueFavoriteForViewer(db, viewerContext, data.issueId)
   })
 
 export const getIssueFavorite = createServerFn({ method: "GET" })
-  .inputValidator((data: { issueId: string }) => data)
+  .inputValidator(issueIdSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     return getIssueFavoriteForViewer(db, viewerContext, data.issueId)
@@ -301,19 +359,23 @@ export const getIssueFavorite = createServerFn({ method: "GET" })
 // Dashboard aggregation endpoints
 // ---------------------------------------------------------------------------
 
-export const getDashboardStats = createServerFn({ method: "GET" }).handler(async () => {
-  const viewerContext = await getViewerContext()
-  return getDashboardStatsForViewer(db, viewerContext)
-})
+export const getDashboardStats = createServerFn({ method: "GET" }).handler(
+  async () => {
+    const viewerContext = await getViewerContext()
+    return getDashboardStatsForViewer(db, viewerContext)
+  }
+)
 
 export const getMyIssues = createServerFn({ method: "GET" })
-  .inputValidator((data: { limit?: number }) => data)
+  .inputValidator(myIssuesSchema)
   .handler(async ({ data }) => {
     const viewerContext = await getViewerContext()
     return listMyIssuesAcrossTeams(db, viewerContext, data.limit)
   })
 
-export const getActiveCycles = createServerFn({ method: "GET" }).handler(async () => {
-  const viewerContext = await getViewerContext()
-  return listActiveCyclesAcrossTeams(db, viewerContext)
-})
+export const getActiveCycles = createServerFn({ method: "GET" }).handler(
+  async () => {
+    const viewerContext = await getViewerContext()
+    return listActiveCyclesAcrossTeams(db, viewerContext)
+  }
+)

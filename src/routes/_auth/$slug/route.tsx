@@ -2,10 +2,7 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router"
 
 export const Route = createFileRoute("/_auth/$slug")({
   beforeLoad: ({ context, params }) => {
-    if (!context.session.userId) {
-      throw redirect({ to: "/sign-in" })
-    }
-
+    // userId check is handled by parent _auth route
     if (context.session.orgSlug && context.session.orgSlug !== params.slug) {
       throw redirect({
         to: "/$slug/tickets",

@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   archiveIssue,
   createSavedView,
+  createCycle,
   createIssue,
   createIssueComment,
   deleteSavedView,
@@ -24,7 +25,12 @@ import {
   runFeedbackAnalysisInternal,
   updateFeedbackSuggestion,
 } from "@/server/functions/feedback"
-import type { IssueQueryFilters } from "@/components/tickets/types"
+import type {
+  IssueQueryFilters,
+  IssueStatus,
+  IssuePriority,
+  CycleStatus,
+} from "@/components/tickets/types"
 import {
   markAllNotificationsAsRead,
   markNotificationAsRead,
@@ -38,15 +44,41 @@ export function useCreateIssueMutation() {
       teamId: string
       title: string
       description?: string
-      status?: string
-      priority?: string
+      status?: IssueStatus
+      priority?: IssuePriority
       dueDate?: string | null
     }) => createIssue({ data: input }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["issues"], refetchType: "active" })
+      queryClient.invalidateQueries({
+        queryKey: ["issues"],
+        refetchType: "active",
+      })
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] })
       queryClient.invalidateQueries({ queryKey: ["my-issues"] })
+    },
+  })
+}
+
+export function useCreateCycleMutation(teamSlug?: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: {
+      teamId: string
+      name: string
+      startDate: string
+      endDate: string
+    }) => createCycle({ data: input }),
+    onSuccess: () => {
+      if (teamSlug) {
+        queryClient.invalidateQueries({ queryKey: ["cycles", teamSlug] })
+      }
+      queryClient.invalidateQueries({ queryKey: ["cycles"] })
+      queryClient.invalidateQueries({
+        queryKey: ["issues"],
+        refetchType: "active",
+      })
     },
   })
 }
@@ -75,7 +107,7 @@ export function useRunFeedbackAnalysisMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (input?: { workspaceId?: string; force?: boolean }) =>
+    mutationFn: (input?: { force?: boolean }) =>
       runFeedbackAnalysisInternal({ data: input }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["feedback-items"] })
@@ -115,7 +147,10 @@ export function useCreateIssueFromSuggestionMutation() {
     }) => createIssueFromSuggestion({ data: input }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["feedback-suggestions"] })
-      queryClient.invalidateQueries({ queryKey: ["issues"], refetchType: "active" })
+      queryClient.invalidateQueries({
+        queryKey: ["issues"],
+        refetchType: "active",
+      })
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] })
       queryClient.invalidateQueries({ queryKey: ["my-issues"] })
     },
@@ -139,22 +174,22 @@ export function useUpdateIssueStatusMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (input: { issueId: string; status: string }) =>
+    mutationFn: (input: { issueId: string; status: IssueStatus }) =>
       updateIssueStatus({ data: input }),
     onMutate: async (variables) => {
       await queryClient.cancelQueries({ queryKey: ["issues"] })
 
-      const previousQueries = queryClient.getQueriesData<unknown[]>({ queryKey: ["issues"] })
+      const previousQueries = queryClient.getQueriesData<unknown[]>({
+        queryKey: ["issues"],
+      })
 
-      queryClient.setQueriesData<unknown[]>(
-        { queryKey: ["issues"] },
-        (old) =>
-          old?.map((issue) => {
-            const i = issue as Record<string, unknown>
-            return i.id === variables.issueId
-              ? { ...i, status: variables.status }
-              : issue
-          }),
+      queryClient.setQueriesData<unknown[]>({ queryKey: ["issues"] }, (old) =>
+        old?.map((issue) => {
+          const i = issue as Record<string, unknown>
+          return i.id === variables.issueId
+            ? { ...i, status: variables.status }
+            : issue
+        })
       )
 
       return { previousQueries }
@@ -167,9 +202,14 @@ export function useUpdateIssueStatusMutation() {
       }
     },
     onSettled: (_data, _error, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["issues"], refetchType: "active" })
+      queryClient.invalidateQueries({
+        queryKey: ["issues"],
+        refetchType: "active",
+      })
       queryClient.invalidateQueries({ queryKey: ["issue", variables.issueId] })
-      queryClient.invalidateQueries({ queryKey: ["issue-activity", variables.issueId] })
+      queryClient.invalidateQueries({
+        queryKey: ["issue-activity", variables.issueId],
+      })
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] })
     },
@@ -180,12 +220,17 @@ export function useUpdateIssuePriorityMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (input: { issueId: string; priority: string }) =>
+    mutationFn: (input: { issueId: string; priority: IssuePriority }) =>
       updateIssuePriority({ data: input }),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["issues"], refetchType: "active" })
+      queryClient.invalidateQueries({
+        queryKey: ["issues"],
+        refetchType: "active",
+      })
       queryClient.invalidateQueries({ queryKey: ["issue", variables.issueId] })
-      queryClient.invalidateQueries({ queryKey: ["issue-activity", variables.issueId] })
+      queryClient.invalidateQueries({
+        queryKey: ["issue-activity", variables.issueId],
+      })
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
     },
   })
@@ -198,9 +243,14 @@ export function useUpdateIssueAssigneeMutation() {
     mutationFn: (input: { issueId: string; assigneeUserId: string | null }) =>
       updateIssueAssignee({ data: input }),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["issues"], refetchType: "active" })
+      queryClient.invalidateQueries({
+        queryKey: ["issues"],
+        refetchType: "active",
+      })
       queryClient.invalidateQueries({ queryKey: ["issue", variables.issueId] })
-      queryClient.invalidateQueries({ queryKey: ["issue-activity", variables.issueId] })
+      queryClient.invalidateQueries({
+        queryKey: ["issue-activity", variables.issueId],
+      })
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
       queryClient.invalidateQueries({ queryKey: ["my-issues"] })
     },
@@ -214,9 +264,14 @@ export function useUpdateIssueCycleMutation() {
     mutationFn: (input: { issueId: string; cycleId: string | null }) =>
       updateIssueCycle({ data: input }),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["issues"], refetchType: "active" })
+      queryClient.invalidateQueries({
+        queryKey: ["issues"],
+        refetchType: "active",
+      })
       queryClient.invalidateQueries({ queryKey: ["issue", variables.issueId] })
-      queryClient.invalidateQueries({ queryKey: ["issue-activity", variables.issueId] })
+      queryClient.invalidateQueries({
+        queryKey: ["issue-activity", variables.issueId],
+      })
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
     },
   })
@@ -229,7 +284,10 @@ export function useUpdateIssueDueDateMutation() {
     mutationFn: (input: { issueId: string; dueDate: string | null }) =>
       updateIssueDueDate({ data: input }),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["issues"], refetchType: "active" })
+      queryClient.invalidateQueries({
+        queryKey: ["issues"],
+        refetchType: "active",
+      })
       queryClient.invalidateQueries({ queryKey: ["issue", variables.issueId] })
     },
   })
@@ -242,9 +300,14 @@ export function useUpdateIssueLabelsMutation() {
     mutationFn: (input: { issueId: string; labelIds: string[] }) =>
       updateIssueLabels({ data: input }),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["issues"], refetchType: "active" })
+      queryClient.invalidateQueries({
+        queryKey: ["issues"],
+        refetchType: "active",
+      })
       queryClient.invalidateQueries({ queryKey: ["issue", variables.issueId] })
-      queryClient.invalidateQueries({ queryKey: ["issue-activity", variables.issueId] })
+      queryClient.invalidateQueries({
+        queryKey: ["issue-activity", variables.issueId],
+      })
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
     },
   })
@@ -257,7 +320,10 @@ export function useUpdateIssueTitleMutation() {
     mutationFn: (input: { issueId: string; title: string }) =>
       updateIssueTitle({ data: input }),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["issues"], refetchType: "active" })
+      queryClient.invalidateQueries({
+        queryKey: ["issues"],
+        refetchType: "active",
+      })
       queryClient.invalidateQueries({ queryKey: ["issue", variables.issueId] })
     },
   })
@@ -270,8 +336,12 @@ export function useCreateIssueCommentMutation() {
     mutationFn: (input: { issueId: string; body: string }) =>
       createIssueComment({ data: input }),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["issue-comments", variables.issueId] })
-      queryClient.invalidateQueries({ queryKey: ["issue-activity", variables.issueId] })
+      queryClient.invalidateQueries({
+        queryKey: ["issue-comments", variables.issueId],
+      })
+      queryClient.invalidateQueries({
+        queryKey: ["issue-activity", variables.issueId],
+      })
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
     },
   })
@@ -281,7 +351,7 @@ export function useUpdateCycleStatusMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (input: { cycleId: string; status: string }) =>
+    mutationFn: (input: { cycleId: string; status: CycleStatus }) =>
       updateCycleStatus({ data: input }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cycles"] })
@@ -295,10 +365,12 @@ export function useArchiveIssueMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (input: { issueId: string }) =>
-      archiveIssue({ data: input }),
+    mutationFn: (input: { issueId: string }) => archiveIssue({ data: input }),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["issues"], refetchType: "active" })
+      queryClient.invalidateQueries({
+        queryKey: ["issues"],
+        refetchType: "active",
+      })
       queryClient.invalidateQueries({ queryKey: ["issue", variables.issueId] })
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
     },
@@ -309,10 +381,12 @@ export function useDeleteIssueMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (input: { issueId: string }) =>
-      deleteIssue({ data: input }),
+    mutationFn: (input: { issueId: string }) => deleteIssue({ data: input }),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["issues"], refetchType: "active" })
+      queryClient.invalidateQueries({
+        queryKey: ["issues"],
+        refetchType: "active",
+      })
       queryClient.invalidateQueries({ queryKey: ["issue", variables.issueId] })
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
     },
@@ -326,20 +400,33 @@ export function useToggleIssueFavoriteMutation() {
     mutationFn: (input: { issueId: string }) =>
       toggleIssueFavorite({ data: input }),
     onMutate: async (variables) => {
-      await queryClient.cancelQueries({ queryKey: ["issue-favorite", variables.issueId] })
-      const previous = queryClient.getQueryData<{ favorited: boolean }>(["issue-favorite", variables.issueId])
-      queryClient.setQueryData(["issue-favorite", variables.issueId], (old: { favorited: boolean } | undefined) => ({
-        favorited: !(old?.favorited ?? false),
-      }))
+      await queryClient.cancelQueries({
+        queryKey: ["issue-favorite", variables.issueId],
+      })
+      const previous = queryClient.getQueryData<{ favorited: boolean }>([
+        "issue-favorite",
+        variables.issueId,
+      ])
+      queryClient.setQueryData(
+        ["issue-favorite", variables.issueId],
+        (old: { favorited: boolean } | undefined) => ({
+          favorited: !(old?.favorited ?? false),
+        })
+      )
       return { previous }
     },
     onError: (_error, variables, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(["issue-favorite", variables.issueId], context.previous)
+        queryClient.setQueryData(
+          ["issue-favorite", variables.issueId],
+          context.previous
+        )
       }
     },
     onSettled: (_data, _error, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["issue-favorite", variables.issueId] })
+      queryClient.invalidateQueries({
+        queryKey: ["issue-favorite", variables.issueId],
+      })
     },
   })
 }

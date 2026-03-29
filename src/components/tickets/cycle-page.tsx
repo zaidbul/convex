@@ -1,10 +1,12 @@
+import { useState } from "react"
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
-import { useNavigate } from "@tanstack/react-router"
+import { useNavigate, useParams } from "@tanstack/react-router"
 import { CalendarRange, RefreshCw, Target } from "lucide-react"
 import {
   getFilterPillSelection,
   serializeIssueQueryFilters,
 } from "@/components/tickets/filter-state"
+import { CreateCycleDialog } from "@/components/tickets/create-cycle-dialog"
 import { IssueRow } from "@/components/tickets/issue-row"
 import { TicketHeader } from "@/components/tickets/ticket-header"
 import { Button } from "@/components/ui/button"
@@ -41,13 +43,15 @@ type CyclePageProps = {
 
 export function CyclePage({ teamSlug, filters, viewKind }: CyclePageProps) {
   const navigate = useNavigate()
+  const { slug } = useParams({ strict: false })
+  const [createCycleOpen, setCreateCycleOpen] = useState(false)
   const { data: team } = useSuspenseQuery(teamQueryOptions(teamSlug))
   const { data: cycles } = useSuspenseQuery(cyclesQueryOptions(teamSlug))
   const { data: filteredIssues } = useSuspenseQuery(
-    issuesQueryOptions(teamSlug, filters),
+    issuesQueryOptions(teamSlug, filters)
   )
   const { data: allIssues = [] } = useQuery(
-    issuesQueryOptions(teamSlug, { presetFilter: "all" }),
+    issuesQueryOptions(teamSlug, { presetFilter: "all" })
   )
   const cycle = getCycleForView(cycles, viewKind)
   const allCycleIssues = cycle ? getIssuesForCycle(allIssues, cycle.id) : []
@@ -61,24 +65,25 @@ export function CyclePage({ teamSlug, filters, viewKind }: CyclePageProps) {
         advancedFilters={filters.advancedFilters}
         onFilterChange={(presetFilter) =>
           navigate({
-            search: () =>
-              serializeIssueQueryFilters(
-                { presetFilter },
-                { omitActivePreset: true },
-              ),
-          } as unknown as Parameters<typeof navigate>[0])
+            to: ".",
+            search: serializeIssueQueryFilters(
+              { presetFilter },
+              { omitActivePreset: true }
+            ),
+          })
         }
         onAdvancedFiltersChange={(advancedFilters) =>
           navigate({
-            search: () =>
-              serializeIssueQueryFilters(
-                advancedFilters
-                  ? { advancedFilters }
-                  : { presetFilter: "active" },
-                { omitActivePreset: true },
-              ),
-          } as unknown as Parameters<typeof navigate>[0])
+            to: ".",
+            search: serializeIssueQueryFilters(
+              advancedFilters
+                ? { advancedFilters }
+                : { presetFilter: "active" },
+              { omitActivePreset: true }
+            ),
+          })
         }
+        onCreateCycle={() => setCreateCycleOpen(true)}
       />
       <CyclePageBody
         team={team}
@@ -88,6 +93,22 @@ export function CyclePage({ teamSlug, filters, viewKind }: CyclePageProps) {
         allCycleIssues={allCycleIssues}
         visibleIssues={visibleIssues}
         filters={filters}
+        onCreateCycle={() => setCreateCycleOpen(true)}
+      />
+      <CreateCycleDialog
+        open={createCycleOpen}
+        onOpenChange={setCreateCycleOpen}
+        teamId={team.id}
+        teamSlug={teamSlug}
+        teamName={team.name}
+        onSuccess={() => {
+          if (viewKind === "current" && slug) {
+            navigate({
+              to: "/$slug/tickets/$teamSlug/cycles/upcoming",
+              params: { slug, teamSlug },
+            })
+          }
+        }}
       />
     </div>
   )
@@ -101,6 +122,7 @@ export function CyclePageBody({
   allCycleIssues,
   visibleIssues,
   filters,
+  onCreateCycle,
 }: {
   team: Team
   teamSlug: string
@@ -109,9 +131,11 @@ export function CyclePageBody({
   allCycleIssues: Issue[]
   visibleIssues: Issue[]
   filters: IssueQueryFilters
+  onCreateCycle: () => void
 }) {
   if (!cycle) {
-    const title = viewKind === "current" ? "No current cycle" : "No upcoming cycle"
+    const title =
+      viewKind === "current" ? "No current cycle" : "No upcoming cycle"
     const description =
       viewKind === "current"
         ? "This team does not have an active cycle yet. Start an upcoming cycle to see work here."
@@ -127,6 +151,9 @@ export function CyclePageBody({
             <EmptyTitle>{title}</EmptyTitle>
             <EmptyDescription>{description}</EmptyDescription>
           </EmptyHeader>
+          <Button variant="outline" className="mt-6" onClick={onCreateCycle}>
+            Create upcoming cycle
+          </Button>
         </Empty>
       </div>
     )
@@ -142,7 +169,7 @@ export function CyclePageBody({
           <div className="flex flex-col gap-5">
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div className="min-w-0 space-y-2">
-                <div className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                <div className="text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase">
                   {team.name}
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
@@ -189,7 +216,10 @@ export function CyclePageBody({
                     {progress.completed}/{progress.total}
                   </span>
                 </div>
-                <Progress value={progress.percentage} aria-label="Cycle progress" />
+                <Progress
+                  value={progress.percentage}
+                  aria-label="Cycle progress"
+                />
                 <div className="mt-3 text-xs text-muted-foreground">
                   {progress.percentage}% complete
                 </div>
@@ -250,7 +280,7 @@ export function CyclePageBody({
 function CycleStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-outline-variant/10 bg-surface-container/40 p-4">
-      <div className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+      <div className="text-xs tracking-[0.16em] text-muted-foreground uppercase">
         {label}
       </div>
       <div className="mt-2 text-2xl font-medium tracking-tight text-foreground tabular-nums">

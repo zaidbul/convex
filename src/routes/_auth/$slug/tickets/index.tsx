@@ -41,22 +41,10 @@ export const Route = createFileRoute("/_auth/$slug/tickets/")({
           : undefined,
   }),
   loader: async ({ context, location }) => {
-    const rawSearch =
-      (typeof location.search === "object" && location.search
-        ? location.search
-        : {}) as Record<string, unknown>
-    const scope = rawSearch.scope === "unread" ? "unread" : "all"
-    const type =
-      typeof rawSearch.type === "string" &&
-      ["assignment", "status", "comment", "mention", "cycle"].includes(rawSearch.type)
-        ? (rawSearch.type as "assignment" | "status" | "comment" | "mention" | "cycle")
-        : "all"
-    const page =
-      typeof rawSearch.page === "number"
-        ? Math.max(1, rawSearch.page)
-        : typeof rawSearch.page === "string"
-          ? Math.max(1, Number.parseInt(rawSearch.page, 10) || 1)
-          : 1
+    const search = location.search as InboxSearch
+    const scope = search.scope ?? "all"
+    const type = search.type ?? "all"
+    const page = search.page ?? 1
 
     await context.queryClient.ensureQueryData(
       notificationsQueryOptions({

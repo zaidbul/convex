@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import type { DragEndEvent } from "@dnd-kit/core"
 import {
   Empty,
@@ -27,11 +27,9 @@ export function IssueBoard({
 }) {
   const [columns, setColumns] = useState(() => groupIssuesByStatus(issues))
   const updateStatus = useUpdateIssueStatusMutation()
-  const issuesRef = useRef(issues)
 
   // Sync local state when server data changes
   useEffect(() => {
-    issuesRef.current = issues
     setColumns(groupIssuesByStatus(issues))
   }, [issues])
 

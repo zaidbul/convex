@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
   $createParagraphNode,
   $getNodeByKey,
@@ -31,7 +30,7 @@ import { mergeRegister } from "@lexical/utils";
 import { Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type BaseSerializedImageNode = {
+export type SerializedImageNode = SerializedLexicalNode & {
   altText: string;
   caption?: string | null;
   height?: number | null;
@@ -40,10 +39,6 @@ type BaseSerializedImageNode = {
   type: "image";
   version: 1;
   width?: number | null;
-} & SerializedLexicalNode;
-
-export type SerializedImageNode = BaseSerializedImageNode & {
-  caption?: string | null;
 };
 
 export type ImagePayload = {
@@ -120,7 +115,7 @@ function ImageComponent({
   );
 }
 
-export class ImageNode extends DecoratorNode<JSX.Element> {
+export class ImageNode extends DecoratorNode<React.JSX.Element> {
   __src: string;
   __altText: string;
   __width: number | null | undefined;
@@ -135,28 +130,22 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
   static override clone(node: ImageNode): ImageNode {
     return new ImageNode(node.__src, {
       altText: node.__altText,
-      caption: node.__caption ?? undefined,
-      height: node.__height ?? undefined,
-      width: node.__width ?? undefined,
+      caption: node.__caption,
+      height: node.__height,
+      width: node.__width,
       maxWidth: node.__maxWidth,
       key: node.__key,
     });
   }
 
   static override importJSON(json: SerializedImageNode): ImageNode {
-    const node = new ImageNode(json.src, {
+    return new ImageNode(json.src, {
       altText: json.altText,
-      caption: json.caption ?? undefined,
-      height: json.height ?? undefined,
+      caption: json.caption,
+      height: json.height,
       maxWidth: json.maxWidth ?? DEFAULT_MAX_WIDTH,
-      width: json.width ?? undefined,
+      width: json.width,
     });
-    node.setFormat(json.format);
-    node.setDetail(json.detail);
-    node.setMode(json.mode);
-    node.setStyle(json.style);
-    node.setIndent(json.indent);
-    return node;
   }
 
   static override importDOM(): DOMConversionMap | null {
@@ -168,7 +157,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     };
   }
 
-  constructor(src: string, payload: ImagePayload = {}, key?: NodeKey) {
+  constructor(src: string, payload: Omit<ImagePayload, "src"> = {}, key?: NodeKey) {
     const { altText = "", width, height, caption, maxWidth = DEFAULT_MAX_WIDTH } = payload;
     super(key ?? payload.key);
     this.__src = src;
@@ -246,7 +235,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     return false;
   }
 
-  override decorate(_editor: LexicalEditor, _config: EditorConfig): JSX.Element {
+  override decorate(_editor: LexicalEditor, _config: EditorConfig): React.JSX.Element {
     return (
       <ImageNodeView
         altText={this.__altText}
@@ -292,7 +281,7 @@ function ImageNodeView({
   width?: number | null;
   nodeKey: NodeKey;
   editor: LexicalEditor;
-}): JSX.Element {
+}): React.JSX.Element {
   const [isSelected, setSelected, clearSelection] = useLexicalNodeSelection(nodeKey);
 
   const removeNodeAndMoveCaret = React.useCallback(() => {
