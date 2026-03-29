@@ -10,6 +10,7 @@ import { TanStackDevtools } from "@tanstack/react-devtools"
 import { ClerkProvider } from "@clerk/tanstack-react-start"
 import { ThemeProvider } from "next-themes"
 import { QueryClientProvider, type QueryClient } from "@tanstack/react-query"
+import { Button } from "@/components/ui/button"
 import { Toaster } from "@/components/ui/sonner"
 import { sessionQuery } from "@/query/options/session"
 
@@ -116,12 +117,9 @@ function RootNotFoundComponent() {
         <p className="mt-2 text-sm text-muted-foreground">
           The page you're looking for doesn't exist or has been moved.
         </p>
-        <a
-          href="/"
-          className="mt-5 inline-flex h-10 items-center justify-center rounded-lg bg-foreground px-4 text-sm font-medium text-background"
-        >
+        <Button className="mt-5" render={<a href="/" />}>
           Go home
-        </a>
+        </Button>
       </div>
     </div>
   )
@@ -150,13 +148,9 @@ function RootErrorComponent({ error, reset }: ErrorComponentProps) {
             <code>{message}</code>
           </pre>
         ) : null}
-        <button
-          type="button"
-          onClick={reset}
-          className="mt-5 inline-flex h-10 items-center justify-center rounded-lg bg-foreground px-4 text-sm font-medium text-background"
-        >
+        <Button type="button" className="mt-5" onClick={reset}>
           Try again
-        </button>
+        </Button>
       </div>
     </div>
   )

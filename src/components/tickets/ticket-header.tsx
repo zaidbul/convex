@@ -1,5 +1,6 @@
 import {
   Bell,
+  List,
   SlidersHorizontal,
   LayoutGrid,
   PanelRight,
@@ -25,8 +26,10 @@ import {
   recentNotificationsQueryOptions,
   unreadNotificationCountQueryOptions,
 } from "@/query/options/tickets"
+import { cn } from "@/lib/utils"
 import { AdvancedFiltersSheet } from "./advanced-filters-sheet"
 import { FilterPills } from "./filter-pills"
+import type { ViewMode } from "./filter-state"
 import type {
   IssueAdvancedFilters,
   IssueFilter,
@@ -38,8 +41,10 @@ export function TicketHeader({
   activeFilter,
   advancedFilters,
   savedViewName,
+  viewMode = "list",
   onFilterChange,
   onAdvancedFiltersChange,
+  onViewModeChange,
   onSaveView,
   onUpdateView,
 }: {
@@ -47,8 +52,10 @@ export function TicketHeader({
   activeFilter?: IssueFilter
   advancedFilters?: IssueAdvancedFilters
   savedViewName?: string
+  viewMode?: ViewMode
   onFilterChange?: (filter: IssueFilter) => void
   onAdvancedFiltersChange?: (filters?: IssueAdvancedFilters) => void
+  onViewModeChange?: (mode: ViewMode) => void
   onSaveView?: () => void
   onUpdateView?: () => void
 }) {
@@ -140,7 +147,22 @@ export function TicketHeader({
           >
             <SlidersHorizontal className="size-3.5 text-on-surface-variant" strokeWidth={1.5} />
           </Button>
-          <Button variant="ghost" size="icon" className="size-7" disabled title="Coming soon">
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn("size-7", viewMode === "list" && "bg-surface-high")}
+            onClick={() => onViewModeChange?.("list")}
+            title="List view"
+          >
+            <List className="size-3.5 text-on-surface-variant" strokeWidth={1.5} />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn("size-7", viewMode === "board" && "bg-surface-high")}
+            onClick={() => onViewModeChange?.("board")}
+            title="Board view"
+          >
             <LayoutGrid className="size-3.5 text-on-surface-variant" strokeWidth={1.5} />
           </Button>
           <Button variant="ghost" size="icon" className="size-7" disabled title="Coming soon">

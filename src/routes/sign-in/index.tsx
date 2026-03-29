@@ -9,7 +9,9 @@ import { createServerFn } from "@tanstack/react-start"
 import { auth } from "@clerk/tanstack-react-start/server"
 import { useSignIn, useAuth } from "@clerk/tanstack-react-start"
 import { useForm } from "@tanstack/react-form"
+import { ChevronLeft } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 
 const fetchAuthForRedirect = createServerFn({ method: "GET" }).handler(
@@ -378,9 +380,9 @@ function SignInPage() {
                 <form.Field name="email">
                   {(field) => (
                     <div className="w-full">
-                      <label className="block text-sm font-medium text-foreground mb-2">
+                      <Label className="mb-2">
                         Email
-                      </label>
+                      </Label>
                       <Input
                         type="email"
                         placeholder="Email"
@@ -401,36 +403,26 @@ function SignInPage() {
 
             {step === "password" && (
               <div className="space-y-4">
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1 px-0 text-muted-foreground hover:text-foreground"
                   onClick={() => {
                     setStep("email")
                     setClerkError(null)
                   }}
-                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="m15 18-6-6 6-6" />
-                  </svg>
+                  <ChevronLeft className="size-4" />
                   {form.state.values.email}
-                </button>
+                </Button>
 
                 <form.Field name="password">
                   {(field) => (
                     <div className="w-full">
-                      <label className="block text-sm font-medium text-foreground mb-2">
+                      <Label className="mb-2">
                         Password
-                      </label>
+                      </Label>
                       <Input
                         type="password"
                         placeholder="Password"
@@ -451,14 +443,15 @@ function SignInPage() {
                   {isSubmitting ? "Signing in..." : "Log in"}
                 </Button>
 
-                <button
+                <Button
                   type="button"
+                  variant="link"
+                  className="w-full text-muted-foreground hover:text-foreground"
                   onClick={handleForgotPassword}
                   disabled={isSubmitting}
-                  className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Forgot password?
-                </button>
+                </Button>
               </div>
             )}
 
@@ -500,17 +493,18 @@ function SignInPage() {
                   {isSubmitting ? "Verifying..." : "Verify code"}
                 </Button>
 
-                <button
+                <Button
                   type="button"
+                  variant="link"
+                  className="w-full text-muted-foreground hover:text-foreground"
                   onClick={() => {
                     setStep("password")
                     setClerkError(null)
                     setResetCode("")
                   }}
-                  className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Back to sign in
-                </button>
+                </Button>
               </div>
             )}
 

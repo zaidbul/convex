@@ -68,18 +68,11 @@ function NotificationRow({
   })
 
   return (
-    <div
-      role="button"
-      tabIndex={0}
+    <button
+      type="button"
       onClick={() => onSelect(notification)}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault()
-          onSelect(notification)
-        }
-      }}
       className={cn(
-        "flex items-start gap-3 rounded-xl border border-outline-variant/10 bg-surface px-3 py-3 text-left transition-colors hover:bg-accent/35",
+        "flex w-full items-start gap-3 rounded-xl border border-outline-variant/10 bg-surface px-3 py-3 text-left transition-colors hover:bg-accent/35",
         !notification.readAt && "border-primary/20 bg-primary/5",
         compact && "rounded-lg px-3 py-2.5",
       )}
@@ -145,7 +138,7 @@ function NotificationRow({
           <CheckCircle2 className="size-4" />
         </Button>
       )}
-    </div>
+    </button>
   )
 }
 

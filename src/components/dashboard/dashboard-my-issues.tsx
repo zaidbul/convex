@@ -17,7 +17,7 @@ export function DashboardMyIssues({ issues, slug }: DashboardMyIssuesProps) {
     <Card className="border-outline-variant/10">
       <CardHeader className="flex-row items-center justify-between pb-3">
         <CardTitle className="text-sm font-medium">Assigned to Me</CardTitle>
-        <Badge variant="secondary" className="rounded-full text-[10px]">
+        <Badge variant="outline" className="rounded-full text-[10px]">
           {issues.length}
         </Badge>
       </CardHeader>

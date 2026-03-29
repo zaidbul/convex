@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { useSuspenseQuery } from "@tanstack/react-query"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { workspaceQueryOptions } from "@/query/options/tickets"
 
@@ -22,27 +24,29 @@ function SettingsPage() {
 
       <div className="flex-1 overflow-y-auto p-6">
         <div className="mx-auto max-w-2xl space-y-6">
-          <div className="rounded-lg border border-outline-variant/20 bg-surface p-6">
-            <h2 className="text-sm font-medium text-on-surface">Workspace</h2>
-            <div className="mt-4 space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Workspace</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div>
-                <label className="text-xs font-medium text-on-surface-variant">
+                <Label className="text-xs text-on-surface-variant">
                   Name
-                </label>
+                </Label>
                 <p className="mt-1 text-sm text-on-surface">
                   {workspace?.name ?? "—"}
                 </p>
               </div>
               <div>
-                <label className="text-xs font-medium text-on-surface-variant">
+                <Label className="text-xs text-on-surface-variant">
                   Slug
-                </label>
+                </Label>
                 <p className="mt-1 text-sm text-on-surface-variant">
                   /{slug}
                 </p>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

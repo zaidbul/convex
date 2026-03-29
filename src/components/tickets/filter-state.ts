@@ -7,6 +7,8 @@ import type {
   IssueStatus,
 } from "./types"
 
+export type ViewMode = "list" | "board"
+
 export type TicketRouteSearch = {
   filter?: string
   logic?: string
@@ -17,6 +19,7 @@ export type TicketRouteSearch = {
   cycleIds?: string
   dueFrom?: string
   dueTo?: string
+  view?: string
 }
 
 const issueFilters = new Set<IssueFilter>([
@@ -67,6 +70,8 @@ export function normalizeTicketRouteSearch(
   const readString = (value: unknown) =>
     typeof value === "string" && value.trim().length > 0 ? value.trim() : undefined
 
+  const view = readString(search.view)
+
   return {
     filter: readString(search.filter),
     logic: readString(search.logic),
@@ -77,6 +82,7 @@ export function normalizeTicketRouteSearch(
     cycleIds: readString(search.cycleIds),
     dueFrom: normalizeDate(readString(search.dueFrom)),
     dueTo: normalizeDate(readString(search.dueTo)),
+    view: view === "board" ? "board" : undefined,
   }
 }
 
@@ -171,4 +177,8 @@ export function emptyAdvancedFilters(
     labelIds: [],
     cycleIds: [],
   }
+}
+
+export function getViewMode(search: TicketRouteSearch): ViewMode {
+  return search.view === "board" ? "board" : "list"
 }

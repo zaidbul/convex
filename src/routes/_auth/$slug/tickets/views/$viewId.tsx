@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   Dialog,
   DialogContent,
@@ -12,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { TeamIssuesScreen } from "@/components/tickets/team-issues-screen"
+import type { ViewMode } from "@/components/tickets/filter-state"
 import type { IssueQueryFilters } from "@/components/tickets/types"
 import {
   useCreateSavedViewMutation,
@@ -37,6 +39,7 @@ function SavedViewPage() {
     advancedFilters: savedView?.advancedFilters,
   }))
 
+  const [viewMode, setViewMode] = useState<ViewMode>("list")
   const [saveAsDialogOpen, setSaveAsDialogOpen] = useState(false)
   const [saveAsName, setSaveAsName] = useState("")
 
@@ -101,10 +104,12 @@ function SavedViewPage() {
         teamSlug={savedView.teamSlug}
         filters={filters}
         savedViewName={savedView.name}
+        viewMode={viewMode}
         onPresetChange={(presetFilter) => setFilters({ presetFilter })}
         onAdvancedFiltersChange={(advancedFilters) =>
           setFilters(advancedFilters ? { advancedFilters } : { presetFilter: "active" })
         }
+        onViewModeChange={setViewMode}
         onSaveView={handleSaveAsNew}
         onUpdateView={handleUpdateView}
       />
@@ -121,12 +126,12 @@ function SavedViewPage() {
               handleSaveAsSubmit()
             }}
           >
-            <input
+            <Input
               autoFocus
               type="text"
               value={saveAsName}
               onChange={(e) => setSaveAsName(e.target.value)}
-              className="w-full rounded-lg border border-outline-variant/20 bg-surface px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+              className="rounded-lg"
             />
             <DialogFooter className="mt-4">
               <Button

@@ -95,15 +95,12 @@ function NotificationsInboxPage() {
 
   return (
     <div className="flex h-screen flex-col bg-surface-low">
-      <div className="border-b border-outline-variant/10 px-6 py-5">
-        <div className="flex items-center gap-3">
-          <div className="rounded-2xl bg-primary/10 p-3 text-primary">
-            <Bell className="size-5" strokeWidth={1.75} />
-          </div>
-          <div className="min-w-0 flex-1">
+      <div className="border-b border-outline-variant/15 px-6 py-5">
+        <div className="flex items-center justify-between">
+          <div>
             <h1 className="text-lg font-semibold text-foreground">Inbox</h1>
-            <p className="text-sm text-muted-foreground">
-              Notifications for assignments, mentions, comments, status changes, and cycles.
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Assignments, mentions, comments, and status changes.
             </p>
           </div>
           <Button
@@ -157,7 +154,7 @@ function NotificationsInboxPage() {
         </div>
 
         {total === 0 ? (
-          <Empty className="border-outline-variant/20 bg-surface px-8 py-12">
+          <Empty className="max-w-xl border-outline-variant/20 bg-surface px-8 py-12">
             <EmptyHeader>
               <EmptyMedia variant="icon">
                 <Bell />

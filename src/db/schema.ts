@@ -443,27 +443,6 @@ export const notifications = sqliteTable(
   })
 )
 
-export const notes = sqliteTable(
-  "notes",
-  {
-    id: text("id").primaryKey(),
-    workspaceId: text("workspace_id")
-      .notNull()
-      .references(() => workspaces.id, { onDelete: "cascade" }),
-    authorUserId: text("author_user_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "restrict" }),
-    title: text("title").notNull().default(""),
-    content: text("content"),
-    createdAt: text("created_at").notNull(),
-    updatedAt: text("updated_at").notNull(),
-  },
-  (table) => ({
-    workspaceIdIdx: index("notes_workspace_id_idx").on(table.workspaceId),
-    authorUserIdIdx: index("notes_author_user_id_idx").on(table.authorUserId),
-  })
-)
-
 export const feedbackImports = sqliteTable(
   "feedback_imports",
   {
@@ -682,7 +661,6 @@ export type IssueFavorite = typeof issueFavorites.$inferSelect
 export type IssueComment = typeof issueComments.$inferSelect
 export type IssueActivity = typeof issueActivity.$inferSelect
 export type Notification = typeof notifications.$inferSelect
-export type Note = typeof notes.$inferSelect
 export type FeedbackImport = typeof feedbackImports.$inferSelect
 export type FeedbackItem = typeof feedbackItems.$inferSelect
 export type FeedbackCluster = typeof feedbackClusters.$inferSelect

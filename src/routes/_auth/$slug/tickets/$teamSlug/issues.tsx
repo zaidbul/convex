@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   Dialog,
   DialogContent,
@@ -12,9 +13,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import {
+  getViewMode,
   normalizeTicketRouteSearch,
   parseIssueQueryFilters,
   serializeIssueQueryFilters,
+  type ViewMode,
 } from "@/components/tickets/filter-state"
 import { TeamIssuesScreen } from "@/components/tickets/team-issues-screen"
 import { useCreateSavedViewMutation } from "@/query/mutations/tickets"
@@ -34,14 +37,25 @@ function IssuesPage() {
   const { data: team } = useSuspenseQuery(teamQueryOptions(teamSlug))
   const createSavedView = useCreateSavedViewMutation()
   const filters = parseIssueQueryFilters(search, { defaultPresetFilter: "active" })
+  const viewMode = getViewMode(search)
 
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
   const [saveViewName, setSaveViewName] = useState("")
 
   const updateSearch = (nextFilters: typeof filters) =>
     navigate({
-      search: () =>
-        serializeIssueQueryFilters(nextFilters, { omitActivePreset: true }),
+      search: () => ({
+        ...serializeIssueQueryFilters(nextFilters, { omitActivePreset: true }),
+        view: viewMode === "board" ? "board" : undefined,
+      }),
+    } as unknown as Parameters<typeof navigate>[0])
+
+  const handleViewModeChange = (mode: ViewMode) =>
+    navigate({
+      search: (prev: Record<string, unknown>) => ({
+        ...prev,
+        view: mode === "board" ? "board" : undefined,
+      }),
     } as unknown as Parameters<typeof navigate>[0])
 
   const handleSaveView = () => {
@@ -79,10 +93,12 @@ function IssuesPage() {
       <TeamIssuesScreen
         teamSlug={teamSlug}
         filters={filters}
+        viewMode={viewMode}
         onPresetChange={(presetFilter) => updateSearch({ presetFilter })}
         onAdvancedFiltersChange={(advancedFilters) =>
           updateSearch(advancedFilters ? { advancedFilters } : { presetFilter: "active" })
         }
+        onViewModeChange={handleViewModeChange}
         onSaveView={handleSaveView}
       />
 
@@ -100,13 +116,13 @@ function IssuesPage() {
               handleSaveSubmit()
             }}
           >
-            <input
+            <Input
               autoFocus
               type="text"
               value={saveViewName}
               onChange={(e) => setSaveViewName(e.target.value)}
               placeholder="View name"
-              className="w-full rounded-lg border border-outline-variant/20 bg-surface px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+              className="rounded-lg"
             />
             <DialogFooter className="mt-4">
               <Button

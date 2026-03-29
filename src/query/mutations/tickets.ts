@@ -141,7 +141,32 @@ export function useUpdateIssueStatusMutation() {
   return useMutation({
     mutationFn: (input: { issueId: string; status: string }) =>
       updateIssueStatus({ data: input }),
-    onSuccess: (_data, variables) => {
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: ["issues"] })
+
+      const previousQueries = queryClient.getQueriesData<unknown[]>({ queryKey: ["issues"] })
+
+      queryClient.setQueriesData<unknown[]>(
+        { queryKey: ["issues"] },
+        (old) =>
+          old?.map((issue) => {
+            const i = issue as Record<string, unknown>
+            return i.id === variables.issueId
+              ? { ...i, status: variables.status }
+              : issue
+          }),
+      )
+
+      return { previousQueries }
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousQueries) {
+        for (const [queryKey, data] of context.previousQueries) {
+          queryClient.setQueryData(queryKey, data)
+        }
+      }
+    },
+    onSettled: (_data, _error, variables) => {
       queryClient.invalidateQueries({ queryKey: ["issues"], refetchType: "active" })
       queryClient.invalidateQueries({ queryKey: ["issue", variables.issueId] })
       queryClient.invalidateQueries({ queryKey: ["issue-activity", variables.issueId] })

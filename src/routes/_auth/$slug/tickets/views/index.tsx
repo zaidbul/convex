@@ -4,6 +4,7 @@ import { useSuspenseQuery } from "@tanstack/react-query"
 import { Eye, Pencil, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   Dialog,
   DialogContent,
@@ -63,7 +64,7 @@ function ViewsIndexPage() {
       <div className="flex-1 overflow-y-auto p-6">
         {views.length === 0 ? (
           <div className="flex h-full items-center justify-center">
-            <Empty className="max-w-xl border-outline-variant/30 bg-surface px-8 py-12">
+            <Empty className="max-w-xl border-outline-variant/20 bg-surface px-8 py-12">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
                   <Eye />
@@ -80,7 +81,7 @@ function ViewsIndexPage() {
             {views.map((view) => (
               <div
                 key={view.id}
-                className="flex items-center gap-4 rounded-2xl border border-outline-variant/15 bg-surface p-5 shadow-sm"
+                className="flex items-center gap-4 rounded-2xl border border-outline-variant/10 bg-surface p-5"
               >
                 <Link
                   to="/$slug/tickets/views/$viewId"
@@ -163,12 +164,12 @@ function ViewsIndexPage() {
               setRenameTarget(null)
             }}
           >
-            <input
+            <Input
               autoFocus
               type="text"
               value={renameValue}
               onChange={(e) => setRenameValue(e.target.value)}
-              className="w-full rounded-lg border border-outline-variant/20 bg-surface px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+              className="rounded-lg"
             />
             <DialogFooter className="mt-4">
               <Button

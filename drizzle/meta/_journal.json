@@ -57,6 +57,13 @@
       "when": 1774765340178,
       "tag": "0007_talented_thunderball",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1774775677261,
+      "tag": "0008_thin_the_order",
+      "breakpoints": true
     }
   ]
 }
