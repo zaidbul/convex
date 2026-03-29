@@ -11,12 +11,21 @@ import { ClerkProvider } from "@clerk/tanstack-react-start"
 import { ThemeProvider } from "next-themes"
 import { QueryClientProvider, type QueryClient } from "@tanstack/react-query"
 import { Toaster } from "@/components/ui/sonner"
+import { sessionQuery } from "@/query/options/session"
 
 import appCss from "../styles.css?url"
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient
 }>()({
+  beforeLoad: async ({ context }) => {
+    try {
+      const session = await context.queryClient.ensureQueryData(sessionQuery)
+      return { session }
+    } catch {
+      return { session: { userId: null, orgId: null, orgSlug: null, token: null } }
+    }
+  },
   head: () => ({
     meta: [
       {
