@@ -1,13 +1,15 @@
 import { useState, useRef } from "react";
 
-const GEMINI_KEY = "AIzaSyDyAPZro3vnwdRoccqmCcviZdbypRNNmWU";
-const ELEVENLABS_KEY = "sk_650de27c7d1098a75c620247f18e93d37f05ed22ded5ca22";
+const GEMINI_KEY = import.meta.env.VITE_GEMINI_KEY;
+const ELEVENLABS_KEY = import.meta.env.VITE_ELEVENLABS_KEY;
 
 export default function Sandbox() {
   const [code, setCode] = useState(`// Write TypeScript here\nconsole.log("Hello from sandbox!")`);
+  const [prompt, setPrompt] = useState("");
   const [output, setOutput] = useState("");
   const [suggestion, setSuggestion] = useState("");
   const [loadingGemini, setLoadingGemini] = useState(false);
+  const [loadingGenerate, setLoadingGenerate] = useState(false);
   const [loadingVoice, setLoadingVoice] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -19,6 +21,30 @@ export default function Sandbox() {
       if (e.data.type === "log") setOutput(e.data.logs.join("\n"));
       if (e.data.type === "error") setOutput("Error: " + e.data.message);
     };
+  };
+
+  const generateCode = async () => {
+    if (!prompt) return;
+    setLoadingGenerate(true);
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: `Write TypeScript code that does the following. Return ONLY the code, no explanation, no markdown, no backticks:\n\n${prompt}` }] }],
+          }),
+        }
+      );
+      const data = await res.json();
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const clean = text.replace(/```typescript/g, "").replace(/```ts/g, "").replace(/```/g, "").trim();
+      setCode(clean);
+    } catch {
+      alert("Could not reach Gemini.");
+    }
+    setLoadingGenerate(false);
   };
 
   const askGemini = async () => {
@@ -65,8 +91,7 @@ export default function Sandbox() {
       );
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      audio.play();
+      new Audio(url).play();
     } catch {
       alert("Could not reach ElevenLabs.");
     }
@@ -75,6 +100,7 @@ export default function Sandbox() {
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "#16130d", display: "flex", flexDirection: "column", padding: "1rem", gap: "1rem" }}>
+      
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <h2 style={{ color: "#eae1d6", margin: 0 }}>Sandbox</h2>
         <div style={{ display: "flex", gap: "0.5rem" }}>
@@ -91,17 +117,34 @@ export default function Sandbox() {
           </button>
         </div>
       </div>
+
+      <div style={{ display: "flex", gap: "0.5rem" }}>
+        <input
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && generateCode()}
+          placeholder="Describe what to build... (e.g. a ticket tracker)"
+          style={{ flex: 1, background: "#1e1a13", color: "#eae1d6", border: "1px solid #333", borderRadius: "0.5rem", padding: "0.75rem 1rem", fontFamily: "sans-serif", fontSize: "14px" }}
+        />
+        <button onClick={generateCode} style={{ background: "#fd5300", color: "#220a00", border: "none", borderRadius: "0.5rem", padding: "0.75rem 1.5rem", cursor: "pointer", fontWeight: "bold", whiteSpace: "nowrap" }}>
+          {loadingGenerate ? "Generating..." : "Generate Code"}
+        </button>
+      </div>
+
       <textarea value={code} onChange={(e) => setCode(e.target.value)} style={{ flex: 1, background: "#1e1a13", color: "#eae1d6", border: "none", borderRadius: "0.5rem", padding: "1rem", fontFamily: "monospace", fontSize: "14px", resize: "none" }} />
+
       {suggestion && (
         <div style={{ background: "#1e1a13", borderLeft: "3px solid #fd5300", borderRadius: "0.5rem", padding: "1rem" }}>
           <strong style={{ color: "#fd5300" }}>Gemini:</strong>
           <p style={{ color: "#eae1d6", margin: "0.5rem 0 0", fontSize: "14px", whiteSpace: "pre-wrap" }}>{suggestion}</p>
         </div>
       )}
+
       <div style={{ background: "#1e1a13", borderRadius: "0.5rem", padding: "1rem" }}>
         <strong style={{ color: "#eae1d6" }}>Output:</strong>
         <pre style={{ margin: 0, color: "#fd5300" }}>{output || "Click Run to see output"}</pre>
       </div>
+
       <iframe ref={iframeRef} style={{ display: "none" }} title="sandbox-runner" />
     </div>
   );
