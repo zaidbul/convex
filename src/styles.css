@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@tailwindcss/typography";
 @import "@fontsource-variable/inter";
 
 @font-face {
