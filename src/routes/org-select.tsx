@@ -21,7 +21,12 @@ import {
 
 export const Route = createFileRoute("/org-select")({
   validateSearch: (search: Record<string, unknown>) => ({
-    intent: search.intent === "create" ? "create" : undefined,
+    intent:
+      search.intent === "create"
+        ? "create"
+        : search.intent === "switch"
+          ? "switch"
+          : undefined,
   }),
   component: OrgSelectPage,
 })
@@ -49,6 +54,7 @@ export function OrgSelectPage() {
   const activeOrgSlug =
     orgSlug ?? (organization ? getOrganizationSlug(organization) : null)
   const isCreateIntent = search.intent === "create"
+  const isExplicitIntent = search.intent === "create" || search.intent === "switch"
 
   const activateOrganization = React.useCallback(
     async (orgId: string, orgSlugValue: string) => {
@@ -87,7 +93,7 @@ export function OrgSelectPage() {
       return
     }
 
-    if (activeOrgSlug && !isCreateIntent) {
+    if (activeOrgSlug && !isExplicitIntent) {
       hasResolvedRef.current = true
       hardNavigate(getOrganizationDashboardPath(activeOrgSlug))
       return
@@ -131,7 +137,7 @@ export function OrgSelectPage() {
       return
     }
 
-    if (memberships.length === 1 && !isCreateIntent) {
+    if (memberships.length === 1 && !isExplicitIntent) {
       const nextOrg = memberships[0]?.organization
       if (!nextOrg) {
         return
@@ -225,7 +231,7 @@ export function OrgSelectPage() {
 
   const shouldBlockOnLoad =
     !isAuthLoaded ||
-    (isAuthLoaded && (!isSignedIn || (Boolean(activeOrgSlug) && !isCreateIntent))) ||
+    (isAuthLoaded && (!isSignedIn || (Boolean(activeOrgSlug) && !isExplicitIntent))) ||
     (isSignedIn && (!isLoaded || (memberships.length === 0 && !isUserLoaded))) ||
     isResolving
 

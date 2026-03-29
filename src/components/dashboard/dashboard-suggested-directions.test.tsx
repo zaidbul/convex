@@ -1,13 +1,51 @@
 // @vitest-environment jsdom
 
 import { render, screen } from "@testing-library/react"
-import type { ReactNode } from "react"
+import React, { type ReactElement, type ReactNode } from "react"
 import { describe, expect, test, vi } from "vitest"
 import { DashboardSuggestedDirections } from "./dashboard-suggested-directions"
 import type { FeedbackSuggestion } from "@/components/tickets/types"
 
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children }: { children: ReactNode }) => <a>{children}</a>,
+  Link: ({
+    children,
+    to,
+    ...props
+  }: {
+    children?: ReactNode
+    to?: string
+  }) => (
+    <a href={to ?? "#"} {...props}>
+      {children}
+    </a>
+  ),
+}))
+
+vi.mock("@/components/ui/button", () => ({
+  Button: ({
+    children,
+    render,
+    nativeButton,
+    ...props
+  }: {
+    children?: ReactNode
+    render?: ReactElement
+    nativeButton?: boolean
+  }) => {
+    if (render) {
+      return React.cloneElement(render, {
+        ...props,
+        "data-native-button": String(nativeButton),
+        children,
+      })
+    }
+
+    return (
+      <button data-native-button={String(nativeButton)} {...props}>
+        {children}
+      </button>
+    )
+  },
 }))
 
 const suggestions: FeedbackSuggestion[] = [
@@ -45,5 +83,16 @@ describe("DashboardSuggestedDirections", () => {
     expect(screen.getByText("Improve ticket search")).toBeTruthy()
     expect(screen.getByText("Platform")).toBeTruthy()
     expect(screen.getByText("84%")).toBeTruthy()
+  })
+
+  test("renders the open hub control as a navigable non-native button link", () => {
+    render(<DashboardSuggestedDirections suggestions={suggestions} slug="demo" />)
+
+    const [openHubLink] = screen.getAllByRole("link", { name: /open hub/i })
+
+    expect(openHubLink.getAttribute("href")).toBe(
+      "/$slug/tickets/synthesize/suggestions"
+    )
+    expect(openHubLink.getAttribute("data-native-button")).toBe("false")
   })
 })

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import {
   Check,
   ChevronRight,
@@ -49,6 +49,7 @@ function HeroSection() {
           <Button
             size="lg"
             className="px-8 shadow-glow"
+            nativeButton={false}
             render={<Link to="/sign-up" />}
           >
             Get started free
@@ -413,7 +414,8 @@ function WorkflowSection() {
             <Button
               size="lg"
               className="px-8 shadow-glow"
-              render={<Link to="/sign-up" />}
+              nativeButton={false}
+            render={<Link to="/sign-up" />}
             >
               Start building
             </Button>
@@ -738,22 +740,34 @@ function SpeedSection() {
    Section 8 — Final CTA (with rain)
    ───────────────────────────────────────────── */
 
+// Deterministic pseudo-random to avoid SSR/client hydration mismatch
+function seededRandom(seed: number): number {
+  const x = Math.sin(seed * 9301 + 49297) * 233280
+  return x - Math.floor(x)
+}
+
 function FinalCtaSection() {
+  const rainDrops = useMemo(
+    () =>
+      Array.from({ length: 40 }, (_, i) => ({
+        left: `${(i / 40) * 100}%`,
+        height: `${60 + seededRandom(i) * 100}px`,
+        top: `-${seededRandom(i + 100) * 200}px`,
+        animation: `rain-fall ${3 + seededRandom(i + 200) * 4}s linear infinite`,
+        animationDelay: `${seededRandom(i + 300) * 5}s`,
+      })),
+    []
+  )
+
   return (
     <section className="relative overflow-hidden bg-surface-lowest px-6 py-32 md:py-48">
       {/* Animated rain overlay */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        {Array.from({ length: 40 }).map((_, i) => (
+        {rainDrops.map((style, i) => (
           <div
             key={i}
             className="absolute w-px bg-foreground/20"
-            style={{
-              left: `${(i / 40) * 100}%`,
-              height: `${60 + Math.random() * 100}px`,
-              top: `-${Math.random() * 200}px`,
-              animation: `rain-fall ${3 + Math.random() * 4}s linear infinite`,
-              animationDelay: `${Math.random() * 5}s`,
-            }}
+            style={style}
           />
         ))}
       </div>
@@ -769,6 +783,7 @@ function FinalCtaSection() {
           <Button
             size="lg"
             className="px-8 shadow-glow"
+            nativeButton={false}
             render={<Link to="/sign-up" />}
           >
             Get started free

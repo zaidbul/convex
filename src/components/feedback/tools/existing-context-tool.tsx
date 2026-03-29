@@ -1,26 +1,30 @@
 import { Database } from "lucide-react"
 import { FeedbackToolCard, type ToolState } from "./feedback-tool-card"
 import { Badge } from "@/components/ui/badge"
-import type { MessagePart } from "../feedback-chat-types"
+import type { ToolPart } from "../feedback-chat-types"
 
 interface ExistingContextToolProps {
-  callPart?: MessagePart
-  resultPart?: MessagePart
+  part: ToolPart
 }
 
-export function ExistingContextTool({ resultPart }: ExistingContextToolProps) {
-  const result = (resultPart?.result ?? resultPart?.output) as {
+export function ExistingContextTool({ part }: ExistingContextToolProps) {
+  const output = part.output as {
     existingItemCount?: number
     existingClusterCount?: number
     existingSuggestionCount?: number
     topFeatureAreas?: string[]
   } | undefined
 
-  const hasResult = !!result
-  const state: ToolState = hasResult ? "completed" : "running"
+  const hasOutput = part.state === "output-available"
+  const state: ToolState =
+    part.state === "output-error" || part.state === "output-denied"
+      ? "error"
+      : hasOutput
+        ? "completed"
+        : "running"
 
-  const title = hasResult
-    ? `${result.existingItemCount ?? 0} items, ${result.existingClusterCount ?? 0} clusters, ${result.existingSuggestionCount ?? 0} suggestions`
+  const title = hasOutput
+    ? `${output?.existingItemCount ?? 0} items, ${output?.existingClusterCount ?? 0} clusters, ${output?.existingSuggestionCount ?? 0} suggestions`
     : "Checking existing feedback..."
 
   return (
@@ -28,13 +32,13 @@ export function ExistingContextTool({ resultPart }: ExistingContextToolProps) {
       title={title}
       icon={<Database className="size-3.5 text-muted-foreground" />}
       state={state}
-      defaultOpen={hasResult}
+      defaultOpen={hasOutput}
     >
-      {hasResult && result.topFeatureAreas && result.topFeatureAreas.length > 0 && (
+      {hasOutput && output?.topFeatureAreas && output.topFeatureAreas.length > 0 && (
         <div className="space-y-1.5">
           <span className="text-muted-foreground">Top feature areas:</span>
           <div className="flex flex-wrap gap-1">
-            {result.topFeatureAreas.map((area) => (
+            {output.topFeatureAreas.map((area) => (
               <Badge key={area} variant="secondary" className="text-[10px]">
                 {area}
               </Badge>

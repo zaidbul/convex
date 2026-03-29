@@ -3,6 +3,7 @@ import { db } from "@/db/connection"
 import { getViewerContext } from "@/server/functions/viewer-context"
 import {
   getFeedbackChatForViewer,
+  saveFeedbackChatMessage,
   updateFeedbackChatStatus,
 } from "@/server/functions/feedback-chat-data"
 import { runFeedbackAnalysis } from "@/server/functions/feedback-data"
@@ -19,6 +20,10 @@ type AnalysisStatusRecord = {
   itemsProcessed?: number
   suggestionsProduced?: number
   error?: string
+}
+
+function createTextParts(text: string) {
+  return [{ type: "text", text }]
 }
 
 export const Route = createFileRoute("/api/chat/feedback/run-analysis")({
@@ -55,6 +60,15 @@ export const Route = createFileRoute("/api/chat/feedback/run-analysis")({
             { status: 400 }
           )
         }
+
+        const startedMessage =
+          "Starting analysis now. I’ll post the results here when it finishes."
+        await saveFeedbackChatMessage(db, body.chatId, {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: startedMessage,
+          partsJson: createTextParts(startedMessage),
+        })
 
         // Update chat status
         await updateFeedbackChatStatus(db, body.chatId, "analysis_triggered")
@@ -103,6 +117,14 @@ export const Route = createFileRoute("/api/chat/feedback/run-analysis")({
             { ex: 3600 }
           )
 
+          const completionMessage = `Analysis finished: ${totalItemsProcessed} items processed and ${totalSuggestionsProduced} suggestions generated.`
+          await saveFeedbackChatMessage(db, body.chatId, {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: completionMessage,
+            partsJson: createTextParts(completionMessage),
+          })
+
           return Response.json({
             ok: true,
             itemsProcessed: totalItemsProcessed,
@@ -123,6 +145,14 @@ export const Route = createFileRoute("/api/chat/feedback/run-analysis")({
             JSON.stringify(failedStatus),
             { ex: 3600 }
           )
+
+          const failureMessage = `Analysis failed: ${errorMessage}`
+          await saveFeedbackChatMessage(db, body.chatId, {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: failureMessage,
+            partsJson: createTextParts(failureMessage),
+          })
 
           return Response.json(
             { ok: false, error: errorMessage },

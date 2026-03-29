@@ -16,6 +16,25 @@ import {
 } from "./feedback-chat-file-upload"
 import type { FeedbackChatMessageRecord } from "@/components/tickets/types"
 import type { AskQuestionsOutput } from "./tools/ask-questions-tool"
+import {
+  formatMessageContent,
+  normalizeMessageParts,
+  rehydrateStoredMessagePartsToUi,
+} from "./feedback-chat-types"
+
+type RenderedChatMessage = {
+  id: string
+  role: "user" | "assistant" | "system"
+  content: string
+  partsJson: unknown[] | null
+  attachmentsJson: Array<{
+    id: string
+    fileName: string
+    fileType: string
+    fileSize: number
+  }> | null
+  isStreaming: boolean
+}
 
 interface FeedbackChatPanelProps {
   chatId: string | null
@@ -31,32 +50,74 @@ interface FeedbackChatPanelProps {
  */
 function serverMessagesToUIMessages(messages: FeedbackChatMessageRecord[]): UIMessage[] {
   return messages.map((m) => {
-    const parts: UIMessage["parts"] = []
-
-    if (m.partsJson && Array.isArray(m.partsJson) && m.partsJson.length > 0) {
-      for (const part of m.partsJson) {
-        const p = part as Record<string, unknown>
-        if (p.type === "text" && typeof p.text === "string") {
-          parts.push({ type: "text", text: p.text })
-        }
-        // Tool calls and results are handled via tool-invocation parts in UIMessage
-      }
-    } else if (m.content) {
-      parts.push({ type: "text", text: m.content })
-    }
-
-    // Ensure at least one text part
-    if (parts.length === 0 && m.content) {
-      parts.push({ type: "text", text: m.content })
-    }
+    const parts = rehydrateStoredMessagePartsToUi(
+      m.partsJson,
+      m.content,
+      m.toolResultJson as unknown[] | null | undefined,
+      m.toolCallsJson
+    )
 
     return {
       id: m.id,
-      role: m.role as "user" | "assistant",
+      role: m.role as UIMessage["role"],
       parts,
       createdAt: new Date(m.createdAt),
     } as UIMessage
   })
+}
+
+function serializeUiMessages(messages: UIMessage[]): string {
+  return JSON.stringify(
+    messages.map((message) => ({
+      id: message.id,
+      role: message.role,
+      parts: message.parts,
+    }))
+  )
+}
+
+function shouldSyncFromServer(
+  currentMessages: UIMessage[],
+  hydratedServerMessages: UIMessage[]
+): boolean {
+  if (currentMessages.length === 0) {
+    return hydratedServerMessages.length > 0
+  }
+
+  if (hydratedServerMessages.length === 0) {
+    return false
+  }
+
+  const currentSnapshot = serializeUiMessages(currentMessages)
+  const serverSnapshot = serializeUiMessages(hydratedServerMessages)
+
+  if (currentSnapshot === serverSnapshot) {
+    return false
+  }
+
+  const currentLastMessageId = currentMessages[currentMessages.length - 1]?.id
+  const serverLastMessageId =
+    hydratedServerMessages[hydratedServerMessages.length - 1]?.id
+  const serverHasCaughtUp =
+    currentLastMessageId === undefined ||
+    currentLastMessageId === serverLastMessageId ||
+    hydratedServerMessages.length > currentMessages.length
+
+  if (!serverHasCaughtUp) {
+    return false
+  }
+
+  const sameMessageOrder =
+    currentMessages.length === hydratedServerMessages.length &&
+    currentMessages.every(
+      (message, index) => message.id === hydratedServerMessages[index]?.id
+    )
+
+  if (sameMessageOrder && serverSnapshot.length < currentSnapshot.length) {
+    return false
+  }
+
+  return true
 }
 
 export function FeedbackChatPanel({
@@ -70,10 +131,15 @@ export function FeedbackChatPanel({
   const [input, setInput] = useState("")
   const [pendingFiles, setPendingFiles] = useState<UploadedFile[]>([])
   const [isAnalysisRunning, setIsAnalysisRunning] = useState(false)
+  const [analysisStatusMessage, setAnalysisStatusMessage] =
+    useState<RenderedChatMessage | null>(null)
   const [currentChatId, setCurrentChatId] = useState<string | null>(chatId)
   const scrollRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const pendingFilesRef = useRef<UploadedFile[]>([])
+  const shouldAutoScrollRef = useRef(true)
+  const previousChatIdRef = useRef<string | null>(chatId)
+  const currentMessagesRef = useRef<UIMessage[]>([])
 
   // Keep ref in sync with state for use in transport
   useEffect(() => {
@@ -86,7 +152,7 @@ export function FeedbackChatPanel({
   }, [chatId])
 
   // Convert server messages to UIMessage format for useChat initial state
-  const initialMessages = useMemo(
+  const hydratedServerMessages = useMemo(
     () => serverMessagesToUIMessages(serverMessages),
     [serverMessages]
   )
@@ -124,7 +190,8 @@ export function FeedbackChatPanel({
   } = useChat({
     id: currentChatId ?? undefined,
     transport,
-    messages: initialMessages,
+    messages: hydratedServerMessages,
+    experimental_throttle: 50,
     onError: (err) => {
       toast.error(err.message || "Failed to send message")
     },
@@ -133,21 +200,64 @@ export function FeedbackChatPanel({
     },
   })
 
+  useEffect(() => {
+    currentMessagesRef.current = messages
+  }, [messages])
+
   // Sync server messages when they change (e.g., after refetch)
   useEffect(() => {
-    if (serverMessages.length > 0 && status !== "streaming" && status !== "submitted") {
-      setMessages(serverMessagesToUIMessages(serverMessages))
+    const chatChanged = previousChatIdRef.current !== chatId
+    previousChatIdRef.current = chatId
+
+    if (chatChanged) {
+      setMessages(hydratedServerMessages)
+      return
     }
-  }, [serverMessages, status, setMessages])
+
+    if (status === "streaming" || status === "submitted") return
+
+    if (
+      !shouldSyncFromServer(
+        currentMessagesRef.current,
+        hydratedServerMessages
+      )
+    ) {
+      return
+    }
+
+    setMessages(hydratedServerMessages)
+  }, [chatId, hydratedServerMessages, status, setMessages])
 
   const isLoading = status === "streaming" || status === "submitted"
 
-  // Auto-scroll on new messages
+  const attachmentsByMessageId = useMemo(() => {
+    return new Map(
+      serverMessages.map((message) => [message.id, message.attachmentsJson ?? null])
+    )
+  }, [serverMessages])
+
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    const element = scrollRef.current
+    if (!element) return
+
+    const updateAutoScroll = () => {
+      const distanceFromBottom =
+        element.scrollHeight - element.scrollTop - element.clientHeight
+      shouldAutoScrollRef.current = distanceFromBottom < 80
     }
-  }, [messages, isLoading])
+
+    updateAutoScroll()
+    element.addEventListener("scroll", updateAutoScroll)
+    return () => {
+      element.removeEventListener("scroll", updateAutoScroll)
+    }
+  }, [])
+
+  useEffect(() => {
+    const element = scrollRef.current
+    if (!element || !shouldAutoScrollRef.current) return
+    element.scrollTop = element.scrollHeight
+  }, [isLoading])
 
   const handleFilesReady = useCallback((files: UploadedFile[]) => {
     setPendingFiles((prev) => [...prev, ...files])
@@ -183,6 +293,19 @@ export function FeedbackChatPanel({
   const handleRunAnalysis = async () => {
     if (!currentChatId || isAnalysisRunning) return
 
+    setAnalysisStatusMessage({
+      id: `analysis-status-${crypto.randomUUID()}`,
+      role: "assistant",
+      content: "Starting analysis now. I’ll post the results here when it finishes.",
+      partsJson: [
+        {
+          type: "text",
+          text: "Starting analysis now. I’ll post the results here when it finishes.",
+        },
+      ],
+      attachmentsJson: null,
+      isStreaming: true,
+    })
     setIsAnalysisRunning(true)
     try {
       const response = await fetch("/api/chat/feedback/run-analysis", {
@@ -202,13 +325,41 @@ export function FeedbackChatPanel({
         throw new Error(data.error || "Analysis failed")
       }
 
+      setAnalysisStatusMessage({
+        id: `analysis-status-${crypto.randomUUID()}`,
+        role: "assistant",
+        content: `Analysis finished: ${data.itemsProcessed} items processed and ${data.suggestionsProduced} suggestions generated.`,
+        partsJson: [
+          {
+            type: "text",
+            text: `Analysis finished: ${data.itemsProcessed} items processed and ${data.suggestionsProduced} suggestions generated.`,
+          },
+        ],
+        attachmentsJson: null,
+        isStreaming: false,
+      })
       toast.success(
         `Analysis complete: ${data.itemsProcessed} items processed, ${data.suggestionsProduced} suggestions generated`
       )
       onMessagesUpdated()
     } catch (err) {
-      toast.error(
+      const message =
         err instanceof Error ? err.message : "Failed to run analysis"
+      setAnalysisStatusMessage({
+        id: `analysis-status-${crypto.randomUUID()}`,
+        role: "assistant",
+        content: `Analysis failed: ${message}`,
+        partsJson: [
+          {
+            type: "text",
+            text: `Analysis failed: ${message}`,
+          },
+        ],
+        attachmentsJson: null,
+        isStreaming: false,
+      })
+      toast.error(
+        message
       )
     } finally {
       setIsAnalysisRunning(false)
@@ -234,50 +385,55 @@ export function FeedbackChatPanel({
 
   // Convert UIMessages to the format our message component expects
   const renderedMessages = useMemo(() => {
-    return messages.map((msg) => {
-      const partsJson: unknown[] = []
-      for (const part of msg.parts ?? []) {
-        if (part.type === "text") {
-          partsJson.push({ type: "text", text: part.text })
-        } else if (part.type === "tool-invocation") {
-          const inv = (part as unknown as { toolInvocation: Record<string, unknown> }).toolInvocation
-          partsJson.push({
-            type: "tool-call",
-            toolCallId: inv.toolCallId,
-            toolName: inv.toolName,
-            args: inv.args,
-          })
-          if (inv.state === "result") {
-            partsJson.push({
-              type: "tool-result",
-              toolCallId: inv.toolCallId,
-              toolName: inv.toolName,
-              result: inv.result,
-            })
-          }
-        } else if (part.type === "reasoning") {
-          const rp = part as unknown as { reasoning: string }
-          partsJson.push({ type: "reasoning", text: rp.reasoning })
-        }
-      }
-
-      const content = partsJson
-        .filter((p) => (p as Record<string, unknown>).type === "text")
-        .map((p) => (p as Record<string, unknown>).text as string)
-        .join("\n")
+    return messages.map((msg): RenderedChatMessage => {
+      const partsJson = normalizeMessageParts(msg.parts as unknown[])
+      const content = formatMessageContent(partsJson)
 
       return {
         id: msg.id,
         role: msg.role as "user" | "assistant" | "system",
         content,
-        partsJson: partsJson.length > 0 ? partsJson : null,
-        attachmentsJson:
-          serverMessages.find((sm) => sm.id === msg.id)?.attachmentsJson ?? null,
+        partsJson,
+        attachmentsJson: attachmentsByMessageId.get(msg.id) ?? null,
         isStreaming:
           isLoading && msg.id === messages[messages.length - 1]?.id && msg.role === "assistant",
       }
     })
-  }, [messages, serverMessages, isLoading])
+  }, [attachmentsByMessageId, isLoading, messages])
+
+  const visibleMessages = useMemo(() => {
+    if (!analysisStatusMessage) return renderedMessages
+
+    const duplicateExists = renderedMessages.some(
+      (message) =>
+        message.role === analysisStatusMessage.role &&
+        message.content === analysisStatusMessage.content
+    )
+
+    return duplicateExists
+      ? renderedMessages
+      : [...renderedMessages, analysisStatusMessage]
+  }, [analysisStatusMessage, renderedMessages])
+
+  useEffect(() => {
+    const element = scrollRef.current
+    if (!element || !shouldAutoScrollRef.current) return
+    element.scrollTop = element.scrollHeight
+  }, [visibleMessages])
+
+  useEffect(() => {
+    if (!analysisStatusMessage) return
+
+    const duplicateExists = renderedMessages.some(
+      (message) =>
+        message.role === analysisStatusMessage.role &&
+        message.content === analysisStatusMessage.content
+    )
+
+    if (duplicateExists) {
+      setAnalysisStatusMessage(null)
+    }
+  }, [analysisStatusMessage, renderedMessages])
 
   return (
     <div className="flex h-[600px] flex-col rounded-lg border">
@@ -320,7 +476,7 @@ export function FeedbackChatPanel({
             </div>
           )}
 
-          {renderedMessages.map((msg) => (
+          {visibleMessages.map((msg) => (
             <FeedbackChatMessage
               key={msg.id}
               id={msg.id}

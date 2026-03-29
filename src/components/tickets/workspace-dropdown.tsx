@@ -224,7 +224,7 @@ export function WorkspaceDropdown({ workspace }: { workspace: Workspace | null }
           <DropdownMenuGroup>
             <DropdownMenuLabel>Workspace</DropdownMenuLabel>
             <DropdownMenuItem
-              onClick={() => navigate({ to: "/org-select", search: { intent: undefined } })}
+              onClick={() => navigate({ to: "/org-select", search: { intent: "switch" } })}
             >
               <ArrowLeftRight className="size-4" />
               <span>Switch workspace</span>

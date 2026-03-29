@@ -3,10 +3,9 @@ import { Check, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
-import type { MessagePart } from "../feedback-chat-types"
+import type { ToolPart } from "../feedback-chat-types"
 
 // --- Types ---
 
@@ -533,23 +532,10 @@ function AskQuestionsForm({
   )
 }
 
-// --- Skeleton for loading state ---
-
-function QuestionSkeleton() {
+function PreparingQuestionsNotice() {
   return (
-    <div className="space-y-3">
-      <div className="space-y-2">
-        <Skeleton className="h-3 w-1/3 bg-muted/60" />
-        <Skeleton className="h-8 w-full bg-muted/60" />
-      </div>
-      <div className="space-y-2 pt-2">
-        <Skeleton className="h-3 w-1/4 bg-muted/60" />
-        <div className="flex gap-2">
-          <Skeleton className="h-7 w-16 bg-muted/60" />
-          <Skeleton className="h-7 w-20 bg-muted/60" />
-          <Skeleton className="h-7 w-14 bg-muted/60" />
-        </div>
-      </div>
+    <div className="rounded-md border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+      Preparing questions...
     </div>
   )
 }
@@ -557,13 +543,12 @@ function QuestionSkeleton() {
 // --- Main component ---
 
 interface AskQuestionsToolProps {
-  callPart?: MessagePart
-  resultPart?: MessagePart
+  part: ToolPart
   onSubmit?: (toolCallId: string, output: AskQuestionsOutput) => void
 }
 
-export function AskQuestionsTool({ callPart, resultPart, onSubmit }: AskQuestionsToolProps) {
-  const state = resultPart?.state ?? callPart?.state
+export function AskQuestionsTool({ part, onSubmit }: AskQuestionsToolProps) {
+  const state = part.state
 
   if (state === "output-error" || state === "output-denied") {
     return (
@@ -573,28 +558,27 @@ export function AskQuestionsTool({ callPart, resultPart, onSubmit }: AskQuestion
     )
   }
 
-  // Extract questions from whichever part has them
-  const questions = extractQuestions(callPart?.args ?? callPart?.input ?? resultPart?.output ?? resultPart?.result)
-  const toolCallId = callPart?.toolCallId ?? resultPart?.toolCallId
-  const submittedOutput = resultPart ? extractOutput(resultPart.result ?? resultPart.output) : null
-
-  // Determine if we're in edit mode (waiting for user input) or read-only (already answered)
-  const isWaitingForInput = !resultPart && !!callPart && questions.length > 0
+  const questions = extractQuestions(part.input)
+  const toolCallId = part.toolCallId
+  const submittedOutput =
+    state === "output-available" ? extractOutput(part.output) : null
   const canSubmit = typeof onSubmit === "function" && !!toolCallId
 
   return (
-    <div className="my-2 overflow-hidden rounded-lg border bg-card/50">
-      <div className="p-3">
-        {isWaitingForInput && canSubmit ? (
+    <div className="my-2 max-h-[380px] overflow-hidden rounded-lg border bg-card/50">
+      <div className="max-h-[380px] overflow-y-auto p-3">
+        {state === "input-streaming" ? (
+          <PreparingQuestionsNotice />
+        ) : state === "input-available" && canSubmit && questions.length > 0 ? (
           <AskQuestionsForm
             questions={questions}
-            onSubmit={(output) => onSubmit(toolCallId!, output)}
+            onSubmit={(output) => onSubmit(toolCallId, output)}
             mode="edit"
           />
         ) : submittedOutput ? (
           <AskQuestionsForm questions={questions} mode="readonly" initialOutput={submittedOutput} />
         ) : (
-          <QuestionSkeleton />
+          <PreparingQuestionsNotice />
         )}
       </div>
     </div>

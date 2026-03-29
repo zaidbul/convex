@@ -1,20 +1,19 @@
 import { FileText } from "lucide-react"
 import { FeedbackToolCard, type ToolState } from "./feedback-tool-card"
-import type { MessagePart } from "../feedback-chat-types"
+import type { ToolPart } from "../feedback-chat-types"
 
 interface ProcessFileToolProps {
-  callPart?: MessagePart
-  resultPart?: MessagePart
+  part: ToolPart
 }
 
-export function ProcessFileTool({ callPart, resultPart }: ProcessFileToolProps) {
-  const args = (callPart?.args ?? callPart?.input) as {
+export function ProcessFileTool({ part }: ProcessFileToolProps) {
+  const input = part.input as {
     fileName?: string
     fileType?: string
     attachmentId?: string
   } | undefined
 
-  const result = (resultPart?.result ?? resultPart?.output) as {
+  const output = part.output as {
     success?: boolean
     itemCount?: number
     fileName?: string
@@ -22,16 +21,21 @@ export function ProcessFileTool({ callPart, resultPart }: ProcessFileToolProps) 
     message?: string
   } | undefined
 
-  const fileName = result?.fileName ?? args?.fileName ?? "file"
-  const hasResult = !!result
-  const state: ToolState = result
-    ? result.success ? "completed" : "error"
-    : "running"
+  const fileName = output?.fileName ?? input?.fileName ?? "file"
+  const hasOutput = part.state === "output-available"
+  const state: ToolState =
+    part.state === "output-error" || part.state === "output-denied"
+      ? "error"
+      : hasOutput
+        ? output?.success === false
+          ? "error"
+          : "completed"
+        : "running"
 
-  const title = hasResult
-    ? result.success
-      ? `${result.itemCount ?? 0} items imported from ${fileName}`
-      : result.message ?? `Failed to process ${fileName}`
+  const title = hasOutput
+    ? output?.success
+      ? `${output.itemCount ?? 0} items imported from ${fileName}`
+      : output?.message ?? part.errorText ?? `Failed to process ${fileName}`
     : `Processing ${fileName}...`
 
   return (

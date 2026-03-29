@@ -40,6 +40,7 @@ export function DashboardSuggestedDirections({
         <Button
           variant="ghost"
           size="sm"
+          nativeButton={false}
           render={
             <Link
               to="/$slug/tickets/synthesize/suggestions"

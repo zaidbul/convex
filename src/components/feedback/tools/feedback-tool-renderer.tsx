@@ -1,4 +1,4 @@
-import type { MessagePart } from "../feedback-chat-types"
+import type { ToolPart } from "../feedback-chat-types"
 import { ProcessFileTool } from "./process-file-tool"
 import { AskQuestionsTool, type AskQuestionsOutput } from "./ask-questions-tool"
 import { ReadinessScoreTool } from "./readiness-score-tool"
@@ -6,10 +6,7 @@ import { ExistingContextTool } from "./existing-context-tool"
 import { FeedbackToolCard } from "./feedback-tool-card"
 
 interface FeedbackToolRendererProps {
-  /** The tool-call part (has args/input) */
-  callPart?: MessagePart
-  /** The tool-result part (has result/output) */
-  resultPart?: MessagePart
+  part: ToolPart
   /** Callback for interactive tool outputs (askStructuredQuestions) */
   onToolOutput?: (toolCallId: string, output: AskQuestionsOutput) => void
 }
@@ -19,42 +16,45 @@ interface FeedbackToolRendererProps {
  * Call this for each tool invocation in a message.
  */
 export function FeedbackToolRenderer({
-  callPart,
-  resultPart,
+  part,
   onToolOutput,
 }: FeedbackToolRendererProps) {
-  const toolName = callPart?.toolName ?? resultPart?.toolName
+  const toolName = part.toolName
 
   switch (toolName) {
     case "processUploadedFile":
-      return <ProcessFileTool callPart={callPart} resultPart={resultPart} />
+      return <ProcessFileTool part={part} />
 
     case "askStructuredQuestions":
       return (
         <AskQuestionsTool
-          callPart={callPart}
-          resultPart={resultPart}
+          part={part}
           onSubmit={onToolOutput}
         />
       )
 
     case "updateReadinessScore":
-      return <ReadinessScoreTool callPart={callPart} resultPart={resultPart} />
+      return <ReadinessScoreTool part={part} />
 
     case "getExistingFeedbackContext":
-      return <ExistingContextTool callPart={callPart} resultPart={resultPart} />
+      return <ExistingContextTool part={part} />
 
     default: {
-      // Generic fallback for unknown tools
-      const hasResult = !!resultPart
+      const hasOutput = part.state === "output-available"
       return (
         <FeedbackToolCard
-          title={toolName ?? "Tool"}
-          state={hasResult ? "completed" : "running"}
+          title={toolName}
+          state={
+            part.state === "output-error" || part.state === "output-denied"
+              ? "error"
+              : hasOutput
+                ? "completed"
+                : "running"
+          }
         >
-          {hasResult && (
+          {hasOutput && (
             <pre className="max-h-32 overflow-auto whitespace-pre-wrap text-muted-foreground">
-              {JSON.stringify(resultPart?.result ?? resultPart?.output, null, 2)}
+              {JSON.stringify(part.output, null, 2)}
             </pre>
           )}
         </FeedbackToolCard>

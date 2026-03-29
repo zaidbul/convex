@@ -81,11 +81,12 @@ function Navbar() {
             variant="ghost"
             size="sm"
             className="hidden sm:inline-flex"
+            nativeButton={false}
             render={<Link to="/sign-in" />}
           >
             Log In
           </Button>
-          <Button size="sm" render={<Link to="/sign-up" />}>
+          <Button size="sm" nativeButton={false} render={<Link to="/sign-up" />}>
             Sign Up
           </Button>
 
@@ -116,11 +117,12 @@ function Navbar() {
                   <Button
                     variant="ghost"
                     className="w-full justify-start"
+                    nativeButton={false}
                     render={<Link to="/sign-in" />}
                   >
                     Log In
                   </Button>
-                  <Button className="w-full" render={<Link to="/sign-up" />}>
+                  <Button className="w-full" nativeButton={false} render={<Link to="/sign-up" />}>
                     Sign Up
                   </Button>
                 </div>

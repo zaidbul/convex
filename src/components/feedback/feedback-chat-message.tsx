@@ -1,15 +1,23 @@
 import { memo, useMemo } from "react"
 import { Bot, User, FileText, Lightbulb } from "lucide-react"
 import Markdown from "react-markdown"
-import remarkGfm from "remark-gfm"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import {
   type MessagePart,
+  normalizeMessageParts,
+  synthesizeAssistantNarration,
   synthesizePartsFromLegacy,
 } from "./feedback-chat-types"
 import { FeedbackToolRenderer } from "./tools/feedback-tool-renderer"
 import type { AskQuestionsOutput } from "./tools/ask-questions-tool"
+
+const MarkdownContent = memo(
+  function MarkdownContent({ content }: { content: string }) {
+    return <Markdown>{content}</Markdown>
+  },
+  (prev, next) => prev.content === next.content,
+)
 
 // --- Types ---
 
@@ -47,29 +55,19 @@ function MessagePartsRenderer({
   isStreaming?: boolean
   onToolOutput?: (toolCallId: string, output: AskQuestionsOutput) => void
 }) {
-  // Group tool-call and tool-result parts by toolCallId for paired rendering
-  const toolCallMap = useMemo(() => {
-    const map = new Map<string, { call?: MessagePart; result?: MessagePart }>()
-    for (const part of parts) {
-      if (part.type === "tool-call" && part.toolCallId) {
-        const entry = map.get(part.toolCallId) ?? {}
-        entry.call = part
-        map.set(part.toolCallId, entry)
-      }
-      if (part.type === "tool-result" && part.toolCallId) {
-        const entry = map.get(part.toolCallId) ?? {}
-        entry.result = part
-        map.set(part.toolCallId, entry)
-      }
-    }
-    return map
-  }, [parts])
-
-  // Track which toolCallIds we've already rendered
-  const renderedToolCallIds = new Set<string>()
+  const synthesizedNarration = useMemo(
+    () => synthesizeAssistantNarration(parts),
+    [parts]
+  )
 
   return (
     <div className="space-y-3">
+      {synthesizedNarration.length > 0 && (
+        <div className="prose prose-sm dark:prose-invert max-w-none break-words prose-p:my-1 prose-p:leading-relaxed">
+          <MarkdownContent content={synthesizedNarration.join("\n\n")} />
+        </div>
+      )}
+
       {parts.map((part, index) => {
         // Text parts — render with Markdown
         if (part.type === "text") {
@@ -80,7 +78,7 @@ function MessagePartsRenderer({
               key={`text-${index}`}
               className="prose prose-sm dark:prose-invert max-w-none break-words prose-p:my-1 prose-p:leading-relaxed"
             >
-              <Markdown remarkPlugins={[remarkGfm]}>{text}</Markdown>
+              <MarkdownContent content={text} />
               {isStreaming && index === parts.length - 1 && (
                 <span className="ml-1 inline-block size-1.5 animate-pulse rounded-full bg-current" />
               )}
@@ -90,7 +88,7 @@ function MessagePartsRenderer({
 
         // Reasoning parts — lightbulb + amber italic
         if (part.type === "reasoning") {
-          const reasoningText = part.text ?? ""
+          const reasoningText = part.text
           if (!reasoningText) return null
           return (
             <div
@@ -103,33 +101,11 @@ function MessagePartsRenderer({
           )
         }
 
-        // Tool-call parts — render paired with their result
-        if (part.type === "tool-call" && part.toolCallId) {
-          if (renderedToolCallIds.has(part.toolCallId)) return null
-          renderedToolCallIds.add(part.toolCallId)
-
-          const pair = toolCallMap.get(part.toolCallId)
+        if (part.type === "tool") {
           return (
             <FeedbackToolRenderer
               key={part.toolCallId}
-              callPart={pair?.call}
-              resultPart={pair?.result}
-              onToolOutput={onToolOutput}
-            />
-          )
-        }
-
-        // Tool-result parts — render only if we haven't already rendered them via their call
-        if (part.type === "tool-result" && part.toolCallId) {
-          if (renderedToolCallIds.has(part.toolCallId)) return null
-          renderedToolCallIds.add(part.toolCallId)
-
-          const pair = toolCallMap.get(part.toolCallId)
-          return (
-            <FeedbackToolRenderer
-              key={part.toolCallId}
-              callPart={pair?.call}
-              resultPart={pair?.result}
+              part={part}
               onToolOutput={onToolOutput}
             />
           )
@@ -158,7 +134,7 @@ function FeedbackChatMessageInner({
   // Use partsJson if available, otherwise synthesize from legacy fields
   const parts: MessagePart[] = useMemo(() => {
     if (partsJson && Array.isArray(partsJson) && partsJson.length > 0) {
-      return partsJson as MessagePart[]
+      return normalizeMessageParts(partsJson)
     }
     return synthesizePartsFromLegacy(
       content,
@@ -205,7 +181,7 @@ function FeedbackChatMessageInner({
         {isUser ? (
           // User messages: bubble style
           <div className="rounded-xl bg-primary px-3.5 py-2.5 text-sm leading-relaxed text-primary-foreground">
-            <Markdown remarkPlugins={[remarkGfm]}>{content}</Markdown>
+            <MarkdownContent content={content} />
           </div>
         ) : (
           // Assistant messages: flat layout with parts renderer
