@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { streamText } from "ai"
+import { streamText, stepCountIs } from "ai"
 import { openai } from "@ai-sdk/openai"
 import { db } from "@/db/connection"
 import * as schema from "@/db/schema"
@@ -95,18 +95,14 @@ export const Route = createFileRoute("/api/chat/feedback")({
         const historyMessages = chatDetail?.messages ?? []
 
         // Build context for the AI about any attachments in this message
+        // The AI does NOT need to see or relay raw file content — the tool reads directly from the DB
         let attachmentContext = ""
         if (body.attachments && body.attachments.length > 0) {
           attachmentContext = body.attachments
             .map(
               (att) =>
                 `\n\n[File uploaded: "${att.fileName}" (${att.fileType}, ${att.fileSize} bytes)]\n` +
-                `Call the processUploadedFile tool with:\n` +
-                `- attachmentId: "${att.id}"\n` +
-                `- fileName: "${att.fileName}"\n` +
-                `- fileType: "${att.fileType}"\n` +
-                `- rawContent: (the file content below)\n\n` +
-                `<file_content name="${att.fileName}">\n${att.rawContent}\n</file_content>`
+                `Call the processUploadedFile tool with attachmentId: "${att.id}", fileName: "${att.fileName}", fileType: "${att.fileType}"`
             )
             .join("\n")
         }
@@ -125,92 +121,87 @@ export const Route = createFileRoute("/api/chat/feedback")({
         const statusKey = streamStatusKey(streamId)
         await feedbackChatRedis.set(statusKey, "streaming", { ex: 3600 })
 
-        // Stream the AI response using SSE directly
-        const encoder = new TextEncoder()
-        const readable = new ReadableStream({
-          async start(controller) {
-            const sendEvent = (data: string) => {
-              controller.enqueue(encoder.encode(`data: ${data}\n\n`))
+        // Stream using AI SDK data stream protocol — enables tool calls, reasoning, and
+        // structured parts to be sent to the frontend's useChat hook automatically
+        const result = streamText({
+          model: openai(FEEDBACK_CHAT_MODEL),
+          system: feedbackChatSystemPrompt,
+          messages: modelMessages,
+          tools,
+          stopWhen: stepCountIs(8),
+          onFinish: async ({ text, steps }) => {
+            // Build structured parts from steps for rich message rendering
+            const partsJson: Record<string, unknown>[] = []
+            const toolCalls: Array<{ toolName: string; args: unknown }> = []
+            const toolResults: Array<{ toolName: string; result: unknown }> = []
+
+            for (const step of steps) {
+              if (step.text) {
+                partsJson.push({ type: "text", text: step.text })
+              }
+              for (const tc of step.toolCalls) {
+                const tcTyped = tc as Record<string, unknown>
+                toolCalls.push({ toolName: tcTyped.toolName as string, args: tcTyped.args })
+                partsJson.push({
+                  type: "tool-call",
+                  toolCallId: tcTyped.toolCallId,
+                  toolName: tcTyped.toolName,
+                  args: tcTyped.args,
+                })
+              }
+              for (const tr of step.toolResults) {
+                const trTyped = tr as Record<string, unknown>
+                toolResults.push({ toolName: trTyped.toolName as string, result: trTyped.result })
+                partsJson.push({
+                  type: "tool-result",
+                  toolCallId: trTyped.toolCallId,
+                  toolName: trTyped.toolName,
+                  result: trTyped.result,
+                })
+              }
             }
 
-            try {
-              const result = streamText({
-                model: openai(FEEDBACK_CHAT_MODEL),
-                system: feedbackChatSystemPrompt,
-                messages: modelMessages,
-                tools,
-                onFinish: async ({ text, steps }) => {
-                  // Save assistant message
-                  const toolCalls = steps.flatMap((s) =>
-                    s.toolCalls.map((tc: Record<string, unknown>) => ({
-                      toolName: tc.toolName,
-                      args: tc.args,
-                    }))
-                  )
-                  const toolResults = steps.flatMap((s) =>
-                    s.toolResults.map((tr: Record<string, unknown>) => ({
-                      toolName: tr.toolName,
-                      result: tr.result,
-                    }))
-                  )
+            // Save assistant message with parts
+            await saveFeedbackChatMessage(db, chatId!, {
+              id: crypto.randomUUID(),
+              role: "assistant",
+              content: text,
+              toolCallsJson: toolCalls,
+              toolResultJson: toolResults,
+              partsJson: partsJson.length > 0 ? partsJson : null,
+            })
 
-                  await saveFeedbackChatMessage(db, chatId!, {
-                    id: crypto.randomUUID(),
-                    role: "assistant",
-                    content: text,
-                    toolCallsJson: toolCalls,
-                    toolResultJson: toolResults,
-                  })
-
-                  // Extract readiness score and import links from tool results
-                  for (const tr of toolResults) {
-                    if (
-                      tr.toolName === "updateReadinessScore" &&
-                      tr.result &&
-                      typeof tr.result === "object"
-                    ) {
-                      const score = (tr.result as { score?: number }).score
-                      if (typeof score === "number") {
-                        await updateFeedbackChatReadiness(db, chatId!, score)
-                      }
-                    }
-
-                    if (
-                      tr.toolName === "processUploadedFile" &&
-                      tr.result &&
-                      typeof tr.result === "object"
-                    ) {
-                      const importId = (tr.result as { importId?: string }).importId
-                      if (typeof importId === "string") {
-                        await linkImportToChat(db, chatId!, importId)
-                      }
-                    }
-                  }
-
-                  await feedbackChatRedis.set(statusKey, "completed", { ex: 3600 })
-                },
-              })
-
-              for await (const chunk of result.textStream) {
-                sendEvent(JSON.stringify({ type: "text", text: chunk }))
+            // Extract readiness score and import links from tool results
+            for (const tr of toolResults) {
+              if (
+                tr.toolName === "updateReadinessScore" &&
+                tr.result &&
+                typeof tr.result === "object"
+              ) {
+                const score = (tr.result as { score?: number }).score
+                if (typeof score === "number") {
+                  await updateFeedbackChatReadiness(db, chatId!, score)
+                }
               }
 
-              sendEvent(JSON.stringify({ type: "finish", chatId }))
-            } catch (error) {
-              console.error("[feedback-chat] streaming error:", error)
-              sendEvent(JSON.stringify({ type: "error", message: String(error) }))
-              await feedbackChatRedis.set(statusKey, "completed", { ex: 3600 })
-            } finally {
-              controller.close()
+              if (
+                tr.toolName === "processUploadedFile" &&
+                tr.result &&
+                typeof tr.result === "object"
+              ) {
+                const importId = (tr.result as { importId?: string }).importId
+                if (typeof importId === "string") {
+                  await linkImportToChat(db, chatId!, importId)
+                }
+              }
             }
+
+            await feedbackChatRedis.set(statusKey, "completed", { ex: 3600 })
           },
         })
 
-        return new Response(readable, {
+        return result.toUIMessageStreamResponse({
           headers: {
-            "Content-Type": "text/event-stream",
-            "Cache-Control": "no-cache",
-            Connection: "keep-alive",
             "X-Chat-Id": chatId,
             "X-Stream-Id": streamId,
           },

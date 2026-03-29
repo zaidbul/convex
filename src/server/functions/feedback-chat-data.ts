@@ -32,6 +32,8 @@ export type FeedbackChatMessageRecord = {
   attachmentsJson:
     | Array<{ id: string; fileName: string; fileType: string; fileSize: number }>
     | null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  partsJson: any[] | null
   messageIndex: number
   createdAt: string
 }
@@ -105,6 +107,7 @@ export async function getFeedbackChatForViewer(
       toolCallsJson: (m.toolCallsJson ?? null) as any[] | null,
       toolResultJson: (m.toolResultJson ?? null) as any[] | null,
       attachmentsJson: m.attachmentsJson,
+      partsJson: (m.partsJson ?? null) as any[] | null,
       messageIndex: m.messageIndex,
       createdAt: m.createdAt,
     })),
@@ -169,6 +172,7 @@ export async function saveFeedbackChatMessage(
       fileType: string
       fileSize: number
     }> | null
+    partsJson?: any[] | null
   }
 ): Promise<void> {
   // Get next message index
@@ -188,6 +192,7 @@ export async function saveFeedbackChatMessage(
       toolCallsJson: message.toolCallsJson ?? null,
       toolResultJson: message.toolResultJson ?? null,
       attachmentsJson: message.attachmentsJson ?? null,
+      partsJson: message.partsJson ?? null,
       messageIndex: nextIndex,
       createdAt: nowIso(),
     })

@@ -81,18 +81,34 @@ export function createFeedbackChatTools(context: ViewerContext): ToolSet {
   return {
     processUploadedFile: tool({
       description:
-        "Process an uploaded file into structured feedback items. Call this when the user uploads a file.",
+        "Process an uploaded file into structured feedback items. Call this when the user uploads a file. The file content is read from the database automatically — you do NOT need to provide the file content.",
       inputSchema: z.object({
         attachmentId: z.string().describe("The ID of the uploaded attachment"),
         fileName: z.string().describe("The file name"),
         fileType: z.string().describe("The MIME type of the file"),
-        rawContent: z.string().describe("The raw file content"),
         sourceName: z
           .string()
           .optional()
           .describe("Human-readable name for this feedback source"),
       }),
-      execute: async ({ attachmentId, fileName, fileType, rawContent, sourceName }) => {
+      execute: async ({ attachmentId, fileName, fileType, sourceName }) => {
+        // Read file content directly from the database — no need for the AI to relay it
+        const attachment = await db.query.feedbackChatAttachments.findFirst({
+          where: eq(schema.feedbackChatAttachments.id, attachmentId),
+        })
+
+        if (!attachment) {
+          return {
+            success: false,
+            importId: null,
+            itemCount: 0,
+            fileName,
+            kind: "txt" as const,
+            message: `Attachment "${attachmentId}" not found. The file may not have been uploaded correctly.`,
+          }
+        }
+
+        const rawContent = attachment.rawContent
         const kind = inferFileKind(fileName, fileType)
 
         const importInput: CreateFeedbackImportInput = {

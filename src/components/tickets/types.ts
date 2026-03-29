@@ -238,6 +238,8 @@ export interface FeedbackChatMessageRecord {
     fileType: string
     fileSize: number
   }> | null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  partsJson: any[] | null
   messageIndex: number
   createdAt: string
 }

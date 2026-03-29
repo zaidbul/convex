@@ -1,0 +1,1 @@
+ALTER TABLE `feedback_chat_messages` ADD `parts_json` text;

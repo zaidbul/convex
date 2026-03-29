@@ -74,7 +74,7 @@ export function FeedbackHubScreen({
   const { data: chatList = [] } = useQuery(feedbackChatsQueryOptions())
   const { data: activeChatData } = useQuery(feedbackChatQueryOptions(activeChatId ?? ""))
   const activeChat = activeChatData as {
-    messages?: Array<{ id: string; chatId: string; role: "user" | "assistant" | "system"; content: string; toolCallsJson: any[] | null; toolResultJson: any[] | null; attachmentsJson: Array<{ id: string; fileName: string; fileType: string; fileSize: number }> | null; messageIndex: number; createdAt: string }>
+    messages?: Array<{ id: string; chatId: string; role: "user" | "assistant" | "system"; content: string; toolCallsJson: any[] | null; toolResultJson: any[] | null; attachmentsJson: Array<{ id: string; fileName: string; fileType: string; fileSize: number }> | null; partsJson: any[] | null; messageIndex: number; createdAt: string }>
     readinessScore?: number
   } | null | undefined
   const deleteChat = useDeleteFeedbackChatMutation()

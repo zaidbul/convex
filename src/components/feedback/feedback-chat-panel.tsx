@@ -1,16 +1,21 @@
-import { useState, useRef, useEffect, useCallback } from "react"
-import { Send, Loader2, Sparkles, RotateCcw, Plus } from "lucide-react"
+import { useState, useRef, useEffect, useCallback, useMemo } from "react"
+import { Send, Loader2, Sparkles, RotateCcw, Plus, Radio } from "lucide-react"
+import { useChat } from "@ai-sdk/react"
+import { DefaultChatTransport } from "ai"
+import type { UIMessage } from "ai"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { FeedbackChatMessage } from "./feedback-chat-message"
 import { FeedbackChatReadiness } from "./feedback-chat-readiness"
+import { FeedbackThinkingIndicator } from "./feedback-thinking-indicator"
 import {
   FeedbackChatFileUpload,
   type UploadedFile,
 } from "./feedback-chat-file-upload"
 import type { FeedbackChatMessageRecord } from "@/components/tickets/types"
+import type { AskQuestionsOutput } from "./tools/ask-questions-tool"
 
 interface FeedbackChatPanelProps {
   chatId: string | null
@@ -21,18 +26,37 @@ interface FeedbackChatPanelProps {
   onMessagesUpdated: () => void
 }
 
-type LocalMessage = {
-  id: string
-  role: "user" | "assistant"
-  content: string
-  attachmentsJson?: Array<{
-    id: string
-    fileName: string
-    fileType: string
-    fileSize: number
-  }> | null
-  toolResultJson?: unknown[] | null
-  isStreaming?: boolean
+/**
+ * Convert server message records to the UIMessage format that useChat expects.
+ */
+function serverMessagesToUIMessages(messages: FeedbackChatMessageRecord[]): UIMessage[] {
+  return messages.map((m) => {
+    const parts: UIMessage["parts"] = []
+
+    if (m.partsJson && Array.isArray(m.partsJson) && m.partsJson.length > 0) {
+      for (const part of m.partsJson) {
+        const p = part as Record<string, unknown>
+        if (p.type === "text" && typeof p.text === "string") {
+          parts.push({ type: "text", text: p.text })
+        }
+        // Tool calls and results are handled via tool-invocation parts in UIMessage
+      }
+    } else if (m.content) {
+      parts.push({ type: "text", text: m.content })
+    }
+
+    // Ensure at least one text part
+    if (parts.length === 0 && m.content) {
+      parts.push({ type: "text", text: m.content })
+    }
+
+    return {
+      id: m.id,
+      role: m.role as "user" | "assistant",
+      parts,
+      createdAt: new Date(m.createdAt),
+    } as UIMessage
+  })
 }
 
 export function FeedbackChatPanel({
@@ -45,226 +69,126 @@ export function FeedbackChatPanel({
 }: FeedbackChatPanelProps) {
   const [input, setInput] = useState("")
   const [pendingFiles, setPendingFiles] = useState<UploadedFile[]>([])
-  const [localMessages, setLocalMessages] = useState<LocalMessage[]>([])
-  const [isLoading, setIsLoading] = useState(false)
   const [isAnalysisRunning, setIsAnalysisRunning] = useState(false)
+  const [currentChatId, setCurrentChatId] = useState<string | null>(chatId)
   const scrollRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const pendingFilesRef = useRef<UploadedFile[]>([])
+
+  // Keep ref in sync with state for use in transport
+  useEffect(() => {
+    pendingFilesRef.current = pendingFiles
+  }, [pendingFiles])
+
+  // Track chatId changes from parent
+  useEffect(() => {
+    setCurrentChatId(chatId)
+  }, [chatId])
+
+  // Convert server messages to UIMessage format for useChat initial state
+  const initialMessages = useMemo(
+    () => serverMessagesToUIMessages(serverMessages),
+    [serverMessages]
+  )
+
+  // Create a custom transport that includes chatId and attachments
+  const transport = useMemo(() => {
+    return new DefaultChatTransport({
+      api: "/api/chat/feedback",
+      body: () => ({
+        chatId: currentChatId,
+        attachments: pendingFilesRef.current.length > 0 ? pendingFilesRef.current : undefined,
+      }),
+      fetch: async (input, init) => {
+        const response = await fetch(input, init)
+
+        // Extract chatId from response header for new chats
+        const responseChatId = response.headers.get("X-Chat-Id")
+        if (!currentChatId && responseChatId) {
+          setCurrentChatId(responseChatId)
+          onChatCreated(responseChatId)
+        }
+
+        return response
+      },
+    })
+  }, [currentChatId, onChatCreated])
+
+  const {
+    messages,
+    sendMessage,
+    addToolOutput,
+    status,
+    error,
+    setMessages,
+  } = useChat({
+    id: currentChatId ?? undefined,
+    transport,
+    messages: initialMessages,
+    onError: (err) => {
+      toast.error(err.message || "Failed to send message")
+    },
+    onFinish: () => {
+      onMessagesUpdated()
+    },
+  })
+
+  // Sync server messages when they change (e.g., after refetch)
+  useEffect(() => {
+    if (serverMessages.length > 0 && status !== "streaming" && status !== "submitted") {
+      setMessages(serverMessagesToUIMessages(serverMessages))
+    }
+  }, [serverMessages, status, setMessages])
+
+  const isLoading = status === "streaming" || status === "submitted"
 
   // Auto-scroll on new messages
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
-  }, [serverMessages, localMessages])
-
-  // Merge server messages with local streaming messages
-  const allMessages: Array<{
-    id: string
-    role: "user" | "assistant" | "system"
-    content: string
-    toolResultJson?: unknown | null
-    attachmentsJson?: Array<{
-      id: string
-      fileName: string
-      fileType: string
-      fileSize: number
-    }> | null
-    isStreaming?: boolean
-  }> = [
-    ...serverMessages.map((m) => ({
-      id: m.id,
-      role: m.role as "user" | "assistant" | "system",
-      content: m.content,
-      toolResultJson: m.toolResultJson,
-      attachmentsJson: m.attachmentsJson,
-      isStreaming: false,
-    })),
-    ...localMessages
-      .filter(
-        (lm) => !serverMessages.some((sm) => sm.id === lm.id)
-      )
-      .map((lm) => ({
-        id: lm.id,
-        role: lm.role,
-        content: lm.content,
-        toolResultJson: lm.toolResultJson ?? null,
-        attachmentsJson: lm.attachmentsJson,
-        isStreaming: lm.isStreaming,
-      })),
-  ]
+  }, [messages, isLoading])
 
   const handleFilesReady = useCallback((files: UploadedFile[]) => {
     setPendingFiles((prev) => [...prev, ...files])
   }, [])
 
-  const handleSend = async () => {
+  const handleSend = useCallback(() => {
     const trimmed = input.trim()
     if (!trimmed && pendingFiles.length === 0) return
     if (isLoading) return
 
-    setIsLoading(true)
     const messageContent =
       trimmed ||
       `I've uploaded ${pendingFiles.length} file${pendingFiles.length > 1 ? "s" : ""} for analysis.`
-    const messageId = crypto.randomUUID()
 
-    // Add user message locally
-    const userMessage: LocalMessage = {
-      id: messageId,
-      role: "user",
-      content: messageContent,
-      attachmentsJson: pendingFiles.map((f) => ({
-        id: f.id,
-        fileName: f.fileName,
-        fileType: f.fileType,
-        fileSize: f.fileSize,
-      })),
-    }
-    setLocalMessages((prev) => [...prev, userMessage])
+    // sendMessage will trigger the transport which includes attachments via the body callback
+    sendMessage({ text: messageContent })
+
     setInput("")
-
-    // Add streaming assistant placeholder
-    const assistantId = crypto.randomUUID()
-    setLocalMessages((prev) => [
-      ...prev,
-      {
-        id: assistantId,
-        role: "assistant",
-        content: "",
-        isStreaming: true,
-      },
-    ])
-
-    const filesToSend = [...pendingFiles]
     setPendingFiles([])
+  }, [input, pendingFiles, isLoading, sendMessage])
 
-    try {
-      const allMessageHistory = [
-        ...serverMessages.map((m) => ({
-          id: m.id,
-          role: m.role,
-          content: m.content,
-        })),
-        { id: messageId, role: "user" as const, content: messageContent },
-      ]
-
-      const response = await fetch("/api/chat/feedback", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chatId,
-          messages: allMessageHistory,
-          streamId: crypto.randomUUID(),
-          attachments: filesToSend.length > 0 ? filesToSend : undefined,
-        }),
+  const handleToolOutput = useCallback(
+    (toolCallId: string, output: AskQuestionsOutput) => {
+      addToolOutput({
+        toolCallId,
+        tool: "askStructuredQuestions" as never,
+        output: output as never,
       })
-
-      if (!response.ok) {
-        throw new Error("Failed to send message")
-      }
-
-      // Read chatId from response header
-      const responseChatId = response.headers.get("X-Chat-Id")
-      if (!chatId && responseChatId) {
-        onChatCreated(responseChatId)
-      }
-
-      // Read SSE stream directly from the response
-      const reader = response.body?.getReader()
-      const decoder = new TextDecoder()
-
-      if (reader) {
-        let buffer = ""
-
-        const processChunks = async () => {
-          while (true) {
-            const { done, value } = await reader.read()
-            if (done) break
-
-            buffer += decoder.decode(value, { stream: true })
-
-            // Parse SSE events from buffer
-            const lines = buffer.split("\n")
-            buffer = lines.pop() ?? ""
-
-            for (const line of lines) {
-              if (line.startsWith("data: ")) {
-                try {
-                  const chunk = JSON.parse(line.slice(6)) as {
-                    type: string
-                    text?: string
-                    chatId?: string
-                  }
-
-                  if (chunk.type === "text" && chunk.text) {
-                    setLocalMessages((prev) =>
-                      prev.map((m) =>
-                        m.id === assistantId
-                          ? { ...m, content: m.content + (chunk.text ?? "") }
-                          : m
-                      )
-                    )
-                  }
-
-                  if (chunk.type === "finish") {
-                    setLocalMessages((prev) =>
-                      prev.map((m) =>
-                        m.id === assistantId
-                          ? { ...m, isStreaming: false }
-                          : m
-                      )
-                    )
-                    setIsLoading(false)
-                    onMessagesUpdated()
-                    return
-                  }
-                } catch {
-                  // Ignore parse errors
-                }
-              }
-            }
-          }
-
-          // Stream ended without finish event
-          setLocalMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantId ? { ...m, isStreaming: false } : m
-            )
-          )
-          setIsLoading(false)
-          onMessagesUpdated()
-        }
-
-        processChunks().catch(() => {
-          setLocalMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantId ? { ...m, isStreaming: false } : m
-            )
-          )
-          setIsLoading(false)
-          onMessagesUpdated()
-        })
-      }
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to send message"
-      )
-      // Remove streaming placeholder
-      setLocalMessages((prev) => prev.filter((m) => m.id !== assistantId))
-      setIsLoading(false)
-    }
-  }
+    },
+    [addToolOutput]
+  )
 
   const handleRunAnalysis = async () => {
-    if (!chatId || isAnalysisRunning) return
+    if (!currentChatId || isAnalysisRunning) return
 
     setIsAnalysisRunning(true)
     try {
       const response = await fetch("/api/chat/feedback/run-analysis", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chatId }),
+        body: JSON.stringify({ chatId: currentChatId }),
       })
 
       const data = (await response.json()) as {
@@ -282,9 +206,9 @@ export function FeedbackChatPanel({
         `Analysis complete: ${data.itemsProcessed} items processed, ${data.suggestionsProduced} suggestions generated`
       )
       onMessagesUpdated()
-    } catch (error) {
+    } catch (err) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to run analysis"
+        err instanceof Error ? err.message : "Failed to run analysis"
       )
     } finally {
       setIsAnalysisRunning(false)
@@ -294,11 +218,66 @@ export function FeedbackChatPanel({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
-      void handleSend()
+      handleSend()
     }
   }
 
-  const showEmptyState = allMessages.length === 0 && !isLoading
+  // Determine if we should show the thinking indicator
+  const showThinking = useMemo(() => {
+    if (!isLoading) return false
+    const lastMsg = messages[messages.length - 1]
+    if (!lastMsg || lastMsg.role !== "assistant") return true
+    return !lastMsg.parts || lastMsg.parts.length === 0
+  }, [isLoading, messages])
+
+  const showEmptyState = messages.length === 0 && !isLoading
+
+  // Convert UIMessages to the format our message component expects
+  const renderedMessages = useMemo(() => {
+    return messages.map((msg) => {
+      const partsJson: unknown[] = []
+      for (const part of msg.parts ?? []) {
+        if (part.type === "text") {
+          partsJson.push({ type: "text", text: part.text })
+        } else if (part.type === "tool-invocation") {
+          const inv = (part as unknown as { toolInvocation: Record<string, unknown> }).toolInvocation
+          partsJson.push({
+            type: "tool-call",
+            toolCallId: inv.toolCallId,
+            toolName: inv.toolName,
+            args: inv.args,
+          })
+          if (inv.state === "result") {
+            partsJson.push({
+              type: "tool-result",
+              toolCallId: inv.toolCallId,
+              toolName: inv.toolName,
+              result: inv.result,
+            })
+          }
+        } else if (part.type === "reasoning") {
+          const rp = part as unknown as { reasoning: string }
+          partsJson.push({ type: "reasoning", text: rp.reasoning })
+        }
+      }
+
+      const content = partsJson
+        .filter((p) => (p as Record<string, unknown>).type === "text")
+        .map((p) => (p as Record<string, unknown>).text as string)
+        .join("\n")
+
+      return {
+        id: msg.id,
+        role: msg.role as "user" | "assistant" | "system",
+        content,
+        partsJson: partsJson.length > 0 ? partsJson : null,
+        attachmentsJson:
+          serverMessages.find((sm) => sm.id === msg.id)?.attachmentsJson ?? null,
+        isStreaming:
+          isLoading && msg.id === messages[messages.length - 1]?.id && msg.role === "assistant",
+      }
+    })
+  }, [messages, serverMessages, isLoading])
 
   return (
     <div className="flex h-[600px] flex-col rounded-lg border">
@@ -307,6 +286,12 @@ export function FeedbackChatPanel({
         <div className="flex items-center gap-2">
           <Sparkles className="size-4 text-primary" strokeWidth={1.75} />
           <span className="text-sm font-medium">Feedback Assistant</span>
+          {isLoading && (
+            <span className="flex items-center gap-1 text-xs text-green-500">
+              <Radio className="size-2.5 animate-pulse" />
+              Streaming
+            </span>
+          )}
         </div>
         <Button variant="ghost" size="sm" onClick={onNewChat} className="gap-1.5">
           <Plus className="size-3.5" />
@@ -335,16 +320,20 @@ export function FeedbackChatPanel({
             </div>
           )}
 
-          {allMessages.map((msg) => (
+          {renderedMessages.map((msg) => (
             <FeedbackChatMessage
               key={msg.id}
+              id={msg.id}
               role={msg.role}
               content={msg.content}
-              toolResultJson={msg.toolResultJson}
+              partsJson={msg.partsJson}
               attachmentsJson={msg.attachmentsJson}
               isStreaming={msg.isStreaming}
+              onToolOutput={handleToolOutput}
             />
           ))}
+
+          {showThinking && <FeedbackThinkingIndicator />}
         </div>
       </ScrollArea>
 
@@ -373,6 +362,13 @@ export function FeedbackChatPanel({
         </div>
       )}
 
+      {/* Error display */}
+      {error && (
+        <div className="border-t bg-destructive/5 px-4 py-2 text-xs text-destructive">
+          {error.message}
+        </div>
+      )}
+
       {/* Input area */}
       <div className="border-t p-3">
         <div className="flex items-end gap-2">
@@ -394,9 +390,7 @@ export function FeedbackChatPanel({
           <Button
             size="icon"
             onClick={handleSend}
-            disabled={
-              isLoading && !input.trim() && pendingFiles.length === 0
-            }
+            disabled={isLoading && !input.trim() && pendingFiles.length === 0}
           >
             {isLoading ? (
               <Loader2 className="size-4 animate-spin" />

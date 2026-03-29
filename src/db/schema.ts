@@ -707,6 +707,8 @@ export const feedbackChatMessages = sqliteTable(
     attachmentsJson: text("attachments_json", { mode: "json" }).$type<
       Array<{ id: string; fileName: string; fileType: string; fileSize: number }>
     >(),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    partsJson: text("parts_json", { mode: "json" }).$type<any[]>(),
     messageIndex: integer("message_index").notNull(),
     createdAt: text("created_at").notNull(),
   },

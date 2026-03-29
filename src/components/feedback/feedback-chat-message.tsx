@@ -1,10 +1,24 @@
-import { Bot, User, FileText, CheckCircle2, HelpCircle } from "lucide-react"
+import { memo, useMemo } from "react"
+import { Bot, User, FileText, Lightbulb } from "lucide-react"
+import Markdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import {
+  type MessagePart,
+  synthesizePartsFromLegacy,
+} from "./feedback-chat-types"
+import { FeedbackToolRenderer } from "./tools/feedback-tool-renderer"
+import type { AskQuestionsOutput } from "./tools/ask-questions-tool"
+
+// --- Types ---
 
 interface ChatMessageProps {
+  id: string
   role: "user" | "assistant" | "system"
   content: string
+  partsJson?: unknown[] | null
+  toolCallsJson?: unknown[] | null
   toolResultJson?: unknown | null
   attachmentsJson?: Array<{
     id: string
@@ -13,6 +27,7 @@ interface ChatMessageProps {
     fileSize: number
   }> | null
   isStreaming?: boolean
+  onToolOutput?: (toolCallId: string, output: AskQuestionsOutput) => void
 }
 
 function formatFileSize(bytes: number): string {
@@ -21,38 +36,102 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-function ToolResultBadges({ results }: { results: unknown[] }) {
+// --- Parts Renderer ---
+
+function MessagePartsRenderer({
+  parts,
+  isStreaming,
+  onToolOutput,
+}: {
+  parts: MessagePart[]
+  isStreaming?: boolean
+  onToolOutput?: (toolCallId: string, output: AskQuestionsOutput) => void
+}) {
+  // Group tool-call and tool-result parts by toolCallId for paired rendering
+  const toolCallMap = useMemo(() => {
+    const map = new Map<string, { call?: MessagePart; result?: MessagePart }>()
+    for (const part of parts) {
+      if (part.type === "tool-call" && part.toolCallId) {
+        const entry = map.get(part.toolCallId) ?? {}
+        entry.call = part
+        map.set(part.toolCallId, entry)
+      }
+      if (part.type === "tool-result" && part.toolCallId) {
+        const entry = map.get(part.toolCallId) ?? {}
+        entry.result = part
+        map.set(part.toolCallId, entry)
+      }
+    }
+    return map
+  }, [parts])
+
+  // Track which toolCallIds we've already rendered
+  const renderedToolCallIds = new Set<string>()
+
   return (
-    <div className="mt-2 flex flex-wrap gap-1.5">
-      {results.map((result, i) => {
-        const r = result as { toolName?: string; result?: unknown }
-        if (!r.toolName) return null
-
-        if (r.toolName === "processUploadedFile") {
-          const res = r.result as { success?: boolean; fileName?: string; itemCount?: number } | undefined
+    <div className="space-y-3">
+      {parts.map((part, index) => {
+        // Text parts — render with Markdown
+        if (part.type === "text") {
+          const text = part.text?.trim()
+          if (!text) return null
           return (
-            <Badge key={i} variant="secondary" className="gap-1 text-xs">
-              <CheckCircle2 className="size-3 text-emerald-500" />
-              {res?.fileName ?? "File"}: {res?.itemCount ?? 0} items imported
-            </Badge>
+            <div
+              key={`text-${index}`}
+              className="prose prose-sm dark:prose-invert max-w-none break-words prose-p:my-1 prose-p:leading-relaxed"
+            >
+              <Markdown remarkPlugins={[remarkGfm]}>{text}</Markdown>
+              {isStreaming && index === parts.length - 1 && (
+                <span className="ml-1 inline-block size-1.5 animate-pulse rounded-full bg-current" />
+              )}
+            </div>
           )
         }
 
-        if (r.toolName === "updateReadinessScore") {
-          const res = r.result as { score?: number; reason?: string } | undefined
+        // Reasoning parts — lightbulb + amber italic
+        if (part.type === "reasoning") {
+          const reasoningText = part.text ?? ""
+          if (!reasoningText) return null
           return (
-            <Badge key={i} variant="outline" className="gap-1 text-xs">
-              Readiness: {res?.score ?? 0}%
-            </Badge>
+            <div
+              key={`reasoning-${index}`}
+              className="flex items-start gap-2 py-1.5 text-sm text-amber-600 dark:text-amber-400"
+            >
+              <Lightbulb className="mt-0.5 size-3.5 shrink-0" />
+              <span className="italic">{reasoningText}</span>
+            </div>
           )
         }
 
-        if (r.toolName === "askStructuredQuestions") {
+        // Tool-call parts — render paired with their result
+        if (part.type === "tool-call" && part.toolCallId) {
+          if (renderedToolCallIds.has(part.toolCallId)) return null
+          renderedToolCallIds.add(part.toolCallId)
+
+          const pair = toolCallMap.get(part.toolCallId)
           return (
-            <Badge key={i} variant="outline" className="gap-1 text-xs">
-              <HelpCircle className="size-3" />
-              Questions asked
-            </Badge>
+            <FeedbackToolRenderer
+              key={part.toolCallId}
+              callPart={pair?.call}
+              resultPart={pair?.result}
+              onToolOutput={onToolOutput}
+            />
+          )
+        }
+
+        // Tool-result parts — render only if we haven't already rendered them via their call
+        if (part.type === "tool-result" && part.toolCallId) {
+          if (renderedToolCallIds.has(part.toolCallId)) return null
+          renderedToolCallIds.add(part.toolCallId)
+
+          const pair = toolCallMap.get(part.toolCallId)
+          return (
+            <FeedbackToolRenderer
+              key={part.toolCallId}
+              callPart={pair?.call}
+              resultPart={pair?.result}
+              onToolOutput={onToolOutput}
+            />
           )
         }
 
@@ -62,22 +141,35 @@ function ToolResultBadges({ results }: { results: unknown[] }) {
   )
 }
 
-export function FeedbackChatMessage({
+// --- Main Component ---
+
+function FeedbackChatMessageInner({
   role,
   content,
+  partsJson,
+  toolCallsJson,
   toolResultJson,
   attachmentsJson,
   isStreaming,
+  onToolOutput,
 }: ChatMessageProps) {
   const isUser = role === "user"
 
+  // Use partsJson if available, otherwise synthesize from legacy fields
+  const parts: MessagePart[] = useMemo(() => {
+    if (partsJson && Array.isArray(partsJson) && partsJson.length > 0) {
+      return partsJson as MessagePart[]
+    }
+    return synthesizePartsFromLegacy(
+      content,
+      toolResultJson as unknown[] | null | undefined,
+      toolCallsJson
+    )
+  }, [partsJson, content, toolResultJson, toolCallsJson])
+
   return (
-    <div
-      className={cn(
-        "flex gap-3",
-        isUser ? "flex-row-reverse" : "flex-row"
-      )}
-    >
+    <div className={cn("flex gap-3", isUser ? "flex-row-reverse" : "flex-row")}>
+      {/* Avatar */}
       <div
         className={cn(
           "flex size-7 shrink-0 items-center justify-center rounded-full border",
@@ -93,12 +185,7 @@ export function FeedbackChatMessage({
         )}
       </div>
 
-      <div
-        className={cn(
-          "max-w-[80%] space-y-1",
-          isUser ? "items-end" : "items-start"
-        )}
-      >
+      <div className={cn("max-w-[85%] space-y-1", isUser ? "items-end" : "items-start")}>
         {/* Attachments */}
         {attachmentsJson && attachmentsJson.length > 0 && (
           <div className="flex flex-wrap gap-1.5 pb-1">
@@ -115,27 +202,28 @@ export function FeedbackChatMessage({
         )}
 
         {/* Message content */}
-        {content && (
-          <div
-            className={cn(
-              "rounded-xl px-3.5 py-2.5 text-sm leading-relaxed",
-              isUser
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-foreground"
-            )}
-          >
-            <p className="whitespace-pre-wrap">{content}</p>
-            {isStreaming && (
-              <span className="ml-1 inline-block size-1.5 animate-pulse rounded-full bg-current" />
+        {isUser ? (
+          // User messages: bubble style
+          <div className="rounded-xl bg-primary px-3.5 py-2.5 text-sm leading-relaxed text-primary-foreground">
+            <Markdown remarkPlugins={[remarkGfm]}>{content}</Markdown>
+          </div>
+        ) : (
+          // Assistant messages: flat layout with parts renderer
+          <div className="text-sm">
+            <MessagePartsRenderer
+              parts={parts}
+              isStreaming={isStreaming}
+              onToolOutput={onToolOutput}
+            />
+            {/* Streaming indicator when no content yet */}
+            {isStreaming && parts.length === 0 && (
+              <span className="inline-block size-1.5 animate-pulse rounded-full bg-muted-foreground" />
             )}
           </div>
         )}
-
-        {/* Tool results */}
-        {Array.isArray(toolResultJson) && toolResultJson.length > 0 ? (
-          <ToolResultBadges results={toolResultJson as Record<string, unknown>[]} />
-        ) : null}
       </div>
     </div>
   )
 }
+
+export const FeedbackChatMessage = memo(FeedbackChatMessageInner)
