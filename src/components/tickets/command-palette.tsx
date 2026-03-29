@@ -3,8 +3,6 @@ import { useNavigate, useParams } from "@tanstack/react-router"
 import { useQueryClient } from "@tanstack/react-query"
 import {
   CircleDot,
-  FolderKanban,
-  Rocket,
   Eye,
   Settings,
   Users,
@@ -121,32 +119,6 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
           <CommandSeparator />
           <CommandGroup heading="Pages">
-            <CommandItem
-              onSelect={() =>
-                runAction(() =>
-                  navigate({
-                    to: "/$slug/tickets/projects",
-                    params: { slug: slug! },
-                  })
-                )
-              }
-            >
-              <FolderKanban className="size-4 text-on-surface-variant" strokeWidth={1.5} />
-              <span>Projects</span>
-            </CommandItem>
-            <CommandItem
-              onSelect={() =>
-                runAction(() =>
-                  navigate({
-                    to: "/$slug/tickets/initiatives",
-                    params: { slug: slug! },
-                  })
-                )
-              }
-            >
-              <Rocket className="size-4 text-on-surface-variant" strokeWidth={1.5} />
-              <span>Initiatives</span>
-            </CommandItem>
             <CommandItem
               onSelect={() =>
                 runAction(() =>

@@ -22,8 +22,6 @@ import { Route as AuthSlugDashboardRouteImport } from './routes/_auth/$slug.dash
 import { Route as AuthSlugTicketsRouteRouteImport } from './routes/_auth/$slug/tickets/route'
 import { Route as AuthSlugTicketsIndexRouteImport } from './routes/_auth/$slug/tickets/index'
 import { Route as AuthSlugTicketsSettingsRouteImport } from './routes/_auth/$slug/tickets/settings'
-import { Route as AuthSlugTicketsProjectsRouteImport } from './routes/_auth/$slug/tickets/projects'
-import { Route as AuthSlugTicketsInitiativesRouteImport } from './routes/_auth/$slug/tickets/initiatives'
 import { Route as AuthSlugTicketsDashboardRouteImport } from './routes/_auth/$slug/tickets/dashboard'
 import { Route as AuthSlugTicketsViewsRouteRouteImport } from './routes/_auth/$slug/tickets/views/route'
 import { Route as AuthSlugTicketsTeamSlugRouteRouteImport } from './routes/_auth/$slug/tickets/$teamSlug/route'
@@ -98,17 +96,6 @@ const AuthSlugTicketsSettingsRoute = AuthSlugTicketsSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthSlugTicketsRouteRoute,
 } as any)
-const AuthSlugTicketsProjectsRoute = AuthSlugTicketsProjectsRouteImport.update({
-  id: '/projects',
-  path: '/projects',
-  getParentRoute: () => AuthSlugTicketsRouteRoute,
-} as any)
-const AuthSlugTicketsInitiativesRoute =
-  AuthSlugTicketsInitiativesRouteImport.update({
-    id: '/initiatives',
-    path: '/initiatives',
-    getParentRoute: () => AuthSlugTicketsRouteRoute,
-  } as any)
 const AuthSlugTicketsDashboardRoute =
   AuthSlugTicketsDashboardRouteImport.update({
     id: '/dashboard',
@@ -183,8 +170,6 @@ export interface FileRoutesByFullPath {
   '/$slug/tickets/$teamSlug': typeof AuthSlugTicketsTeamSlugRouteRouteWithChildren
   '/$slug/tickets/views': typeof AuthSlugTicketsViewsRouteRouteWithChildren
   '/$slug/tickets/dashboard': typeof AuthSlugTicketsDashboardRoute
-  '/$slug/tickets/initiatives': typeof AuthSlugTicketsInitiativesRoute
-  '/$slug/tickets/projects': typeof AuthSlugTicketsProjectsRoute
   '/$slug/tickets/settings': typeof AuthSlugTicketsSettingsRoute
   '/$slug/tickets/': typeof AuthSlugTicketsIndexRoute
   '/$slug/tickets/$teamSlug/cycles': typeof AuthSlugTicketsTeamSlugCyclesRouteRouteWithChildren
@@ -206,8 +191,6 @@ export interface FileRoutesByTo {
   '/$slug/dashboard': typeof AuthSlugDashboardRoute
   '/$slug/tickets/$teamSlug': typeof AuthSlugTicketsTeamSlugRouteRouteWithChildren
   '/$slug/tickets/dashboard': typeof AuthSlugTicketsDashboardRoute
-  '/$slug/tickets/initiatives': typeof AuthSlugTicketsInitiativesRoute
-  '/$slug/tickets/projects': typeof AuthSlugTicketsProjectsRoute
   '/$slug/tickets/settings': typeof AuthSlugTicketsSettingsRoute
   '/$slug/tickets': typeof AuthSlugTicketsIndexRoute
   '/$slug/tickets/$teamSlug/cycles': typeof AuthSlugTicketsTeamSlugCyclesRouteRouteWithChildren
@@ -234,8 +217,6 @@ export interface FileRoutesById {
   '/_auth/$slug/tickets/$teamSlug': typeof AuthSlugTicketsTeamSlugRouteRouteWithChildren
   '/_auth/$slug/tickets/views': typeof AuthSlugTicketsViewsRouteRouteWithChildren
   '/_auth/$slug/tickets/dashboard': typeof AuthSlugTicketsDashboardRoute
-  '/_auth/$slug/tickets/initiatives': typeof AuthSlugTicketsInitiativesRoute
-  '/_auth/$slug/tickets/projects': typeof AuthSlugTicketsProjectsRoute
   '/_auth/$slug/tickets/settings': typeof AuthSlugTicketsSettingsRoute
   '/_auth/$slug/tickets/': typeof AuthSlugTicketsIndexRoute
   '/_auth/$slug/tickets/$teamSlug/cycles': typeof AuthSlugTicketsTeamSlugCyclesRouteRouteWithChildren
@@ -261,8 +242,6 @@ export interface FileRouteTypes {
     | '/$slug/tickets/$teamSlug'
     | '/$slug/tickets/views'
     | '/$slug/tickets/dashboard'
-    | '/$slug/tickets/initiatives'
-    | '/$slug/tickets/projects'
     | '/$slug/tickets/settings'
     | '/$slug/tickets/'
     | '/$slug/tickets/$teamSlug/cycles'
@@ -284,8 +263,6 @@ export interface FileRouteTypes {
     | '/$slug/dashboard'
     | '/$slug/tickets/$teamSlug'
     | '/$slug/tickets/dashboard'
-    | '/$slug/tickets/initiatives'
-    | '/$slug/tickets/projects'
     | '/$slug/tickets/settings'
     | '/$slug/tickets'
     | '/$slug/tickets/$teamSlug/cycles'
@@ -311,8 +288,6 @@ export interface FileRouteTypes {
     | '/_auth/$slug/tickets/$teamSlug'
     | '/_auth/$slug/tickets/views'
     | '/_auth/$slug/tickets/dashboard'
-    | '/_auth/$slug/tickets/initiatives'
-    | '/_auth/$slug/tickets/projects'
     | '/_auth/$slug/tickets/settings'
     | '/_auth/$slug/tickets/'
     | '/_auth/$slug/tickets/$teamSlug/cycles'
@@ -425,20 +400,6 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/$slug/tickets/settings'
       preLoaderRoute: typeof AuthSlugTicketsSettingsRouteImport
-      parentRoute: typeof AuthSlugTicketsRouteRoute
-    }
-    '/_auth/$slug/tickets/projects': {
-      id: '/_auth/$slug/tickets/projects'
-      path: '/projects'
-      fullPath: '/$slug/tickets/projects'
-      preLoaderRoute: typeof AuthSlugTicketsProjectsRouteImport
-      parentRoute: typeof AuthSlugTicketsRouteRoute
-    }
-    '/_auth/$slug/tickets/initiatives': {
-      id: '/_auth/$slug/tickets/initiatives'
-      path: '/initiatives'
-      fullPath: '/$slug/tickets/initiatives'
-      preLoaderRoute: typeof AuthSlugTicketsInitiativesRouteImport
       parentRoute: typeof AuthSlugTicketsRouteRoute
     }
     '/_auth/$slug/tickets/dashboard': {
@@ -572,8 +533,6 @@ interface AuthSlugTicketsRouteRouteChildren {
   AuthSlugTicketsTeamSlugRouteRoute: typeof AuthSlugTicketsTeamSlugRouteRouteWithChildren
   AuthSlugTicketsViewsRouteRoute: typeof AuthSlugTicketsViewsRouteRouteWithChildren
   AuthSlugTicketsDashboardRoute: typeof AuthSlugTicketsDashboardRoute
-  AuthSlugTicketsInitiativesRoute: typeof AuthSlugTicketsInitiativesRoute
-  AuthSlugTicketsProjectsRoute: typeof AuthSlugTicketsProjectsRoute
   AuthSlugTicketsSettingsRoute: typeof AuthSlugTicketsSettingsRoute
   AuthSlugTicketsIndexRoute: typeof AuthSlugTicketsIndexRoute
 }
@@ -583,8 +542,6 @@ const AuthSlugTicketsRouteRouteChildren: AuthSlugTicketsRouteRouteChildren = {
     AuthSlugTicketsTeamSlugRouteRouteWithChildren,
   AuthSlugTicketsViewsRouteRoute: AuthSlugTicketsViewsRouteRouteWithChildren,
   AuthSlugTicketsDashboardRoute: AuthSlugTicketsDashboardRoute,
-  AuthSlugTicketsInitiativesRoute: AuthSlugTicketsInitiativesRoute,
-  AuthSlugTicketsProjectsRoute: AuthSlugTicketsProjectsRoute,
   AuthSlugTicketsSettingsRoute: AuthSlugTicketsSettingsRoute,
   AuthSlugTicketsIndexRoute: AuthSlugTicketsIndexRoute,
 }

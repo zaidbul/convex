@@ -25,7 +25,6 @@ import {
   listIssueCommentsForViewer,
   listIssuesForViewerTeam,
   listLabelsForViewer,
-  listProjectsForViewer,
   listSavedViewsForViewer,
   listTeamMembersForViewer,
   listTeamsForViewer,
@@ -54,11 +53,6 @@ export const getWorkspace = createServerFn({ method: "GET" }).handler(async () =
 export const getTeams = createServerFn({ method: "GET" }).handler(async () => {
   const viewerContext = await getViewerContext()
   return listTeamsForViewer(db, viewerContext)
-})
-
-export const getProjects = createServerFn({ method: "GET" }).handler(async () => {
-  const viewerContext = await getViewerContext()
-  return listProjectsForViewer(db, viewerContext)
 })
 
 export const getTeamBySlug = createServerFn({ method: "GET" })

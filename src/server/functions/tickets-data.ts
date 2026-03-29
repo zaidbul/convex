@@ -14,7 +14,6 @@ import type {
   IssueQueryFilters,
   IssueStatus,
   Label as TicketLabel,
-  Project as TicketProject,
   SavedView as TicketSavedView,
   Team as TicketTeam,
   User as TicketUser,
@@ -1754,31 +1753,6 @@ export async function getIssueFavoriteForViewer(
   return { favorited: !!existing }
 }
 
-export async function listProjectsForViewer(
-  db: TicketsDatabase,
-  context: ViewerContext
-): Promise<TicketProject[]> {
-  if (!context.workspaceId) {
-    return []
-  }
-
-  const rows = await db
-    .select()
-    .from(schema.projects)
-    .where(eq(schema.projects.workspaceId, context.workspaceId))
-    .orderBy(asc(schema.projects.name))
-
-  return rows.map((row) => ({
-    id: row.id,
-    name: row.name,
-    slug: row.slug,
-    description: row.description,
-    status: row.status,
-    leadUserId: row.leadUserId,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-  }))
-}
 
 // ---------------------------------------------------------------------------
 // Dashboard aggregation queries (workspace-level)

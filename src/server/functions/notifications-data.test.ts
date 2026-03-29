@@ -170,7 +170,7 @@ async function seedWorkspaceGraph(db: TicketsDatabase) {
     id: "issue_1",
     workspaceId: "org_1",
     teamId: "team_1",
-    projectId: null,
+
     cycleId: "cycle_1",
     creatorUserId: "user_1",
     assigneeUserId: "user_2",

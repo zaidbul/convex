@@ -182,7 +182,7 @@ async function seedWorkspaceGraph(db: TicketsDatabase) {
       id: "issue_1",
       workspaceId: "org_1",
       teamId: "team_1",
-      projectId: null,
+
       cycleId: "cycle_1",
       creatorUserId: "user_1",
       assigneeUserId: "user_2",
@@ -203,7 +203,7 @@ async function seedWorkspaceGraph(db: TicketsDatabase) {
       id: "issue_2",
       workspaceId: "org_1",
       teamId: "team_1",
-      projectId: null,
+
       cycleId: null,
       creatorUserId: "user_1",
       assigneeUserId: null,
@@ -326,7 +326,7 @@ describe("ticket schema and data helpers", () => {
         id: "issue_dup",
         workspaceId: "org_1",
         teamId: "team_1",
-        projectId: null,
+  
         cycleId: null,
         creatorUserId: "user_1",
         assigneeUserId: null,

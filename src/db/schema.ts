@@ -15,14 +15,6 @@ export const workspaceMembershipRoles = [
   "guest",
 ] as const
 
-export const projectStatuses = [
-  "planned",
-  "active",
-  "paused",
-  "completed",
-  "cancelled",
-] as const
-
 export const cycleStatuses = ["active", "upcoming", "completed"] as const
 
 export const issueStatuses = [
@@ -168,33 +160,6 @@ export const teamMemberships = sqliteTable(
   })
 )
 
-export const projects = sqliteTable(
-  "projects",
-  {
-    id: text("id").primaryKey(),
-    workspaceId: text("workspace_id")
-      .notNull()
-      .references(() => workspaces.id, { onDelete: "cascade" }),
-    name: text("name").notNull(),
-    slug: text("slug").notNull(),
-    description: text("description"),
-    status: text("status", { enum: projectStatuses }).notNull().default("planned"),
-    leadUserId: text("lead_user_id").references(() => users.id, {
-      onDelete: "set null",
-    }),
-    createdAt: text("created_at").notNull(),
-    updatedAt: text("updated_at").notNull(),
-  },
-  (table) => ({
-    workspaceIdIdx: index("projects_workspace_id_idx").on(table.workspaceId),
-    leadUserIdIdx: index("projects_lead_user_id_idx").on(table.leadUserId),
-    workspaceSlugUnique: uniqueIndex("projects_workspace_slug_uq").on(
-      table.workspaceId,
-      table.slug
-    ),
-  })
-)
-
 export const cycles = sqliteTable(
   "cycles",
   {
@@ -247,9 +212,6 @@ export const issues = sqliteTable(
     teamId: text("team_id")
       .notNull()
       .references(() => teams.id, { onDelete: "cascade" }),
-    projectId: text("project_id").references(() => projects.id, {
-      onDelete: "set null",
-    }),
     cycleId: text("cycle_id").references(() => cycles.id, {
       onDelete: "set null",
     }),
@@ -277,7 +239,6 @@ export const issues = sqliteTable(
   (table) => ({
     workspaceIdIdx: index("issues_workspace_id_idx").on(table.workspaceId),
     teamIdIdx: index("issues_team_id_idx").on(table.teamId),
-    projectIdIdx: index("issues_project_id_idx").on(table.projectId),
     cycleIdIdx: index("issues_cycle_id_idx").on(table.cycleId),
     assigneeUserIdIdx: index("issues_assignee_user_id_idx").on(table.assigneeUserId),
     creatorUserIdIdx: index("issues_creator_user_id_idx").on(table.creatorUserId),
@@ -476,7 +437,6 @@ export type Workspace = typeof workspaces.$inferSelect
 export type WorkspaceMembership = typeof workspaceMemberships.$inferSelect
 export type Team = typeof teams.$inferSelect
 export type TeamMembership = typeof teamMemberships.$inferSelect
-export type Project = typeof projects.$inferSelect
 export type Cycle = typeof cycles.$inferSelect
 export type Label = typeof labels.$inferSelect
 export type Issue = typeof issues.$inferSelect

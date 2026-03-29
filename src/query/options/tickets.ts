@@ -4,7 +4,6 @@ import {
   getSavedViews,
   getWorkspace,
   getTeams,
-  getProjects,
   getTeamBySlug,
   getCycles,
   getIssues,
@@ -35,12 +34,6 @@ export const teamsQueryOptions = () =>
   queryOptions({
     queryKey: ["teams"],
     queryFn: () => getTeams(),
-  })
-
-export const projectsQueryOptions = () =>
-  queryOptions({
-    queryKey: ["projects"],
-    queryFn: () => getProjects(),
   })
 
 export const teamQueryOptions = (teamSlug: string) =>

@@ -7,8 +7,6 @@ import {
   CircleUser,
   Search,
   Plus,
-  Rocket,
-  FolderKanban,
   Eye,
   Settings,
   HelpCircle,
@@ -128,32 +126,6 @@ export function TicketSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  render={
-                    <Link
-                      to="/$slug/tickets/initiatives"
-                      params={{ slug: slug! }}
-                    />
-                  }
-                >
-                  <Rocket className="size-4" strokeWidth={1.5} />
-                  <span>Initiatives</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  render={
-                    <Link
-                      to="/$slug/tickets/projects"
-                      params={{ slug: slug! }}
-                    />
-                  }
-                >
-                  <FolderKanban className="size-4" strokeWidth={1.5} />
-                  <span>Projects</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   render={
