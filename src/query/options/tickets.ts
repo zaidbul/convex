@@ -17,6 +17,13 @@ import {
   getMyIssues,
   getActiveCycles,
 } from "@/server/functions/tickets"
+import {
+  getFeedbackSuggestion,
+  listFeedbackClusters,
+  listFeedbackImports,
+  listFeedbackItems,
+  listFeedbackSuggestions,
+} from "@/server/functions/feedback"
 import type { IssueFilter, IssueQueryFilters } from "@/components/tickets/types"
 import {
   getUnreadNotificationCount,
@@ -180,4 +187,35 @@ export const activeCyclesQueryOptions = () =>
   queryOptions({
     queryKey: ["active-cycles"],
     queryFn: () => getActiveCycles(),
+  })
+
+export const feedbackImportsQueryOptions = () =>
+  queryOptions({
+    queryKey: ["feedback-imports"],
+    queryFn: () => listFeedbackImports(),
+  })
+
+export const feedbackItemsQueryOptions = () =>
+  queryOptions({
+    queryKey: ["feedback-items"],
+    queryFn: () => listFeedbackItems(),
+  })
+
+export const feedbackClustersQueryOptions = () =>
+  queryOptions({
+    queryKey: ["feedback-clusters"],
+    queryFn: () => listFeedbackClusters(),
+  })
+
+export const feedbackSuggestionsQueryOptions = (limit?: number) =>
+  queryOptions({
+    queryKey: ["feedback-suggestions", limit ?? "all"],
+    queryFn: () => listFeedbackSuggestions({ data: { limit } }),
+  })
+
+export const feedbackSuggestionQueryOptions = (suggestionId: string) =>
+  queryOptions({
+    queryKey: ["feedback-suggestion", suggestionId],
+    queryFn: () => getFeedbackSuggestion({ data: { suggestionId } }),
+    enabled: !!suggestionId,
   })

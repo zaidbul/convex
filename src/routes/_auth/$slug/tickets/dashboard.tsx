@@ -13,6 +13,8 @@ import { DashboardMyIssues } from "@/components/dashboard/dashboard-my-issues"
 import { DashboardCycleProgress } from "@/components/dashboard/dashboard-cycle-progress"
 import { DashboardActivityFeed } from "@/components/dashboard/dashboard-activity-feed"
 import { DashboardQuickActions } from "@/components/dashboard/dashboard-quick-actions"
+import { DashboardSuggestedDirections } from "@/components/dashboard/dashboard-suggested-directions"
+import { feedbackSuggestionsQueryOptions } from "@/query/options/tickets"
 
 export const Route = createFileRoute("/_auth/$slug/tickets/dashboard")({
   loader: async ({ context }) => {
@@ -21,6 +23,7 @@ export const Route = createFileRoute("/_auth/$slug/tickets/dashboard")({
       context.queryClient.ensureQueryData(myIssuesQueryOptions(20)),
       context.queryClient.ensureQueryData(activeCyclesQueryOptions()),
       context.queryClient.ensureQueryData(recentNotificationsQueryOptions(8)),
+      context.queryClient.ensureQueryData(feedbackSuggestionsQueryOptions(8)),
       context.queryClient.ensureQueryData(teamsQueryOptions()),
       context.queryClient.ensureQueryData(workspaceQueryOptions()),
     ])
@@ -37,6 +40,7 @@ function DashboardPage() {
   const { data: notifications } = useSuspenseQuery(
     recentNotificationsQueryOptions(8)
   )
+  const { data: suggestions } = useSuspenseQuery(feedbackSuggestionsQueryOptions(8))
   const { data: teams } = useSuspenseQuery(teamsQueryOptions())
   const { data: workspace } = useSuspenseQuery(workspaceQueryOptions())
 
@@ -61,6 +65,7 @@ function DashboardPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left column */}
         <div className="space-y-6 lg:col-span-2">
+          <DashboardSuggestedDirections suggestions={suggestions} slug={slug} />
           <DashboardMyIssues issues={myIssues} slug={slug} />
           <DashboardCycleProgress cycles={activeCycles} slug={slug} />
         </div>

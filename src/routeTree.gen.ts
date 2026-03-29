@@ -18,10 +18,12 @@ import { Route as SignInIndexRouteImport } from './routes/sign-in/index'
 import { Route as DefaultIndexRouteImport } from './routes/_default.index'
 import { Route as SignInSplatRouteImport } from './routes/sign-in/$'
 import { Route as AuthSlugRouteRouteImport } from './routes/_auth/$slug/route'
+import { Route as ApiInternalFeedbackAnalysisRouteImport } from './routes/api/internal/feedback-analysis'
 import { Route as AuthSlugDashboardRouteImport } from './routes/_auth/$slug.dashboard'
 import { Route as AuthSlugTicketsRouteRouteImport } from './routes/_auth/$slug/tickets/route'
 import { Route as AuthSlugTicketsIndexRouteImport } from './routes/_auth/$slug/tickets/index'
 import { Route as AuthSlugTicketsSettingsRouteImport } from './routes/_auth/$slug/tickets/settings'
+import { Route as AuthSlugTicketsFeedbackRouteImport } from './routes/_auth/$slug/tickets/feedback'
 import { Route as AuthSlugTicketsDashboardRouteImport } from './routes/_auth/$slug/tickets/dashboard'
 import { Route as AuthSlugTicketsViewsRouteRouteImport } from './routes/_auth/$slug/tickets/views/route'
 import { Route as AuthSlugTicketsTeamSlugRouteRouteImport } from './routes/_auth/$slug/tickets/$teamSlug/route'
@@ -76,6 +78,12 @@ const AuthSlugRouteRoute = AuthSlugRouteRouteImport.update({
   path: '/$slug',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+const ApiInternalFeedbackAnalysisRoute =
+  ApiInternalFeedbackAnalysisRouteImport.update({
+    id: '/api/internal/feedback-analysis',
+    path: '/api/internal/feedback-analysis',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthSlugDashboardRoute = AuthSlugDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -94,6 +102,11 @@ const AuthSlugTicketsIndexRoute = AuthSlugTicketsIndexRouteImport.update({
 const AuthSlugTicketsSettingsRoute = AuthSlugTicketsSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AuthSlugTicketsRouteRoute,
+} as any)
+const AuthSlugTicketsFeedbackRoute = AuthSlugTicketsFeedbackRouteImport.update({
+  id: '/feedback',
+  path: '/feedback',
   getParentRoute: () => AuthSlugTicketsRouteRoute,
 } as any)
 const AuthSlugTicketsDashboardRoute =
@@ -167,9 +180,11 @@ export interface FileRoutesByFullPath {
   '/sign-in/': typeof SignInIndexRoute
   '/$slug/tickets': typeof AuthSlugTicketsRouteRouteWithChildren
   '/$slug/dashboard': typeof AuthSlugDashboardRoute
+  '/api/internal/feedback-analysis': typeof ApiInternalFeedbackAnalysisRoute
   '/$slug/tickets/$teamSlug': typeof AuthSlugTicketsTeamSlugRouteRouteWithChildren
   '/$slug/tickets/views': typeof AuthSlugTicketsViewsRouteRouteWithChildren
   '/$slug/tickets/dashboard': typeof AuthSlugTicketsDashboardRoute
+  '/$slug/tickets/feedback': typeof AuthSlugTicketsFeedbackRoute
   '/$slug/tickets/settings': typeof AuthSlugTicketsSettingsRoute
   '/$slug/tickets/': typeof AuthSlugTicketsIndexRoute
   '/$slug/tickets/$teamSlug/cycles': typeof AuthSlugTicketsTeamSlugCyclesRouteRouteWithChildren
@@ -189,8 +204,10 @@ export interface FileRoutesByTo {
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-in': typeof SignInIndexRoute
   '/$slug/dashboard': typeof AuthSlugDashboardRoute
+  '/api/internal/feedback-analysis': typeof ApiInternalFeedbackAnalysisRoute
   '/$slug/tickets/$teamSlug': typeof AuthSlugTicketsTeamSlugRouteRouteWithChildren
   '/$slug/tickets/dashboard': typeof AuthSlugTicketsDashboardRoute
+  '/$slug/tickets/feedback': typeof AuthSlugTicketsFeedbackRoute
   '/$slug/tickets/settings': typeof AuthSlugTicketsSettingsRoute
   '/$slug/tickets': typeof AuthSlugTicketsIndexRoute
   '/$slug/tickets/$teamSlug/cycles': typeof AuthSlugTicketsTeamSlugCyclesRouteRouteWithChildren
@@ -214,9 +231,11 @@ export interface FileRoutesById {
   '/sign-in/': typeof SignInIndexRoute
   '/_auth/$slug/tickets': typeof AuthSlugTicketsRouteRouteWithChildren
   '/_auth/$slug/dashboard': typeof AuthSlugDashboardRoute
+  '/api/internal/feedback-analysis': typeof ApiInternalFeedbackAnalysisRoute
   '/_auth/$slug/tickets/$teamSlug': typeof AuthSlugTicketsTeamSlugRouteRouteWithChildren
   '/_auth/$slug/tickets/views': typeof AuthSlugTicketsViewsRouteRouteWithChildren
   '/_auth/$slug/tickets/dashboard': typeof AuthSlugTicketsDashboardRoute
+  '/_auth/$slug/tickets/feedback': typeof AuthSlugTicketsFeedbackRoute
   '/_auth/$slug/tickets/settings': typeof AuthSlugTicketsSettingsRoute
   '/_auth/$slug/tickets/': typeof AuthSlugTicketsIndexRoute
   '/_auth/$slug/tickets/$teamSlug/cycles': typeof AuthSlugTicketsTeamSlugCyclesRouteRouteWithChildren
@@ -239,9 +258,11 @@ export interface FileRouteTypes {
     | '/sign-in/'
     | '/$slug/tickets'
     | '/$slug/dashboard'
+    | '/api/internal/feedback-analysis'
     | '/$slug/tickets/$teamSlug'
     | '/$slug/tickets/views'
     | '/$slug/tickets/dashboard'
+    | '/$slug/tickets/feedback'
     | '/$slug/tickets/settings'
     | '/$slug/tickets/'
     | '/$slug/tickets/$teamSlug/cycles'
@@ -261,8 +282,10 @@ export interface FileRouteTypes {
     | '/sign-in/$'
     | '/sign-in'
     | '/$slug/dashboard'
+    | '/api/internal/feedback-analysis'
     | '/$slug/tickets/$teamSlug'
     | '/$slug/tickets/dashboard'
+    | '/$slug/tickets/feedback'
     | '/$slug/tickets/settings'
     | '/$slug/tickets'
     | '/$slug/tickets/$teamSlug/cycles'
@@ -285,9 +308,11 @@ export interface FileRouteTypes {
     | '/sign-in/'
     | '/_auth/$slug/tickets'
     | '/_auth/$slug/dashboard'
+    | '/api/internal/feedback-analysis'
     | '/_auth/$slug/tickets/$teamSlug'
     | '/_auth/$slug/tickets/views'
     | '/_auth/$slug/tickets/dashboard'
+    | '/_auth/$slug/tickets/feedback'
     | '/_auth/$slug/tickets/settings'
     | '/_auth/$slug/tickets/'
     | '/_auth/$slug/tickets/$teamSlug/cycles'
@@ -307,6 +332,7 @@ export interface RootRouteChildren {
   SignUpRoute: typeof SignUpRoute
   SignInSplatRoute: typeof SignInSplatRoute
   SignInIndexRoute: typeof SignInIndexRoute
+  ApiInternalFeedbackAnalysisRoute: typeof ApiInternalFeedbackAnalysisRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -374,6 +400,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSlugRouteRouteImport
       parentRoute: typeof AuthRouteRoute
     }
+    '/api/internal/feedback-analysis': {
+      id: '/api/internal/feedback-analysis'
+      path: '/api/internal/feedback-analysis'
+      fullPath: '/api/internal/feedback-analysis'
+      preLoaderRoute: typeof ApiInternalFeedbackAnalysisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_auth/$slug/dashboard': {
       id: '/_auth/$slug/dashboard'
       path: '/dashboard'
@@ -400,6 +433,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/$slug/tickets/settings'
       preLoaderRoute: typeof AuthSlugTicketsSettingsRouteImport
+      parentRoute: typeof AuthSlugTicketsRouteRoute
+    }
+    '/_auth/$slug/tickets/feedback': {
+      id: '/_auth/$slug/tickets/feedback'
+      path: '/feedback'
+      fullPath: '/$slug/tickets/feedback'
+      preLoaderRoute: typeof AuthSlugTicketsFeedbackRouteImport
       parentRoute: typeof AuthSlugTicketsRouteRoute
     }
     '/_auth/$slug/tickets/dashboard': {
@@ -533,6 +573,7 @@ interface AuthSlugTicketsRouteRouteChildren {
   AuthSlugTicketsTeamSlugRouteRoute: typeof AuthSlugTicketsTeamSlugRouteRouteWithChildren
   AuthSlugTicketsViewsRouteRoute: typeof AuthSlugTicketsViewsRouteRouteWithChildren
   AuthSlugTicketsDashboardRoute: typeof AuthSlugTicketsDashboardRoute
+  AuthSlugTicketsFeedbackRoute: typeof AuthSlugTicketsFeedbackRoute
   AuthSlugTicketsSettingsRoute: typeof AuthSlugTicketsSettingsRoute
   AuthSlugTicketsIndexRoute: typeof AuthSlugTicketsIndexRoute
 }
@@ -542,6 +583,7 @@ const AuthSlugTicketsRouteRouteChildren: AuthSlugTicketsRouteRouteChildren = {
     AuthSlugTicketsTeamSlugRouteRouteWithChildren,
   AuthSlugTicketsViewsRouteRoute: AuthSlugTicketsViewsRouteRouteWithChildren,
   AuthSlugTicketsDashboardRoute: AuthSlugTicketsDashboardRoute,
+  AuthSlugTicketsFeedbackRoute: AuthSlugTicketsFeedbackRoute,
   AuthSlugTicketsSettingsRoute: AuthSlugTicketsSettingsRoute,
   AuthSlugTicketsIndexRoute: AuthSlugTicketsIndexRoute,
 }
@@ -594,6 +636,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignUpRoute: SignUpRoute,
   SignInSplatRoute: SignInSplatRoute,
   SignInIndexRoute: SignInIndexRoute,
+  ApiInternalFeedbackAnalysisRoute: ApiInternalFeedbackAnalysisRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -18,6 +18,12 @@ import {
   updateIssueTitle,
   updateSavedView,
 } from "@/server/functions/tickets"
+import {
+  createFeedbackImport,
+  createIssueFromSuggestion,
+  runFeedbackAnalysisInternal,
+  updateFeedbackSuggestion,
+} from "@/server/functions/feedback"
 import type { IssueQueryFilters } from "@/components/tickets/types"
 import {
   markAllNotificationsAsRead,
@@ -39,6 +45,77 @@ export function useCreateIssueMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["issues"], refetchType: "active" })
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] })
+      queryClient.invalidateQueries({ queryKey: ["my-issues"] })
+    },
+  })
+}
+
+export function useCreateFeedbackImportMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: {
+      kind: "paste" | "txt" | "md" | "csv" | "json"
+      sourceName: string
+      sourceDescription?: string
+      rawContent?: string
+      rawPayloadJson?: unknown
+    }) => createFeedbackImport({ data: input }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["feedback-imports"] })
+      queryClient.invalidateQueries({ queryKey: ["feedback-items"] })
+      queryClient.invalidateQueries({ queryKey: ["feedback-clusters"] })
+      queryClient.invalidateQueries({ queryKey: ["feedback-suggestions"] })
+    },
+  })
+}
+
+export function useRunFeedbackAnalysisMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input?: { workspaceId?: string; force?: boolean }) =>
+      runFeedbackAnalysisInternal({ data: input }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["feedback-items"] })
+      queryClient.invalidateQueries({ queryKey: ["feedback-clusters"] })
+      queryClient.invalidateQueries({ queryKey: ["feedback-suggestions"] })
+    },
+  })
+}
+
+export function useUpdateFeedbackSuggestionMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: {
+      suggestionId: string
+      status?: "new" | "reviewing" | "accepted" | "issue_created" | "dismissed"
+      selectedTeamId?: string | null
+    }) => updateFeedbackSuggestion({ data: input }),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["feedback-suggestions"] })
+      queryClient.invalidateQueries({
+        queryKey: ["feedback-suggestion", variables.suggestionId],
+      })
+    },
+  })
+}
+
+export function useCreateIssueFromSuggestionMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: {
+      suggestionId: string
+      teamId?: string
+      title?: string
+      description?: string
+    }) => createIssueFromSuggestion({ data: input }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["feedback-suggestions"] })
+      queryClient.invalidateQueries({ queryKey: ["issues"], refetchType: "active" })
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] })
       queryClient.invalidateQueries({ queryKey: ["my-issues"] })
     },

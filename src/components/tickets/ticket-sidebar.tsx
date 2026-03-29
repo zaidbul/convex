@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   Inbox,
   CircleUser,
+  Sparkles,
   Search,
   Plus,
   Eye,
@@ -70,6 +71,20 @@ export function TicketSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  render={
+                    <Link
+                      to="/$slug/tickets/feedback"
+                      params={{ slug: slug! }}
+                      search={{ suggestionId: undefined }}
+                    />
+                  }
+                >
+                  <Sparkles className="size-4" strokeWidth={1.5} />
+                  <span>Feedback</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   render={

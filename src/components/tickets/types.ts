@@ -62,6 +62,21 @@ export interface Workspace {
   name: string
 }
 
+export type FeedbackImportKind =
+  | "paste"
+  | "txt"
+  | "md"
+  | "csv"
+  | "json"
+
+export type FeedbackItemSeverity = "low" | "medium" | "high"
+export type FeedbackSuggestionStatus =
+  | "new"
+  | "reviewing"
+  | "accepted"
+  | "issue_created"
+  | "dismissed"
+
 export interface IssueDetail extends Issue {
   description: string | null
   creator: User
@@ -115,6 +130,75 @@ export interface SavedView {
   updatedAt: string
   presetFilter?: IssueFilter
   advancedFilters?: IssueAdvancedFilters
+}
+
+export interface FeedbackImport {
+  id: string
+  kind: FeedbackImportKind
+  sourceName: string
+  sourceDescription: string | null
+  itemCount: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface FeedbackItem {
+  id: string
+  importId: string
+  importSourceName: string
+  title: string | null
+  summary: string | null
+  featureArea: string | null
+  problemType: string | null
+  severity: FeedbackItemSeverity | null
+  requestedCapability: string | null
+  suggestedTeam: Team | null
+  tags: string[]
+  analyzedAt: string | null
+  createdAt: string
+}
+
+export interface FeedbackCluster {
+  id: string
+  title: string
+  featureArea: string | null
+  problemType: string | null
+  suggestedTeam: Team | null
+  signalCount: number
+  confidence: number
+  impactScore: number
+  lastAnalyzedAt: string
+}
+
+export interface FeedbackSuggestion {
+  id: string
+  clusterId: string
+  title: string
+  summary: string
+  proposedSolution: string
+  aiRationale: string | null
+  status: FeedbackSuggestionStatus
+  suggestedTeam: Team | null
+  selectedTeam: Team | null
+  confidence: number
+  impactScore: number
+  evidenceCount: number
+  sourceDiversity: number
+  priorityScore: number
+  issueId: string | null
+  updatedAt: string
+}
+
+export interface FeedbackSuggestionDetail extends FeedbackSuggestion {
+  cluster: FeedbackCluster | null
+  evidence: Array<{
+    id: string
+    importSourceName: string
+    title: string | null
+    summary: string | null
+    originalText: string
+    createdAt: string
+  }>
 }
 
 export type IssueFilter =

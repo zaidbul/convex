@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import {
   CircleDot,
   Eye,
+  Sparkles,
   Settings,
   Users,
 } from "lucide-react"
@@ -119,6 +120,20 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
           <CommandSeparator />
           <CommandGroup heading="Pages">
+            <CommandItem
+              onSelect={() =>
+                runAction(() =>
+                  navigate({
+                    to: "/$slug/tickets/feedback",
+                    params: { slug: slug! },
+                    search: { suggestionId: undefined },
+                  })
+                )
+              }
+            >
+              <Sparkles className="size-4 text-on-surface-variant" strokeWidth={1.5} />
+              <span>Feedback Hub</span>
+            </CommandItem>
             <CommandItem
               onSelect={() =>
                 runAction(() =>

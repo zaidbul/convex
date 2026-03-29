@@ -56,6 +56,22 @@ export const notificationTypes = [
 
 export const notificationEntityTypes = ["issue", "cycle"] as const
 
+export const feedbackImportKinds = ["paste", "txt", "md", "csv", "json"] as const
+export const feedbackItemSeverities = ["low", "medium", "high"] as const
+export const feedbackSuggestionStatuses = [
+  "new",
+  "reviewing",
+  "accepted",
+  "issue_created",
+  "dismissed",
+] as const
+export const feedbackAnalysisRunStatuses = [
+  "queued",
+  "running",
+  "completed",
+  "failed",
+] as const
+
 export const users = sqliteTable(
   "users",
   {
@@ -448,6 +464,211 @@ export const notes = sqliteTable(
   })
 )
 
+export const feedbackImports = sqliteTable(
+  "feedback_imports",
+  {
+    id: text("id").primaryKey(),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    createdByUserId: text("created_by_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    kind: text("kind", { enum: feedbackImportKinds }).notNull(),
+    sourceName: text("source_name").notNull(),
+    sourceDescription: text("source_description"),
+    rawContent: text("raw_content"),
+    rawPayloadJson: text("raw_payload_json", { mode: "json" }),
+    itemCount: integer("item_count").notNull().default(0),
+    status: text("status").notNull().default("ready"),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => ({
+    workspaceIdIdx: index("feedback_imports_workspace_id_idx").on(table.workspaceId),
+    createdByUserIdIdx: index("feedback_imports_created_by_user_id_idx").on(table.createdByUserId),
+    workspaceCreatedAtIdx: index("feedback_imports_workspace_created_at_idx").on(
+      table.workspaceId,
+      table.createdAt
+    ),
+  })
+)
+
+export const feedbackItems = sqliteTable(
+  "feedback_items",
+  {
+    id: text("id").primaryKey(),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    importId: text("import_id")
+      .notNull()
+      .references(() => feedbackImports.id, { onDelete: "cascade" }),
+    sourceIndex: integer("source_index").notNull(),
+    title: text("title"),
+    originalText: text("original_text").notNull(),
+    normalizedText: text("normalized_text").notNull(),
+    rawPayloadJson: text("raw_payload_json", { mode: "json" }),
+    summary: text("summary"),
+    featureArea: text("feature_area"),
+    problemType: text("problem_type"),
+    severity: text("severity", { enum: feedbackItemSeverities }),
+    requestedCapability: text("requested_capability"),
+    suggestedTeamId: text("suggested_team_id").references(() => teams.id, {
+      onDelete: "set null",
+    }),
+    tagsJson: text("tags_json", { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
+    dedupeKeysJson: text("dedupe_keys_json", { mode: "json" })
+      .$type<string[]>()
+      .notNull()
+      .default(sql`'[]'`),
+    analysisVersion: integer("analysis_version").notNull().default(0),
+    analyzedAt: text("analyzed_at"),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => ({
+    workspaceIdIdx: index("feedback_items_workspace_id_idx").on(table.workspaceId),
+    importIdIdx: index("feedback_items_import_id_idx").on(table.importId),
+    suggestedTeamIdIdx: index("feedback_items_suggested_team_id_idx").on(table.suggestedTeamId),
+    workspaceFeatureProblemIdx: index("feedback_items_workspace_feature_problem_idx").on(
+      table.workspaceId,
+      table.suggestedTeamId,
+      table.featureArea,
+      table.problemType
+    ),
+  })
+)
+
+export const feedbackClusters = sqliteTable(
+  "feedback_clusters",
+  {
+    id: text("id").primaryKey(),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    clusterKey: text("cluster_key").notNull(),
+    suggestedTeamId: text("suggested_team_id").references(() => teams.id, {
+      onDelete: "set null",
+    }),
+    featureArea: text("feature_area"),
+    problemType: text("problem_type"),
+    title: text("title").notNull(),
+    reason: text("reason"),
+    painSummary: text("pain_summary"),
+    proposedDirection: text("proposed_direction"),
+    confidence: integer("confidence").notNull().default(0),
+    impactScore: integer("impact_score").notNull().default(0),
+    signalCount: integer("signal_count").notNull().default(0),
+    dedupeKeySetJson: text("dedupe_key_set_json", { mode: "json" })
+      .$type<string[]>()
+      .notNull()
+      .default(sql`'[]'`),
+    lastAnalyzedAt: text("last_analyzed_at").notNull(),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => ({
+    workspaceIdIdx: index("feedback_clusters_workspace_id_idx").on(table.workspaceId),
+    clusterKeyUnique: uniqueIndex("feedback_clusters_workspace_cluster_key_uq").on(
+      table.workspaceId,
+      table.clusterKey
+    ),
+    suggestedTeamIdIdx: index("feedback_clusters_suggested_team_id_idx").on(table.suggestedTeamId),
+  })
+)
+
+export const feedbackClusterItems = sqliteTable(
+  "feedback_cluster_items",
+  {
+    clusterId: text("cluster_id")
+      .notNull()
+      .references(() => feedbackClusters.id, { onDelete: "cascade" }),
+    itemId: text("item_id")
+      .notNull()
+      .references(() => feedbackItems.id, { onDelete: "cascade" }),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => ({
+    pk: primaryKey({
+      columns: [table.clusterId, table.itemId],
+      name: "feedback_cluster_items_pk",
+    }),
+    itemIdIdx: index("feedback_cluster_items_item_id_idx").on(table.itemId),
+  })
+)
+
+export const feedbackSuggestions = sqliteTable(
+  "feedback_suggestions",
+  {
+    id: text("id").primaryKey(),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    clusterId: text("cluster_id")
+      .notNull()
+      .references(() => feedbackClusters.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    summary: text("summary").notNull(),
+    proposedSolution: text("proposed_solution").notNull(),
+    aiRationale: text("ai_rationale"),
+    status: text("status", { enum: feedbackSuggestionStatuses }).notNull().default("new"),
+    suggestedTeamId: text("suggested_team_id").references(() => teams.id, {
+      onDelete: "set null",
+    }),
+    selectedTeamId: text("selected_team_id").references(() => teams.id, {
+      onDelete: "set null",
+    }),
+    confidence: integer("confidence").notNull().default(0),
+    impactScore: integer("impact_score").notNull().default(0),
+    evidenceCount: integer("evidence_count").notNull().default(0),
+    sourceDiversity: integer("source_diversity").notNull().default(0),
+    priorityScore: integer("priority_score").notNull().default(0),
+    issueId: text("issue_id").references(() => issues.id, { onDelete: "set null" }),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => ({
+    workspaceIdIdx: index("feedback_suggestions_workspace_id_idx").on(table.workspaceId),
+    clusterIdUnique: uniqueIndex("feedback_suggestions_cluster_id_uq").on(table.clusterId),
+    statusIdx: index("feedback_suggestions_status_idx").on(table.status),
+    selectedTeamIdIdx: index("feedback_suggestions_selected_team_id_idx").on(table.selectedTeamId),
+    priorityIdx: index("feedback_suggestions_priority_idx").on(
+      table.workspaceId,
+      table.status,
+      table.priorityScore,
+      table.updatedAt
+    ),
+  })
+)
+
+export const feedbackAnalysisRuns = sqliteTable(
+  "feedback_analysis_runs",
+  {
+    id: text("id").primaryKey(),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    status: text("status", { enum: feedbackAnalysisRunStatuses }).notNull(),
+    trigger: text("trigger").notNull(),
+    startedAt: text("started_at").notNull(),
+    completedAt: text("completed_at"),
+    errorMessage: text("error_message"),
+    itemsProcessed: integer("items_processed").notNull().default(0),
+    suggestionsProduced: integer("suggestions_produced").notNull().default(0),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => ({
+    workspaceIdIdx: index("feedback_analysis_runs_workspace_id_idx").on(table.workspaceId),
+    statusIdx: index("feedback_analysis_runs_status_idx").on(table.status),
+    workspaceStartedAtIdx: index("feedback_analysis_runs_workspace_started_at_idx").on(
+      table.workspaceId,
+      table.startedAt
+    ),
+  })
+)
+
 export type User = typeof users.$inferSelect
 export type Workspace = typeof workspaces.$inferSelect
 export type WorkspaceMembership = typeof workspaceMemberships.$inferSelect
@@ -462,3 +683,9 @@ export type IssueComment = typeof issueComments.$inferSelect
 export type IssueActivity = typeof issueActivity.$inferSelect
 export type Notification = typeof notifications.$inferSelect
 export type Note = typeof notes.$inferSelect
+export type FeedbackImport = typeof feedbackImports.$inferSelect
+export type FeedbackItem = typeof feedbackItems.$inferSelect
+export type FeedbackCluster = typeof feedbackClusters.$inferSelect
+export type FeedbackClusterItem = typeof feedbackClusterItems.$inferSelect
+export type FeedbackSuggestion = typeof feedbackSuggestions.$inferSelect
+export type FeedbackAnalysisRun = typeof feedbackAnalysisRuns.$inferSelect
