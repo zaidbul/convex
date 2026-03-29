@@ -873,3 +873,52 @@ export async function createIssueFromFeedbackSuggestionForViewer(
 
   return created
 }
+
+export async function autoCreateTicketsFromSuggestions(
+  db: TicketsDatabase,
+  context: ViewerContext,
+  input?: { confidenceThreshold?: number; cycleId?: string }
+): Promise<{ created: number; skipped: number }> {
+  if (!context.workspaceId) {
+    throw new Error("No active workspace")
+  }
+
+  const threshold = input?.confidenceThreshold ?? 75
+
+  const suggestions = await listFeedbackSuggestionsForViewer(db, context, { limit: 100 })
+  const eligible = suggestions.filter(
+    (s) => s.status === "new" && s.confidence >= threshold && (s.suggestedTeam || s.selectedTeam)
+  )
+
+  let created = 0
+  let skipped = 0
+
+  for (const suggestion of eligible) {
+    const teamId = suggestion.selectedTeam?.id ?? suggestion.suggestedTeam?.id
+    if (!teamId) {
+      skipped++
+      continue
+    }
+
+    try {
+      const issue = await createIssueFromFeedbackSuggestionForViewer(db, context, {
+        suggestionId: suggestion.id,
+        teamId,
+      })
+
+      // Optionally assign to cycle
+      if (input?.cycleId && issue.id) {
+        await db
+          .update(schema.issues)
+          .set({ cycleId: input.cycleId, updatedAt: nowIso() })
+          .where(eq(schema.issues.id, issue.id))
+      }
+
+      created++
+    } catch {
+      skipped++
+    }
+  }
+
+  return { created, skipped }
+}

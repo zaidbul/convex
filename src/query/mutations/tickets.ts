@@ -20,11 +20,16 @@ import {
   updateSavedView,
 } from "@/server/functions/tickets"
 import {
+  autoCreateTicketsFromFeedback,
   createFeedbackImport,
   createIssueFromSuggestion,
   runFeedbackAnalysisInternal,
   updateFeedbackSuggestion,
 } from "@/server/functions/feedback"
+import {
+  createFeedbackChat,
+  deleteFeedbackChat,
+} from "@/server/functions/feedback-chat"
 import type {
   IssueQueryFilters,
   IssueStatus,
@@ -496,6 +501,45 @@ export function useMarkAllNotificationsAsReadMutation() {
     mutationFn: () => markAllNotificationsAsRead(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
+    },
+  })
+}
+
+export function useCreateFeedbackChatMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input?: { title?: string }) =>
+      createFeedbackChat({ data: input ?? {} }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["feedback-chats"] })
+    },
+  })
+}
+
+export function useDeleteFeedbackChatMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: { chatId: string }) =>
+      deleteFeedbackChat({ data: input }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["feedback-chats"] })
+    },
+  })
+}
+
+export function useAutoCreateTicketsMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input?: { confidenceThreshold?: number; cycleId?: string }) =>
+      autoCreateTicketsFromFeedback({ data: input }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["feedback-suggestions"] })
+      queryClient.invalidateQueries({ queryKey: ["issues"], refetchType: "active" })
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] })
+      queryClient.invalidateQueries({ queryKey: ["my-issues"] })
     },
   })
 }

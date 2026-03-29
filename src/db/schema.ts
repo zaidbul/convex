@@ -71,6 +71,13 @@ export const feedbackAnalysisRunStatuses = [
   "completed",
   "failed",
 ] as const
+export const feedbackChatStatuses = [
+  "active",
+  "ready",
+  "analysis_triggered",
+  "completed",
+] as const
+export const feedbackChatMessageRoles = ["user", "assistant", "system"] as const
 
 export const users = sqliteTable(
   "users",
@@ -651,6 +658,94 @@ export const feedbackAnalysisRuns = sqliteTable(
   })
 )
 
+export const feedbackChats = sqliteTable(
+  "feedback_chats",
+  {
+    id: text("id").primaryKey(),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    createdByUserId: text("created_by_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    title: text("title"),
+    status: text("status", { enum: feedbackChatStatuses }).notNull().default("active"),
+    readinessScore: integer("readiness_score").notNull().default(0),
+    linkedImportIds: text("linked_import_ids", { mode: "json" })
+      .$type<string[]>()
+      .notNull()
+      .default(sql`'[]'`),
+    metadata: text("metadata", { mode: "json" })
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default(sql`'{}'`),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => ({
+    workspaceIdIdx: index("feedback_chats_workspace_id_idx").on(table.workspaceId),
+    createdByUserIdIdx: index("feedback_chats_created_by_user_id_idx").on(table.createdByUserId),
+    workspaceStatusIdx: index("feedback_chats_workspace_status_idx").on(
+      table.workspaceId,
+      table.status,
+      table.updatedAt
+    ),
+  })
+)
+
+export const feedbackChatMessages = sqliteTable(
+  "feedback_chat_messages",
+  {
+    id: text("id").primaryKey(),
+    chatId: text("chat_id")
+      .notNull()
+      .references(() => feedbackChats.id, { onDelete: "cascade" }),
+    role: text("role", { enum: feedbackChatMessageRoles }).notNull(),
+    content: text("content").notNull(),
+    toolCallsJson: text("tool_calls_json", { mode: "json" }).$type<unknown[]>(),
+    toolResultJson: text("tool_result_json", { mode: "json" }).$type<unknown>(),
+    attachmentsJson: text("attachments_json", { mode: "json" }).$type<
+      Array<{ id: string; fileName: string; fileType: string; fileSize: number }>
+    >(),
+    messageIndex: integer("message_index").notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => ({
+    chatIdIdx: index("feedback_chat_messages_chat_id_idx").on(table.chatId),
+    chatIdOrderIdx: index("feedback_chat_messages_chat_id_order_idx").on(
+      table.chatId,
+      table.messageIndex
+    ),
+  })
+)
+
+export const feedbackChatAttachments = sqliteTable(
+  "feedback_chat_attachments",
+  {
+    id: text("id").primaryKey(),
+    chatId: text("chat_id")
+      .notNull()
+      .references(() => feedbackChats.id, { onDelete: "cascade" }),
+    messageId: text("message_id")
+      .notNull()
+      .references(() => feedbackChatMessages.id, { onDelete: "cascade" }),
+    fileName: text("file_name").notNull(),
+    fileType: text("file_type").notNull(),
+    fileSize: integer("file_size").notNull(),
+    rawContent: text("raw_content").notNull(),
+    importId: text("import_id").references(() => feedbackImports.id, {
+      onDelete: "set null",
+    }),
+    processedAt: text("processed_at"),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => ({
+    chatIdIdx: index("feedback_chat_attachments_chat_id_idx").on(table.chatId),
+    messageIdIdx: index("feedback_chat_attachments_message_id_idx").on(table.messageId),
+    importIdIdx: index("feedback_chat_attachments_import_id_idx").on(table.importId),
+  })
+)
+
 export type User = typeof users.$inferSelect
 export type Workspace = typeof workspaces.$inferSelect
 export type WorkspaceMembership = typeof workspaceMemberships.$inferSelect
@@ -670,3 +765,6 @@ export type FeedbackCluster = typeof feedbackClusters.$inferSelect
 export type FeedbackClusterItem = typeof feedbackClusterItems.$inferSelect
 export type FeedbackSuggestion = typeof feedbackSuggestions.$inferSelect
 export type FeedbackAnalysisRun = typeof feedbackAnalysisRuns.$inferSelect
+export type FeedbackChat = typeof feedbackChats.$inferSelect
+export type FeedbackChatMessage = typeof feedbackChatMessages.$inferSelect
+export type FeedbackChatAttachment = typeof feedbackChatAttachments.$inferSelect

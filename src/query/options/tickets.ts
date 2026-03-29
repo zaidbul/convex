@@ -24,6 +24,10 @@ import {
   listFeedbackItems,
   listFeedbackSuggestions,
 } from "@/server/functions/feedback"
+import {
+  getFeedbackChat,
+  listFeedbackChats,
+} from "@/server/functions/feedback-chat"
 import type { IssueFilter, IssueQueryFilters } from "@/components/tickets/types"
 import {
   getUnreadNotificationCount,
@@ -221,4 +225,17 @@ export const feedbackSuggestionQueryOptions = (suggestionId: string) =>
     queryKey: ["feedback-suggestion", suggestionId],
     queryFn: () => getFeedbackSuggestion({ data: { suggestionId } }),
     enabled: !!suggestionId,
+  })
+
+export const feedbackChatsQueryOptions = () =>
+  queryOptions({
+    queryKey: ["feedback-chats"],
+    queryFn: () => listFeedbackChats(),
+  })
+
+export const feedbackChatQueryOptions = (chatId: string) =>
+  queryOptions({
+    queryKey: ["feedback-chat", chatId],
+    queryFn: () => getFeedbackChat({ data: { chatId } }),
+    enabled: !!chatId,
   })

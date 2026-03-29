@@ -1,5 +1,6 @@
 import type {
   cycleStatuses,
+  feedbackChatStatuses,
   issueActivityTypes,
   issuePriorities,
   issueStatuses,
@@ -209,3 +210,43 @@ export type IssueFilter =
   | "backlog-graded"
   | "recently-added"
   | "my-issues"
+
+// ── Feedback Chat types ────────────────────────────────────────────
+
+export type FeedbackChatStatus = (typeof feedbackChatStatuses)[number]
+
+export interface FeedbackChatRecord {
+  id: string
+  title: string | null
+  status: FeedbackChatStatus
+  readinessScore: number
+  linkedImportIds: string[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface FeedbackChatMessageRecord {
+  id: string
+  chatId: string
+  role: "user" | "assistant" | "system"
+  content: string
+  toolCallsJson: unknown[] | null
+  toolResultJson: unknown | null
+  attachmentsJson: Array<{
+    id: string
+    fileName: string
+    fileType: string
+    fileSize: number
+  }> | null
+  messageIndex: number
+  createdAt: string
+}
+
+export interface FeedbackChatAttachmentRecord {
+  id: string
+  fileName: string
+  fileType: string
+  fileSize: number
+  importId: string | null
+  processedAt: string | null
+}

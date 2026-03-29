@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { useQuery } from "@tanstack/react-query"
+import { useState, useCallback } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Sparkles } from "lucide-react"
 import type { FeedbackSuggestion } from "@/components/tickets/types"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -14,10 +14,15 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { teamsQueryOptions } from "@/query/options/tickets"
-import { feedbackSuggestionQueryOptions } from "@/query/options/tickets"
+import {
+  teamsQueryOptions,
+  feedbackSuggestionQueryOptions,
+  feedbackChatsQueryOptions,
+  feedbackChatQueryOptions,
+} from "@/query/options/tickets"
 import {
   useRunFeedbackAnalysisMutation,
+  useDeleteFeedbackChatMutation,
 } from "@/query/mutations/tickets"
 import type {
   FeedbackCluster,
@@ -27,6 +32,9 @@ import type {
 } from "@/components/tickets/types"
 import { FeedbackImportForm } from "./feedback-import-form"
 import { FeedbackSuggestionReviewDialog } from "./feedback-suggestion-review-dialog"
+import { FeedbackChatPanel } from "./feedback-chat-panel"
+import { FeedbackChatHistory } from "./feedback-chat-history"
+import { FeedbackAnalysisDashboard } from "./feedback-analysis-dashboard"
 
 const suggestionStatusLabel: Record<FeedbackSuggestion["status"], string> = {
   new: "New",
@@ -49,15 +57,55 @@ export function FeedbackHubScreen({
   suggestions: FeedbackSuggestion[]
   selectedSuggestion: FeedbackSuggestionDetail | null
 }) {
+  const queryClient = useQueryClient()
   const { data: teams = [] } = useQuery(teamsQueryOptions())
   const runAnalysis = useRunFeedbackAnalysisMutation()
-  const [activeTab, setActiveTab] = useState("suggestions")
+  const [activeTab, setActiveTab] = useState("chat")
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedSuggestionId, setSelectedSuggestionId] = useState<string | null>(
     selectedSuggestion?.id ?? null
   )
   const { data: fetchedSuggestion } = useQuery(
     feedbackSuggestionQueryOptions(selectedSuggestionId ?? "")
+  )
+
+  // Chat state
+  const [activeChatId, setActiveChatId] = useState<string | null>(null)
+  const { data: chatList = [] } = useQuery(feedbackChatsQueryOptions())
+  const { data: activeChatData } = useQuery(feedbackChatQueryOptions(activeChatId ?? ""))
+  const activeChat = activeChatData as {
+    messages?: Array<{ id: string; chatId: string; role: "user" | "assistant" | "system"; content: string; toolCallsJson: any[] | null; toolResultJson: any[] | null; attachmentsJson: Array<{ id: string; fileName: string; fileType: string; fileSize: number }> | null; messageIndex: number; createdAt: string }>
+    readinessScore?: number
+  } | null | undefined
+  const deleteChat = useDeleteFeedbackChatMutation()
+
+  const handleNewChat = useCallback(() => {
+    setActiveChatId(null)
+  }, [])
+
+  const handleChatCreated = useCallback((chatId: string) => {
+    setActiveChatId(chatId)
+    queryClient.invalidateQueries({ queryKey: ["feedback-chats"] })
+  }, [queryClient])
+
+  const handleMessagesUpdated = useCallback(() => {
+    if (activeChatId) {
+      queryClient.invalidateQueries({ queryKey: ["feedback-chat", activeChatId] })
+    }
+    queryClient.invalidateQueries({ queryKey: ["feedback-chats"] })
+    queryClient.invalidateQueries({ queryKey: ["feedback-imports"] })
+    queryClient.invalidateQueries({ queryKey: ["feedback-items"] })
+    queryClient.invalidateQueries({ queryKey: ["feedback-suggestions"] })
+  }, [activeChatId, queryClient])
+
+  const handleDeleteChat = useCallback(
+    (chatId: string) => {
+      deleteChat.mutate({ chatId })
+      if (activeChatId === chatId) {
+        setActiveChatId(null)
+      }
+    },
+    [activeChatId, deleteChat]
   )
 
   const currentSuggestion =
@@ -87,15 +135,51 @@ export function FeedbackHubScreen({
           </Button>
         </div>
 
-        <FeedbackImportForm />
-
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
+            <TabsTrigger value="chat">Chat</TabsTrigger>
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="suggestions">Suggestions</TabsTrigger>
             <TabsTrigger value="clusters">Clusters</TabsTrigger>
             <TabsTrigger value="signals">Signals</TabsTrigger>
             <TabsTrigger value="imports">Imports</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="chat">
+            <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
+              <Card className="border-outline-variant/10">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium">Sessions</CardTitle>
+                </CardHeader>
+                <CardContent className="px-2 pb-2">
+                  <FeedbackChatHistory
+                    chats={chatList}
+                    activeChatId={activeChatId}
+                    onSelect={setActiveChatId}
+                    onDelete={handleDeleteChat}
+                  />
+                </CardContent>
+              </Card>
+
+              <FeedbackChatPanel
+                chatId={activeChatId}
+                messages={activeChat?.messages ?? []}
+                readinessScore={activeChat?.readinessScore ?? 0}
+                onNewChat={handleNewChat}
+                onChatCreated={handleChatCreated}
+                onMessagesUpdated={handleMessagesUpdated}
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="dashboard">
+            <FeedbackAnalysisDashboard
+              items={items}
+              clusters={clusters}
+              suggestions={suggestions}
+              imports={imports}
+            />
+          </TabsContent>
 
           <TabsContent value="suggestions">
             <Card className="border-outline-variant/10">
@@ -190,7 +274,9 @@ export function FeedbackHubScreen({
           </TabsContent>
 
           <TabsContent value="imports">
-            <Card className="border-outline-variant/10">
+            <FeedbackImportForm />
+
+            <Card className="mt-4 border-outline-variant/10">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium">Imports</CardTitle>
               </CardHeader>

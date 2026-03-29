@@ -71,6 +71,13 @@
       "when": 1774779560280,
       "tag": "0009_dapper_norrin_radd",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1774782582086,
+      "tag": "0010_cute_sheva_callister",
+      "breakpoints": true
     }
   ]
 }

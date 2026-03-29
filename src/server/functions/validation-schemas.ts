@@ -261,3 +261,27 @@ export const runFeedbackAnalysisSchema = z
     force: z.boolean().optional(),
   })
   .optional()
+
+// ── Feedback chat schemas ──────────────────────────────────────────
+
+export const createFeedbackChatSchema = z.object({
+  title: z.string().max(200).optional(),
+})
+
+export const feedbackChatIdSchema = z.object({
+  chatId: id,
+})
+
+export const uploadFeedbackChatAttachmentSchema = z.object({
+  chatId: id,
+  fileName: z.string().min(1).max(500),
+  fileType: z.string().min(1).max(100),
+  rawContent: z.string(),
+})
+
+export const autoCreateTicketsSchema = z
+  .object({
+    confidenceThreshold: z.number().int().min(0).max(100).optional(),
+    cycleId: z.string().optional(),
+  })
+  .optional()

@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start"
 import { db } from "@/db/connection"
 import {
+  autoCreateTicketsFromSuggestions,
   createFeedbackImportForViewer,
   createIssueFromFeedbackSuggestionForViewer,
   getFeedbackSuggestionForViewer,
@@ -19,6 +20,7 @@ import {
   updateFeedbackSuggestionSchema,
   createIssueFromSuggestionSchema,
   runFeedbackAnalysisSchema,
+  autoCreateTicketsSchema,
 } from "./validation-schemas"
 
 export const createFeedbackImport = createServerFn({ method: "POST" })
@@ -87,4 +89,11 @@ export const runFeedbackAnalysisInternal = createServerFn({ method: "POST" })
       trigger: "manual",
       force: data?.force,
     })
+  })
+
+export const autoCreateTicketsFromFeedback = createServerFn({ method: "POST" })
+  .inputValidator(autoCreateTicketsSchema)
+  .handler(async ({ data }) => {
+    const viewerContext = await getViewerContext()
+    return autoCreateTicketsFromSuggestions(db, viewerContext, data)
   })

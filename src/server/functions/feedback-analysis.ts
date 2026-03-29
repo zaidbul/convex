@@ -206,7 +206,7 @@ export async function analyzeFeedbackItem(
 
   try {
     const result = await generateObject({
-      model: openai(process.env.FEEDBACK_ANALYSIS_ITEM_MODEL ?? "gpt-4o-mini"),
+      model: openai(process.env.FEEDBACK_ANALYSIS_ITEM_MODEL ?? "gpt-5.3-chat-latest"),
       schema: feedbackItemAnalysisSchema,
       system:
         "You classify product feedback into stable structured fields. Keep categories compact, concrete, and implementation-friendly.",
@@ -297,7 +297,7 @@ export async function analyzeFeedbackCluster(
 
   try {
     const result = await generateObject({
-      model: openai(process.env.FEEDBACK_ANALYSIS_CLUSTER_MODEL ?? "gpt-4o-mini"),
+      model: openai(process.env.FEEDBACK_ANALYSIS_CLUSTER_MODEL ?? "gpt-5.3-chat-latest"),
       schema: feedbackClusterAnalysisSchema,
       system:
         "You synthesize grouped user feedback into a product direction. Be concise, practical, and avoid generic language.",

@@ -19,11 +19,13 @@ import { Route as DefaultIndexRouteImport } from './routes/_default.index'
 import { Route as SignInSplatRouteImport } from './routes/sign-in/$'
 import { Route as AuthSlugRouteRouteImport } from './routes/_auth/$slug/route'
 import { Route as ApiInternalFeedbackAnalysisRouteImport } from './routes/api/internal/feedback-analysis'
+import { Route as ApiChatFeedbackRouteImport } from './routes/api/chat/feedback'
 import { Route as AuthSlugDashboardRouteImport } from './routes/_auth/$slug.dashboard'
 import { Route as AuthSlugTicketsRouteRouteImport } from './routes/_auth/$slug/tickets/route'
 import { Route as AuthSlugSettingsRouteRouteImport } from './routes/_auth/$slug/settings/route'
 import { Route as AuthSlugTicketsIndexRouteImport } from './routes/_auth/$slug/tickets/index'
 import { Route as AuthSlugSettingsIndexRouteImport } from './routes/_auth/$slug/settings/index'
+import { Route as ApiChatFeedbackRunAnalysisRouteImport } from './routes/api/chat/feedback.run-analysis'
 import { Route as AuthSlugTicketsFeedbackRouteImport } from './routes/_auth/$slug/tickets/feedback'
 import { Route as AuthSlugTicketsDashboardRouteImport } from './routes/_auth/$slug/tickets/dashboard'
 import { Route as AuthSlugSettingsTeamsRouteImport } from './routes/_auth/$slug/settings/teams'
@@ -89,6 +91,11 @@ const ApiInternalFeedbackAnalysisRoute =
     path: '/api/internal/feedback-analysis',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiChatFeedbackRoute = ApiChatFeedbackRouteImport.update({
+  id: '/api/chat/feedback',
+  path: '/api/chat/feedback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthSlugDashboardRoute = AuthSlugDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -114,6 +121,12 @@ const AuthSlugSettingsIndexRoute = AuthSlugSettingsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthSlugSettingsRouteRoute,
 } as any)
+const ApiChatFeedbackRunAnalysisRoute =
+  ApiChatFeedbackRunAnalysisRouteImport.update({
+    id: '/run-analysis',
+    path: '/run-analysis',
+    getParentRoute: () => ApiChatFeedbackRoute,
+  } as any)
 const AuthSlugTicketsFeedbackRoute = AuthSlugTicketsFeedbackRouteImport.update({
   id: '/feedback',
   path: '/feedback',
@@ -211,6 +224,7 @@ export interface FileRoutesByFullPath {
   '/$slug/settings': typeof AuthSlugSettingsRouteRouteWithChildren
   '/$slug/tickets': typeof AuthSlugTicketsRouteRouteWithChildren
   '/$slug/dashboard': typeof AuthSlugDashboardRoute
+  '/api/chat/feedback': typeof ApiChatFeedbackRouteWithChildren
   '/api/internal/feedback-analysis': typeof ApiInternalFeedbackAnalysisRoute
   '/$slug/tickets/$teamSlug': typeof AuthSlugTicketsTeamSlugRouteRouteWithChildren
   '/$slug/tickets/views': typeof AuthSlugTicketsViewsRouteRouteWithChildren
@@ -220,6 +234,7 @@ export interface FileRoutesByFullPath {
   '/$slug/settings/teams': typeof AuthSlugSettingsTeamsRoute
   '/$slug/tickets/dashboard': typeof AuthSlugTicketsDashboardRoute
   '/$slug/tickets/feedback': typeof AuthSlugTicketsFeedbackRoute
+  '/api/chat/feedback/run-analysis': typeof ApiChatFeedbackRunAnalysisRoute
   '/$slug/settings/': typeof AuthSlugSettingsIndexRoute
   '/$slug/tickets/': typeof AuthSlugTicketsIndexRoute
   '/$slug/tickets/$teamSlug/cycles': typeof AuthSlugTicketsTeamSlugCyclesRouteRouteWithChildren
@@ -239,6 +254,7 @@ export interface FileRoutesByTo {
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-in': typeof SignInIndexRoute
   '/$slug/dashboard': typeof AuthSlugDashboardRoute
+  '/api/chat/feedback': typeof ApiChatFeedbackRouteWithChildren
   '/api/internal/feedback-analysis': typeof ApiInternalFeedbackAnalysisRoute
   '/$slug/tickets/$teamSlug': typeof AuthSlugTicketsTeamSlugRouteRouteWithChildren
   '/$slug/settings/general': typeof AuthSlugSettingsGeneralRoute
@@ -247,6 +263,7 @@ export interface FileRoutesByTo {
   '/$slug/settings/teams': typeof AuthSlugSettingsTeamsRoute
   '/$slug/tickets/dashboard': typeof AuthSlugTicketsDashboardRoute
   '/$slug/tickets/feedback': typeof AuthSlugTicketsFeedbackRoute
+  '/api/chat/feedback/run-analysis': typeof ApiChatFeedbackRunAnalysisRoute
   '/$slug/settings': typeof AuthSlugSettingsIndexRoute
   '/$slug/tickets': typeof AuthSlugTicketsIndexRoute
   '/$slug/tickets/$teamSlug/cycles': typeof AuthSlugTicketsTeamSlugCyclesRouteRouteWithChildren
@@ -271,6 +288,7 @@ export interface FileRoutesById {
   '/_auth/$slug/settings': typeof AuthSlugSettingsRouteRouteWithChildren
   '/_auth/$slug/tickets': typeof AuthSlugTicketsRouteRouteWithChildren
   '/_auth/$slug/dashboard': typeof AuthSlugDashboardRoute
+  '/api/chat/feedback': typeof ApiChatFeedbackRouteWithChildren
   '/api/internal/feedback-analysis': typeof ApiInternalFeedbackAnalysisRoute
   '/_auth/$slug/tickets/$teamSlug': typeof AuthSlugTicketsTeamSlugRouteRouteWithChildren
   '/_auth/$slug/tickets/views': typeof AuthSlugTicketsViewsRouteRouteWithChildren
@@ -280,6 +298,7 @@ export interface FileRoutesById {
   '/_auth/$slug/settings/teams': typeof AuthSlugSettingsTeamsRoute
   '/_auth/$slug/tickets/dashboard': typeof AuthSlugTicketsDashboardRoute
   '/_auth/$slug/tickets/feedback': typeof AuthSlugTicketsFeedbackRoute
+  '/api/chat/feedback/run-analysis': typeof ApiChatFeedbackRunAnalysisRoute
   '/_auth/$slug/settings/': typeof AuthSlugSettingsIndexRoute
   '/_auth/$slug/tickets/': typeof AuthSlugTicketsIndexRoute
   '/_auth/$slug/tickets/$teamSlug/cycles': typeof AuthSlugTicketsTeamSlugCyclesRouteRouteWithChildren
@@ -303,6 +322,7 @@ export interface FileRouteTypes {
     | '/$slug/settings'
     | '/$slug/tickets'
     | '/$slug/dashboard'
+    | '/api/chat/feedback'
     | '/api/internal/feedback-analysis'
     | '/$slug/tickets/$teamSlug'
     | '/$slug/tickets/views'
@@ -312,6 +332,7 @@ export interface FileRouteTypes {
     | '/$slug/settings/teams'
     | '/$slug/tickets/dashboard'
     | '/$slug/tickets/feedback'
+    | '/api/chat/feedback/run-analysis'
     | '/$slug/settings/'
     | '/$slug/tickets/'
     | '/$slug/tickets/$teamSlug/cycles'
@@ -331,6 +352,7 @@ export interface FileRouteTypes {
     | '/sign-in/$'
     | '/sign-in'
     | '/$slug/dashboard'
+    | '/api/chat/feedback'
     | '/api/internal/feedback-analysis'
     | '/$slug/tickets/$teamSlug'
     | '/$slug/settings/general'
@@ -339,6 +361,7 @@ export interface FileRouteTypes {
     | '/$slug/settings/teams'
     | '/$slug/tickets/dashboard'
     | '/$slug/tickets/feedback'
+    | '/api/chat/feedback/run-analysis'
     | '/$slug/settings'
     | '/$slug/tickets'
     | '/$slug/tickets/$teamSlug/cycles'
@@ -362,6 +385,7 @@ export interface FileRouteTypes {
     | '/_auth/$slug/settings'
     | '/_auth/$slug/tickets'
     | '/_auth/$slug/dashboard'
+    | '/api/chat/feedback'
     | '/api/internal/feedback-analysis'
     | '/_auth/$slug/tickets/$teamSlug'
     | '/_auth/$slug/tickets/views'
@@ -371,6 +395,7 @@ export interface FileRouteTypes {
     | '/_auth/$slug/settings/teams'
     | '/_auth/$slug/tickets/dashboard'
     | '/_auth/$slug/tickets/feedback'
+    | '/api/chat/feedback/run-analysis'
     | '/_auth/$slug/settings/'
     | '/_auth/$slug/tickets/'
     | '/_auth/$slug/tickets/$teamSlug/cycles'
@@ -390,6 +415,7 @@ export interface RootRouteChildren {
   SignUpRoute: typeof SignUpRoute
   SignInSplatRoute: typeof SignInSplatRoute
   SignInIndexRoute: typeof SignInIndexRoute
+  ApiChatFeedbackRoute: typeof ApiChatFeedbackRouteWithChildren
   ApiInternalFeedbackAnalysisRoute: typeof ApiInternalFeedbackAnalysisRoute
 }
 
@@ -465,6 +491,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiInternalFeedbackAnalysisRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/chat/feedback': {
+      id: '/api/chat/feedback'
+      path: '/api/chat/feedback'
+      fullPath: '/api/chat/feedback'
+      preLoaderRoute: typeof ApiChatFeedbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_auth/$slug/dashboard': {
       id: '/_auth/$slug/dashboard'
       path: '/dashboard'
@@ -499,6 +532,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/$slug/settings/'
       preLoaderRoute: typeof AuthSlugSettingsIndexRouteImport
       parentRoute: typeof AuthSlugSettingsRouteRoute
+    }
+    '/api/chat/feedback/run-analysis': {
+      id: '/api/chat/feedback/run-analysis'
+      path: '/run-analysis'
+      fullPath: '/api/chat/feedback/run-analysis'
+      preLoaderRoute: typeof ApiChatFeedbackRunAnalysisRouteImport
+      parentRoute: typeof ApiChatFeedbackRoute
     }
     '/_auth/$slug/tickets/feedback': {
       id: '/_auth/$slug/tickets/feedback'
@@ -742,6 +782,18 @@ const DefaultRouteChildren: DefaultRouteChildren = {
 const DefaultRouteWithChildren =
   DefaultRoute._addFileChildren(DefaultRouteChildren)
 
+interface ApiChatFeedbackRouteChildren {
+  ApiChatFeedbackRunAnalysisRoute: typeof ApiChatFeedbackRunAnalysisRoute
+}
+
+const ApiChatFeedbackRouteChildren: ApiChatFeedbackRouteChildren = {
+  ApiChatFeedbackRunAnalysisRoute: ApiChatFeedbackRunAnalysisRoute,
+}
+
+const ApiChatFeedbackRouteWithChildren = ApiChatFeedbackRoute._addFileChildren(
+  ApiChatFeedbackRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   AuthRouteRoute: AuthRouteRouteWithChildren,
   DefaultRoute: DefaultRouteWithChildren,
@@ -750,6 +802,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignUpRoute: SignUpRoute,
   SignInSplatRoute: SignInSplatRoute,
   SignInIndexRoute: SignInIndexRoute,
+  ApiChatFeedbackRoute: ApiChatFeedbackRouteWithChildren,
   ApiInternalFeedbackAnalysisRoute: ApiInternalFeedbackAnalysisRoute,
 }
 export const routeTree = rootRouteImport
