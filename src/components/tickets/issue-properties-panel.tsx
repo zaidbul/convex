@@ -343,7 +343,8 @@ export function IssuePropertiesPanel({
       <div className="mt-1">
         <button
           type="button"
-          className="flex items-center gap-1.5 px-2 py-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          disabled
+          className="flex items-center gap-1.5 px-2 py-1 text-sm text-muted-foreground transition-colors opacity-50 cursor-not-allowed"
         >
           <Plus className="size-3" />
           <span>Add to project</span>

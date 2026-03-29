@@ -1,11 +1,8 @@
 import { Link, useParams } from "@tanstack/react-router"
 import {
   ChevronRight,
-  TriangleAlert,
   CircleDot,
   RefreshCw,
-  FolderKanban,
-  Eye,
 } from "lucide-react"
 import {
   Collapsible,
@@ -21,13 +18,9 @@ import {
   SidebarMenuSubButton,
 } from "@/components/ui/sidebar"
 import type { Team } from "./types"
-import { teamColorMap } from "./constants"
 
 const teamNavItems = [
-  { label: "Triage", icon: TriangleAlert, path: "triage" as const },
   { label: "Issues", icon: CircleDot, path: "issues" as const },
-  { label: "Projects", icon: FolderKanban, path: "projects" as const },
-  { label: "Views", icon: Eye, path: "views" as const },
 ]
 
 const cycleSubItems = [{ label: "Current" }, { label: "Upcoming" }]
@@ -71,7 +64,8 @@ function TeamItem({ team, isActive }: { team: Team; isActive: boolean }) {
           }
         >
           <span
-            className={`size-3 shrink-0 rounded-sm ${teamColorMap[team.color] ?? "bg-muted-foreground"}`}
+            className="size-3 shrink-0 rounded-sm"
+            style={{ backgroundColor: team.color }}
           />
           <span>{team.name}</span>
           <ChevronRight className="ml-auto size-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
@@ -113,7 +107,7 @@ function TeamItem({ team, isActive }: { team: Team; isActive: boolean }) {
                   <ul className="ml-4 flex flex-col gap-0.5 py-0.5">
                     {cycleSubItems.map((sub) => (
                       <li key={sub.label}>
-                        <SidebarMenuSubButton size="sm">
+                        <SidebarMenuSubButton size="sm" className="opacity-50 pointer-events-none">
                           <span className="text-on-surface-variant">
                             {sub.label}
                           </span>

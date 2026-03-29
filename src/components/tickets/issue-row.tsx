@@ -49,7 +49,12 @@ export function IssueRow({ issue }: { issue: Issue }) {
       onClick={handleClick}
     >
       {/* Kebab menu - visible on hover */}
-      <button className="flex size-5 shrink-0 items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant hover:text-on-surface">
+      <button
+        disabled
+        title="Coming soon"
+        onClick={(e) => e.stopPropagation()}
+        className="flex size-5 shrink-0 items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant hover:text-on-surface disabled:opacity-50 disabled:cursor-not-allowed"
+      >
         <MoreHorizontal className="size-4" strokeWidth={1.5} />
       </button>
 

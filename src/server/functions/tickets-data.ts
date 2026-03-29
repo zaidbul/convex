@@ -397,7 +397,7 @@ export async function listCyclesForViewerTeam(
   return rows.map(mapCycle)
 }
 
-function buildIssueFilter(filter?: string) {
+function buildIssueFilter(filter?: string, viewerUserId?: string) {
   if (!filter || filter === "all") {
     return undefined
   }
@@ -423,6 +423,10 @@ function buildIssueFilter(filter?: string) {
     return gte(schema.issues.createdAt, recentBoundary)
   }
 
+  if (filter === "my-issues" && viewerUserId) {
+    return eq(schema.issues.assigneeUserId, viewerUserId)
+  }
+
   return undefined
 }
 
@@ -440,7 +444,7 @@ export async function listIssuesForViewerTeam(
   const whereClause = and(
     eq(schema.issues.workspaceId, context.workspaceId),
     eq(schema.issues.teamId, team.id),
-    buildIssueFilter(filter)
+    buildIssueFilter(filter, context.userId)
   )
 
   const issueRows = await db.query.issues.findMany({
@@ -594,6 +598,15 @@ export async function createIssueForViewer(
     updatedAt: timestamp,
   })
 
+  await db.insert(schema.issueActivity).values({
+    id: crypto.randomUUID(),
+    issueId,
+    actorUserId: context.userId,
+    type: "created",
+    data: {},
+    createdAt: timestamp,
+  })
+
   return { id: issueId, identifier }
 }
 
@@ -654,6 +667,8 @@ export async function getIssueByIdForViewer(
     cycleId: issue.cycleId,
     createdAt: issue.createdAt,
     updatedAt: issue.updatedAt,
+    completedAt: issue.completedAt,
+    cancelledAt: issue.cancelledAt,
     creator: creator ? mapUser(creator) : { id: issue.creatorUserId, name: "Unknown", initials: "??" },
     teamId: issue.teamId,
   }
@@ -696,15 +711,26 @@ export async function updateIssueDescriptionForViewer(
     throw new Error("Not authorized to update this issue")
   }
 
+  const timestamp = nowIso()
+
   await db
     .update(schema.issues)
-    .set({ description, updatedAt: nowIso() })
+    .set({ description, updatedAt: timestamp })
     .where(
       and(
         eq(schema.issues.id, issueId),
         eq(schema.issues.workspaceId, context.workspaceId)
       )
     )
+
+  await db.insert(schema.issueActivity).values({
+    id: crypto.randomUUID(),
+    issueId,
+    actorUserId: context.userId,
+    type: "description_change",
+    data: {},
+    createdAt: timestamp,
+  })
 }
 
 async function verifyIssueAccess(

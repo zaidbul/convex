@@ -46,7 +46,7 @@ export function TicketSidebar() {
         <div className="flex items-center justify-between">
           <WorkspaceDropdown workspace={workspace} />
           <div className="flex items-center gap-0.5">
-            <Button variant="ghost" size="icon" className="size-7">
+            <Button variant="ghost" size="icon" className="size-7" disabled title="Coming soon">
               <Search className="size-4" strokeWidth={1.5} />
             </Button>
             <Button
@@ -82,10 +82,13 @@ export function TicketSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   render={
-                    <Link
-                      to="/$slug/tickets"
-                      params={{ slug: slug! }}
-                    />
+                    teams.length > 0
+                      ? <Link
+                          to="/$slug/tickets/$teamSlug/issues"
+                          params={{ slug: slug!, teamSlug: teams[0].slug }}
+                          search={{ filter: "my-issues" }}
+                        />
+                      : <Link to="/$slug/tickets" params={{ slug: slug! }} />
                   }
                 >
                   <CircleUser className="size-4" strokeWidth={1.5} />
@@ -106,25 +109,25 @@ export function TicketSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton>
+                <SidebarMenuButton disabled className="opacity-50 pointer-events-none">
                   <Rocket className="size-4" strokeWidth={1.5} />
                   <span>Initiatives</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton>
+                <SidebarMenuButton disabled className="opacity-50 pointer-events-none">
                   <FolderKanban className="size-4" strokeWidth={1.5} />
                   <span>Projects</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton>
+                <SidebarMenuButton disabled className="opacity-50 pointer-events-none">
                   <Eye className="size-4" strokeWidth={1.5} />
                   <span>Views</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton>
+                <SidebarMenuButton disabled className="opacity-50 pointer-events-none">
                   <MoreHorizontal className="size-4" strokeWidth={1.5} />
                   <span>More</span>
                 </SidebarMenuButton>
@@ -147,7 +150,7 @@ export function TicketSidebar() {
       <SidebarFooter className="px-3 py-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton>
+            <SidebarMenuButton disabled className="opacity-50 pointer-events-none">
               <HelpCircle className="size-4" strokeWidth={1.5} />
             </SidebarMenuButton>
           </SidebarMenuItem>

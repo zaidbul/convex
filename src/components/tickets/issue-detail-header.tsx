@@ -44,13 +44,13 @@ export function IssueDetailHeader({
       <Separator orientation="vertical" className="h-4 mx-1" />
 
       <div className="flex items-center gap-0.5 shrink-0">
-        <Button variant="ghost" size="icon" className="size-7">
+        <Button variant="ghost" size="icon" className="size-7" disabled title="Coming soon">
           <Star className="size-3.5" strokeWidth={1.5} />
         </Button>
-        <Button variant="ghost" size="icon" className="size-7">
+        <Button variant="ghost" size="icon" className="size-7" disabled title="Coming soon">
           <Copy className="size-3.5" strokeWidth={1.5} />
         </Button>
-        <Button variant="ghost" size="icon" className="size-7">
+        <Button variant="ghost" size="icon" className="size-7" disabled title="Coming soon">
           <MoreHorizontal className="size-3.5" strokeWidth={1.5} />
         </Button>
       </div>

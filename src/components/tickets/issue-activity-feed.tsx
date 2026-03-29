@@ -41,6 +41,8 @@ function ActivityDescription({ entry }: { entry: ActivityEntry }) {
     }
     case "label_change":
       return <><span className="font-medium">{actorName}</span> updated labels</>
+    case "description_change":
+      return <><span className="font-medium">{actorName}</span> updated the description</>
     case "comment":
       return null
     default:

@@ -59,6 +59,8 @@ export interface IssueDetail extends Issue {
   description: string | null
   creator: User
   teamId: string
+  completedAt: string | null
+  cancelledAt: string | null
 }
 
 export interface ActivityEntry {
@@ -84,3 +86,4 @@ export type IssueFilter =
   | "backlog-not-estimated"
   | "backlog-graded"
   | "recently-added"
+  | "my-issues"

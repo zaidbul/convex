@@ -46,7 +46,7 @@ export function CycleGroup({
           </span>
         </CollapsibleTrigger>
 
-        <Button variant="ghost" size="icon" className="size-6 shrink-0">
+        <Button variant="ghost" size="icon" className="size-6 shrink-0" disabled title="Coming soon">
           <Plus className="size-3.5 text-on-surface-variant" strokeWidth={1.5} />
         </Button>
       </div>
