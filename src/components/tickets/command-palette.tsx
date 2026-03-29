@@ -151,7 +151,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               onSelect={() =>
                 runAction(() =>
                   navigate({
-                    to: "/$slug/tickets/settings",
+                    to: "/$slug/settings",
                     params: { slug: slug! },
                   })
                 )

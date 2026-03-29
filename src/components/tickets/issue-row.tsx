@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { IssueActionsDropdown, IssueActionsContextMenu } from "./issue-actions-menu"
+import { useIssuePanelSafe } from "./issue-panel-provider"
 import type { Issue, IssueStatus } from "./types"
 import { statusColorMap, labelColorMap } from "./constants"
 
@@ -32,13 +33,20 @@ function formatDate(dateStr: string): string {
 export function IssueRow({ issue }: { issue: Issue }) {
   const navigate = useNavigate()
   const params = useParams({ strict: false }) as { slug?: string; teamSlug?: string }
+  const panel = useIssuePanelSafe()
 
   const issueUrl =
     typeof window !== "undefined"
       ? `${window.location.origin}/${params.slug}/tickets/${params.teamSlug}/issue/${issue.id}`
       : ""
 
+  const isSelected = panel?.panelOpen && panel.selectedIssueId === issue.id
+
   function handleClick() {
+    if (panel?.panelOpen) {
+      panel.selectIssue(issue.id)
+      return
+    }
     if (!params.slug || !params.teamSlug) return
     navigate({
       to: "/$slug/tickets/$teamSlug/issue/$issueId",
@@ -57,7 +65,10 @@ export function IssueRow({ issue }: { issue: Issue }) {
       issueUrl={issueUrl}
     >
       <div
-        className="group flex h-11 items-center gap-2 px-4 hover:bg-surface-container/60 transition-colors cursor-pointer"
+        className={cn(
+          "group flex h-11 items-center gap-2 px-4 hover:bg-surface-container/60 transition-colors cursor-pointer",
+          isSelected && "bg-surface-container/80 border-l-2 border-primary",
+        )}
         onClick={handleClick}
       >
         {/* Kebab menu - visible on hover */}

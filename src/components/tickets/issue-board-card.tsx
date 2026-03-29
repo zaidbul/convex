@@ -4,19 +4,27 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { KanbanItem } from "@/components/ui/kanban"
 import { IssueActionsContextMenu } from "./issue-actions-menu"
+import { useIssuePanelSafe } from "./issue-panel-provider"
 import { statusColorMap, labelColorMap, priorityConfig } from "./constants"
 import type { Issue } from "./types"
 
 export function IssueBoardCard({ issue }: { issue: Issue }) {
   const navigate = useNavigate()
   const params = useParams({ strict: false }) as { slug?: string; teamSlug?: string }
+  const panel = useIssuePanelSafe()
 
   const issueUrl =
     typeof window !== "undefined"
       ? `${window.location.origin}/${params.slug}/tickets/${params.teamSlug}/issue/${issue.id}`
       : ""
 
+  const isSelected = panel?.panelOpen && panel.selectedIssueId === issue.id
+
   function handleClick() {
+    if (panel?.panelOpen) {
+      panel.selectIssue(issue.id)
+      return
+    }
     if (!params.slug || !params.teamSlug) return
     navigate({
       to: "/$slug/tickets/$teamSlug/issue/$issueId",
@@ -37,7 +45,10 @@ export function IssueBoardCard({ issue }: { issue: Issue }) {
       >
         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <div
-          className="rounded-lg border border-outline-variant/15 bg-surface p-3 shadow-xs transition-colors hover:border-outline-variant/30"
+          className={cn(
+            "rounded-lg border border-outline-variant/15 bg-surface p-3 shadow-xs transition-colors hover:border-outline-variant/30",
+            isSelected && "ring-2 ring-primary/50 border-primary/30",
+          )}
           onClick={handleClick}
         >
           {/* Identifier + priority */}

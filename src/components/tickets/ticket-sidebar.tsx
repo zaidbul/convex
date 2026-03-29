@@ -178,7 +178,7 @@ export function TicketSidebar() {
                 <SidebarMenuButton
                   render={
                     <Link
-                      to="/$slug/tickets/settings"
+                      to="/$slug/settings"
                       params={{ slug: slug! }}
                     />
                   }

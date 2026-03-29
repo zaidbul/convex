@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils"
 import { AdvancedFiltersSheet } from "./advanced-filters-sheet"
 import { FilterPills } from "./filter-pills"
 import type { ViewMode } from "./filter-state"
+import { useIssuePanel } from "./issue-panel-provider"
 import type {
   IssueAdvancedFilters,
   IssueFilter,
@@ -62,6 +63,7 @@ export function TicketHeader({
   const { slug } = useParams({ strict: false }) as { slug?: string }
   const navigate = useNavigate()
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const { panelOpen, togglePanel } = useIssuePanel()
   const { data: unreadCount = 0 } = useQuery(unreadNotificationCountQueryOptions())
   const { data: recentNotifications = [] } = useQuery(recentNotificationsQueryOptions(10))
   const markAsRead = useMarkNotificationAsReadMutation()
@@ -165,7 +167,13 @@ export function TicketHeader({
           >
             <LayoutGrid className="size-3.5 text-on-surface-variant" strokeWidth={1.5} />
           </Button>
-          <Button variant="ghost" size="icon" className="size-7" disabled title="Coming soon">
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn("size-7", panelOpen && "bg-surface-high")}
+            onClick={togglePanel}
+            title={panelOpen ? "Close panel" : "Open panel"}
+          >
             <PanelRight className="size-3.5 text-on-surface-variant" strokeWidth={1.5} />
           </Button>
         </div>
