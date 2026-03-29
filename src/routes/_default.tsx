@@ -1,12 +1,6 @@
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
-import {
-  Menu,
-  Globe,
-  AtSign,
-  Hash,
-  Mail,
-} from "lucide-react"
+import { Menu } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -23,68 +17,8 @@ export const Route = createFileRoute("/_default")({
 })
 
 const navLinks = [
-  { label: "Invest", href: "#" },
-  { label: "Cash", href: "#" },
-  { label: "Strategies", href: "#" },
-  { label: "Gold", href: "#" },
-  { label: "Learn", href: "#" },
-]
-
-const footerSections = [
-  {
-    title: "Product",
-    links: [
-      "Invest",
-      "Predict",
-      "Strategies",
-      "Retirement",
-      "Gold",
-      "Crypto",
-      "Chain",
-      "Wallet",
-      "Connect",
-      "API",
-      "Legend",
-      "Options",
-      "Futures",
-      "Trading",
-      "Custodial",
-      "Ventures",
-      "Social",
-      "Banking",
-      "Gold Card",
-      "Platinum Card",
-      "Learn",
-      "Snacks",
-    ],
-  },
-  {
-    title: "Company",
-    links: [
-      "About us",
-      "Blog",
-      "Partner With Us",
-      "Affiliates",
-      "Press",
-      "Careers",
-      "Investor Relations",
-      "Support",
-      "ESG",
-      "Investor Index",
-      "cnvx Merch",
-    ],
-  },
-  {
-    title: "Legal & Regulatory",
-    links: [
-      "Terms & Conditions",
-      "Disclosures",
-      "Privacy Statement",
-      "Market Privacy Statement",
-      "Law Enforcement Requests",
-      "Your Privacy Choices",
-    ],
-  },
+  { label: "Features", href: "#features" },
+  { label: "Workflow", href: "#workflow" },
 ]
 
 function Navbar() {
@@ -203,74 +137,15 @@ function Footer() {
   return (
     <footer className="bg-primary text-primary-foreground">
       <div className="mx-auto max-w-[1400px] px-6 pt-12 pb-16">
-        {/* Top row: regulatory links + social */}
-        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-wrap items-center gap-4 text-sm underline underline-offset-4">
-            <a href="#">Customer Relationship Summaries</a>
-            <span className="opacity-40">|</span>
-            <a href="#">BrokerCheck</a>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <span className="mr-2 opacity-60">Follow us on</span>
-            <a href="#" className="rounded-full p-1.5 hover:bg-primary-foreground/10">
-              <Globe className="size-4" />
-            </a>
-            <a href="#" className="rounded-full p-1.5 hover:bg-primary-foreground/10">
-              <AtSign className="size-4" />
-            </a>
-            <a href="#" className="rounded-full p-1.5 hover:bg-primary-foreground/10">
-              <Hash className="size-4" />
-            </a>
-            <a href="#" className="rounded-full p-1.5 hover:bg-primary-foreground/10">
-              <Mail className="size-4" />
-            </a>
-          </div>
-        </div>
-
-        {/* Link grid + legal prose */}
-        <div className="mt-10 grid grid-cols-2 gap-x-8 gap-y-10 md:grid-cols-4">
-          {footerSections.map((section) => (
-            <div key={section.title}>
-              <h4 className="mb-4 text-sm font-semibold">{section.title}</h4>
-              <ul className="space-y-2">
-                {section.links.map((link) => (
-                  <li key={link}>
-                    <a
-                      href="#"
-                      className="text-sm opacity-80 transition-opacity hover:opacity-100"
-                    >
-                      {link}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-
-          {/* Legal prose column */}
-          <div className="col-span-2 md:col-span-1">
-            <h4 className="mb-4 text-sm font-semibold">
-              All investing involves risk.
-            </h4>
-            <div className="space-y-4 text-xs leading-relaxed opacity-80">
-              <p>
-                Brokerage services are offered through cnvx Financial LLC, a
-                registered broker-dealer. Clearing services through cnvx
-                Securities, LLC, a registered broker-dealer.
-              </p>
-              <p>
-                Portfolio Management offered through cnvx Strategies, an
-                SEC-registered investment advisor. For additional information
-                about services, fees, risks, and conflicts of interest, please
-                see our firm&apos;s brochure.
-              </p>
-              <p>
-                Cryptocurrency services are offered through an account with cnvx
-                Crypto, LLC. cnvx Crypto is licensed to engage in virtual
-                currency business activity. Cryptocurrency held through cnvx
-                Crypto is not FDIC insured or SIPC protected.
-              </p>
-            </div>
+        {/* Copyright + legal */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm opacity-80">
+            &copy; 2026 cnvx. All rights reserved.
+          </p>
+          <div className="flex items-center gap-4 text-sm opacity-60">
+            <span>Privacy</span>
+            <span className="opacity-40">·</span>
+            <span>Terms</span>
           </div>
         </div>
 

@@ -1,14 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { useState } from "react"
 import {
-  Wallet,
-  Zap,
-  TrendingUp,
-  BrainCircuit,
-  BookOpen,
-  Info,
   Check,
   ChevronRight,
+  ListTodo,
+  Timer,
+  Users,
+  Eye,
+  Search,
+  PenLine,
+  Circle,
+  ArrowUpCircle,
+  CheckCircle2,
+  Loader2,
+  SignalHigh,
+  SignalMedium,
+  SignalLow,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -26,23 +33,32 @@ function HeroSection() {
   return (
     <section className="relative flex min-h-[90vh] items-center justify-center bg-surface-lowest px-6 pt-16">
       <div className="mx-auto max-w-4xl text-center">
-        <h1 className="font-display text-5xl font-bold tracking-tight text-foreground md:text-7xl lg:text-8xl">
-          Trade on your time
+        <p className="text-xs font-medium tracking-wider text-on-surface-variant/60 uppercase">
+          Project management, redefined.
+        </p>
+        <h1 className="mt-4 font-display text-5xl font-bold tracking-tight text-foreground md:text-7xl lg:text-8xl">
+          Ship faster.
           <br />
-          and your terms.
+          Track everything.
         </h1>
         <p className="mx-auto mt-6 max-w-xl text-sm leading-relaxed text-on-surface-variant">
-          We have 24/7 support, $0, and no commission fees on stocks, ETFs, and
-          then options. Your first stock is even on us.
+          The issue tracker built for teams who move fast. Organize work across
+          teams, plan sprints, and never lose context.
         </p>
-        <div className="mt-2 flex items-center justify-center gap-2 text-xs text-on-surface-variant/60">
-          <Info className="size-3" />
-          <span>Limitations and risks apply.</span>
-        </div>
-        <div className="mt-8">
-          <Button size="lg" className="px-8 shadow-glow" render={<Link to="/sign-up" />}>
-            Get started
+        <div className="mt-8 flex items-center justify-center gap-4">
+          <Button
+            size="lg"
+            className="px-8 shadow-glow"
+            render={<Link to="/sign-up" />}
+          >
+            Get started free
           </Button>
+          <a
+            href="#product-showcase"
+            className="text-sm font-medium text-on-surface-variant transition-colors hover:text-foreground"
+          >
+            See it in action &darr;
+          </a>
         </div>
       </div>
     </section>
@@ -65,84 +81,186 @@ function SphereTransition() {
           }}
         />
       </div>
-      <p className="absolute bottom-52 left-0 right-0 text-center text-xs text-on-surface-variant/40">
-        Stocks &amp; bonds offered through cnvx Financial. Other fees may apply.
-        See our{" "}
-        <a href="#" className="underline">
-          Fee Schedule
-        </a>{" "}
-        for more details.
-      </p>
     </div>
   )
 }
 
 /* ─────────────────────────────────────────────
-   Section 3 — Stocks & ETFs
+   Section 3 — Product Showcase
    ───────────────────────────────────────────── */
 
-function StocksSection() {
-  return (
-    <section className="bg-surface-low px-6 py-24">
-      <div className="mx-auto grid max-w-[1400px] items-center gap-12 md:grid-cols-[1fr_1fr]">
-        {/* Text */}
-        <div>
-          <p className="text-xs font-medium tracking-wider text-on-surface-variant/60 uppercase">
-            Stocks and ETFs
-          </p>
-          <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-foreground md:text-5xl">
-            Hop on market movements, day or night
-          </h2>
-          <p className="mt-4 text-sm leading-relaxed text-on-surface-variant">
-            Trade your favorite stocks and ETFs 24 hours a day, 5 days a week.
-            All still commission-free.*
-          </p>
-          <div className="mt-4 flex items-center gap-2 text-xs text-on-surface-variant/50">
-            <Info className="size-3" />
-            <span>Limitations and risks apply</span>
-          </div>
-          <p className="mt-6 text-xs text-on-surface-variant/40">
-            *Other fees may apply
-          </p>
-        </div>
+const mockIssues = [
+  {
+    id: "ENG-42",
+    title: "Implement user authentication flow",
+    status: "done",
+    priority: "high",
+    assignee: "ZB",
+  },
+  {
+    id: "ENG-58",
+    title: "Add dark mode toggle to settings",
+    status: "in-progress",
+    priority: "medium",
+    assignee: "AK",
+  },
+  {
+    id: "ENG-63",
+    title: "Migrate database to edge runtime",
+    status: "in-progress",
+    priority: "high",
+    assignee: "RJ",
+  },
+  {
+    id: "ENG-71",
+    title: "Design onboarding checklist component",
+    status: "todo",
+    priority: "medium",
+    assignee: "ML",
+  },
+  {
+    id: "ENG-79",
+    title: "Fix notification badge count on mobile",
+    status: "todo",
+    priority: "low",
+    assignee: "ZB",
+  },
+  {
+    id: "ENG-84",
+    title: "Add keyboard shortcuts documentation",
+    status: "backlog",
+    priority: "low",
+    assignee: "AK",
+  },
+]
 
-        {/* Phone mockup */}
-        <div className="flex justify-center md:justify-end">
-          <div className="w-72 rounded-[2.5rem] bg-surface-highest p-4 shadow-2xl">
-            <div className="rounded-[2rem] bg-surface-lowest p-5">
-              <p className="text-xs text-on-surface-variant/60">GRWL</p>
-              <p className="mt-1 font-display text-2xl font-bold text-foreground">
-                Tiger Corp
-              </p>
-              <p className="font-display text-3xl font-bold text-foreground">
-                $11.54{" "}
-                <span className="text-sm text-on-surface-variant/40">⊕</span>
-              </p>
-              <div className="mt-2 space-y-1">
-                <p className="text-xs">
-                  <span className="text-primary">▲ $1.76 (18.01%)</span>{" "}
-                  <span className="text-on-surface-variant/60">Today</span>
+function StatusDot({ status }: { status: string }) {
+  const colors: Record<string, string> = {
+    backlog: "text-on-surface-variant/40",
+    todo: "text-on-surface-variant/70",
+    "in-progress": "text-primary",
+    done: "text-primary",
+  }
+  const icons: Record<string, React.ReactNode> = {
+    backlog: <Circle className="size-3.5" />,
+    todo: <Circle className="size-3.5" />,
+    "in-progress": <Loader2 className="size-3.5" />,
+    done: <CheckCircle2 className="size-3.5" />,
+  }
+  return (
+    <span className={cn("shrink-0", colors[status])}>
+      {icons[status]}
+    </span>
+  )
+}
+
+function PriorityIcon({ priority }: { priority: string }) {
+  const icons: Record<string, React.ReactNode> = {
+    high: <SignalHigh className="size-3.5 text-primary" />,
+    medium: <SignalMedium className="size-3.5 text-on-surface-variant/60" />,
+    low: <SignalLow className="size-3.5 text-on-surface-variant/40" />,
+  }
+  return <span className="shrink-0">{icons[priority]}</span>
+}
+
+function ProductShowcaseSection() {
+  return (
+    <section id="product-showcase" className="bg-surface-low px-6 py-24">
+      <div className="mx-auto max-w-[1200px]">
+        <div className="overflow-hidden rounded-2xl bg-surface-highest shadow-xl ring-1 ring-foreground/10">
+          <div className="flex min-h-[500px]">
+            {/* Sidebar mockup */}
+            <div className="hidden w-56 shrink-0 border-r border-foreground/5 bg-surface-high p-4 md:block">
+              <div className="flex items-center gap-2 px-2 py-1.5">
+                <div className="size-5 rounded-md bg-primary/20" />
+                <span className="text-xs font-semibold text-foreground">
+                  Acme Corp
+                </span>
+              </div>
+              <div className="mt-6 space-y-0.5">
+                <div className="flex items-center gap-2 rounded-lg bg-surface-lowest/60 px-2 py-1.5 text-xs font-medium text-foreground">
+                  <div className="size-3.5 rounded bg-primary/15" />
+                  Dashboard
+                </div>
+                <div className="flex items-center gap-2 px-2 py-1.5 text-xs text-on-surface-variant/60">
+                  <div className="size-3.5 rounded bg-foreground/5" />
+                  Inbox
+                </div>
+                <div className="flex items-center gap-2 px-2 py-1.5 text-xs text-on-surface-variant/60">
+                  <div className="size-3.5 rounded bg-foreground/5" />
+                  My Issues
+                </div>
+              </div>
+              <div className="mt-6">
+                <p className="px-2 text-[10px] font-medium tracking-wider text-on-surface-variant/40 uppercase">
+                  Teams
                 </p>
-                <p className="text-xs">
-                  <span className="text-primary">▲ $0.0700 (0.61%)</span>{" "}
-                  <span className="text-on-surface-variant/60">Overnight</span>
+                <div className="mt-2 space-y-0.5">
+                  <div className="flex items-center gap-2 px-2 py-1.5 text-xs text-on-surface-variant/60">
+                    <span className="text-[10px]">ENG</span>
+                    Engineering
+                  </div>
+                  <div className="flex items-center gap-2 px-2 py-1.5 text-xs text-on-surface-variant/60">
+                    <span className="text-[10px]">DES</span>
+                    Design
+                  </div>
+                  <div className="flex items-center gap-2 px-2 py-1.5 text-xs text-on-surface-variant/60">
+                    <span className="text-[10px]">MKT</span>
+                    Marketing
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Main content mockup */}
+            <div className="flex-1 p-6">
+              {/* Stats cards */}
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {[
+                  { label: "Backlog", count: 12, color: "text-on-surface-variant/50" },
+                  { label: "Todo", count: 8, color: "text-on-surface-variant/70" },
+                  { label: "In Progress", count: 5, color: "text-primary" },
+                  { label: "Done", count: 24, color: "text-primary" },
+                ].map((stat) => (
+                  <div
+                    key={stat.label}
+                    className="rounded-xl bg-surface-low/60 p-3"
+                  >
+                    <p className="text-[10px] text-on-surface-variant/50">
+                      {stat.label}
+                    </p>
+                    <p className={cn("mt-1 font-display text-xl font-bold", stat.color)}>
+                      {stat.count}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Issue list */}
+              <div className="mt-6">
+                <p className="mb-3 text-xs font-medium text-on-surface-variant/50">
+                  Active Issues
                 </p>
-              </div>
-              {/* Mini chart */}
-              <div className="mt-6 h-32 w-full overflow-hidden rounded-xl">
-                <svg
-                  viewBox="0 0 200 80"
-                  className="h-full w-full"
-                  preserveAspectRatio="none"
-                >
-                  <polyline
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    className="text-primary"
-                    points="0,60 20,55 40,50 60,52 80,45 100,48 120,40 140,35 150,38 160,30 170,32 180,25 200,20"
-                  />
-                </svg>
+                <div className="space-y-0">
+                  {mockIssues.map((issue) => (
+                    <div
+                      key={issue.id}
+                      className="flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-surface-low/40"
+                    >
+                      <PriorityIcon priority={issue.priority} />
+                      <StatusDot status={issue.status} />
+                      <span className="shrink-0 text-[11px] font-medium text-on-surface-variant/40">
+                        {issue.id}
+                      </span>
+                      <span className="truncate text-xs text-foreground">
+                        {issue.title}
+                      </span>
+                      <span className="ml-auto shrink-0 flex size-5 items-center justify-center rounded-full bg-surface-low text-[9px] font-medium text-on-surface-variant/60">
+                        {issue.assignee}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -153,395 +271,52 @@ function StocksSection() {
 }
 
 /* ─────────────────────────────────────────────
-   Section 4 — Strategies
+   Section 4 — Features Grid (flip cards)
    ───────────────────────────────────────────── */
 
-function StrategiesSection() {
-  return (
-    <section className="bg-gradient-to-b from-surface-low to-background px-6 py-24">
-      <div className="mx-auto grid max-w-[1400px] items-center gap-12 md:grid-cols-[1fr_1fr]">
-        {/* Phone mockup left */}
-        <div className="flex justify-center md:justify-start">
-          <div className="relative w-72">
-            <div className="rounded-[2.5rem] bg-surface-highest p-4 shadow-2xl">
-              <div className="flex h-[400px] items-center justify-center rounded-[2rem] bg-surface-lowest">
-                {/* Circular progress visualization */}
-                <svg viewBox="0 0 120 120" className="size-48">
-                  <circle
-                    cx="60"
-                    cy="60"
-                    r="50"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="12"
-                    className="text-surface-container"
-                  />
-                  <circle
-                    cx="60"
-                    cy="60"
-                    r="50"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="12"
-                    strokeDasharray="220 94"
-                    strokeLinecap="round"
-                    className="text-primary"
-                    transform="rotate(-90 60 60)"
-                  />
-                  <circle
-                    cx="60"
-                    cy="60"
-                    r="36"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="10"
-                    strokeDasharray="140 86"
-                    strokeLinecap="round"
-                    className="text-accent"
-                    transform="rotate(-90 60 60)"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Text right */}
-        <div>
-          <div className="mb-4 flex items-center gap-2">
-            <div className="flex size-6 items-center justify-center rounded-full bg-primary">
-              <ChevronRight className="size-3.5 text-primary-foreground" />
-            </div>
-            <span className="text-sm font-medium text-foreground">
-              cnvx Strategies
-            </span>
-          </div>
-          <h2 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-5xl">
-            Get the &lsquo;why&rsquo; behind the &lsquo;how&rsquo; of every
-            investment
-          </h2>
-          <p className="mt-4 text-sm leading-relaxed text-on-surface-variant">
-            Get an expert managed portfolio and timely market insights. Gold
-            members unlock zero management fees on your first dollar over $100K.
-          </p>
-          <p className="mt-4 text-xs text-on-surface-variant/50">
-            Terms apply. Gold subscription $5/month.
-          </p>
-          <div className="mt-6">
-            <Button size="lg" className="px-8 shadow-glow">
-              Get started
-            </Button>
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-/* ─────────────────────────────────────────────
-   Section 5 — ETFs + Options Grid
-   ───────────────────────────────────────────── */
-
-function EtfsOptionsGrid() {
-  return (
-    <section className="bg-background px-6 py-0">
-      <div className="mx-auto grid max-w-[1400px] gap-0 md:grid-cols-2">
-        {/* ETFs */}
-        <div className="flex min-h-[500px] flex-col justify-between bg-background p-10 md:p-16">
-          <div>
-            <p className="text-xs font-medium tracking-wider text-on-surface-variant/60 uppercase">
-              ETFs
-            </p>
-            <h3 className="mt-2 font-display text-2xl font-bold tracking-tight text-foreground md:text-4xl">
-              Get diversified with stock bundles
-            </h3>
-            <p className="mt-4 text-sm leading-relaxed text-on-surface-variant">
-              ETFs can remove some of the pressure from picking individual
-              stocks. Invest in a group of companies all at once.
-            </p>
-            <div className="mt-3 flex items-center gap-2 text-xs text-on-surface-variant/50">
-              <Info className="size-3" />
-              <a href="#" className="underline">
-                Diversification Disclosures
-              </a>
-            </div>
-          </div>
-          {/* Abstract geometric illustration */}
-          <div className="mt-8 flex justify-center opacity-20">
-            <svg viewBox="0 0 200 150" className="h-40 w-56">
-              <polygon
-                points="30,140 100,20 170,140"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                className="text-foreground"
-              />
-              <polygon
-                points="50,140 100,50 150,140"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                className="text-foreground"
-              />
-              <line
-                x1="20"
-                y1="80"
-                x2="180"
-                y2="80"
-                stroke="currentColor"
-                strokeWidth="1"
-                className="text-foreground"
-              />
-            </svg>
-          </div>
-        </div>
-
-        {/* Options */}
-        <div className="flex min-h-[500px] flex-col justify-between bg-background p-10 md:p-16">
-          <div>
-            <p className="text-xs font-medium tracking-wider text-on-surface-variant/60 uppercase">
-              Options
-            </p>
-            <h3 className="mt-2 font-display text-2xl font-bold tracking-tight text-foreground md:text-4xl">
-              Level up your investing strategies
-            </h3>
-            <p className="mt-4 text-sm leading-relaxed text-on-surface-variant">
-              Get the right to buy or sell stocks or ETFs at a specific date for
-              a specific price — commission-free.{" "}
-              <a href="#" className="underline">
-                Learn more about options trading
-              </a>
-              .
-            </p>
-            <div className="mt-3 flex items-center gap-2 text-xs text-on-surface-variant/50">
-              <Info className="size-3" />
-              <a href="#" className="underline">
-                Options Risk Disclosures
-              </a>
-            </div>
-          </div>
-          {/* Abstract geometric illustration */}
-          <div className="mt-8 flex justify-center opacity-20">
-            <svg viewBox="0 0 200 150" className="h-40 w-56">
-              <rect
-                x="20"
-                y="30"
-                width="40"
-                height="100"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                className="text-foreground"
-                transform="rotate(-10 40 80)"
-              />
-              <rect
-                x="70"
-                y="40"
-                width="40"
-                height="90"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                className="text-foreground"
-                transform="rotate(5 90 85)"
-              />
-              <rect
-                x="120"
-                y="20"
-                width="40"
-                height="110"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                className="text-foreground"
-                transform="rotate(-5 140 75)"
-              />
-            </svg>
-          </div>
-        </div>
-      </div>
-      <p className="mx-auto max-w-[1400px] px-6 pb-8 text-xs text-on-surface-variant/40">
-        All investing involves risk. ETFs offered by cnvx Financial. Options are
-        offered through cnvx Financial. Options are risky and aren&apos;t
-        suitable for all investors.
-      </p>
-    </section>
-  )
-}
-
-/* ─────────────────────────────────────────────
-   Section 6 — Margin + Crypto Grid
-   ───────────────────────────────────────────── */
-
-function MarginCryptoGrid() {
-  return (
-    <section className="bg-background px-6 py-0">
-      <div className="mx-auto grid max-w-[1400px] gap-0 md:grid-cols-2">
-        {/* Margin — light */}
-        <div className="flex min-h-[500px] flex-col justify-between bg-background p-10 md:p-16">
-          <div>
-            <p className="text-xs font-medium tracking-wider text-on-surface-variant/60 uppercase">
-              Margin
-            </p>
-            <h3 className="mt-2 font-display text-2xl font-bold tracking-tight text-foreground md:text-4xl">
-              Increase your buying power
-            </h3>
-            <p className="mt-4 text-sm leading-relaxed text-on-surface-variant">
-              Need more leverage to purchase the stocks and ETFs you&apos;ve
-              been eyeing? With Margin, you can preserve your extra cash by
-              borrowing some from us.{" "}
-              <a href="#" className="underline">
-                See our rates
-              </a>
-              .
-            </p>
-            <div className="mt-3 flex items-center gap-2 text-xs text-on-surface-variant/50">
-              <Info className="size-3" />
-              <span>Risk of Margin Disclosure</span>
-            </div>
-          </div>
-          {/* Pie chart line art */}
-          <div className="mt-8 flex justify-center opacity-20">
-            <svg viewBox="0 0 200 200" className="h-40 w-40">
-              <circle
-                cx="100"
-                cy="100"
-                r="80"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                className="text-foreground"
-              />
-              <line
-                x1="100"
-                y1="100"
-                x2="100"
-                y2="20"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                className="text-foreground"
-              />
-              <line
-                x1="100"
-                y1="100"
-                x2="170"
-                y2="140"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                className="text-foreground"
-              />
-              <path
-                d="M 100 20 A 80 80 0 0 1 170 140"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="3"
-                className="text-foreground"
-              />
-            </svg>
-          </div>
-        </div>
-
-        {/* Crypto — dark */}
-        <div className="flex min-h-[500px] flex-col justify-between bg-surface-lowest p-10 text-foreground md:p-16">
-          <div>
-            <div className="mb-3 flex items-center gap-2">
-              <div className="flex size-5 items-center justify-center rounded-full bg-primary">
-                <ChevronRight className="size-3 text-primary-foreground" />
-              </div>
-              <span className="text-xs font-medium">cnvx Crypto</span>
-            </div>
-            <h3 className="font-display text-2xl font-bold tracking-tight md:text-4xl">
-              Break into Bitcoin
-            </h3>
-            <p className="mt-4 text-sm leading-relaxed text-on-surface-variant">
-              Buy, sell, and store popular cryptocurrencies, 24/7. For as little
-              as $1, you can dive into the Bitcoin, Ethereum, and Altcoin
-              family.{" "}
-              <a href="#" className="underline text-on-surface-variant">
-                Learn more about cnvx Crypto
-              </a>
-              .
-            </p>
-            <div className="mt-3 flex items-center gap-2 text-xs text-on-surface-variant/50">
-              <Info className="size-3" />
-              <span>Crypto Risk Disclosures</span>
-            </div>
-          </div>
-          {/* Spiral coin line art */}
-          <div className="mt-8 flex justify-center opacity-20">
-            <svg viewBox="0 0 200 200" className="h-40 w-40">
-              {Array.from({ length: 12 }).map((_, i) => {
-                const angle = (i * 30 * Math.PI) / 180
-                const x = 100 + Math.cos(angle) * 60
-                const y = 100 + Math.sin(angle) * 60
-                return (
-                  <ellipse
-                    key={i}
-                    cx={x}
-                    cy={y}
-                    rx="30"
-                    ry="15"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1"
-                    className="text-foreground"
-                    transform={`rotate(${i * 30} ${x} ${y})`}
-                  />
-                )
-              })}
-            </svg>
-          </div>
-        </div>
-      </div>
-      <p className="mx-auto max-w-[1400px] px-6 pb-8 text-xs text-on-surface-variant/40">
-        Margin offered through cnvx Financial. Crypto offered through cnvx
-        Crypto, LLC, a member of FINRA.
-      </p>
-    </section>
-  )
-}
-
-/* ─────────────────────────────────────────────
-   Section 7 — "How to Enhance" (flip cards)
-   ───────────────────────────────────────────── */
-
-const enhanceCards = [
+const featureCards = [
   {
-    category: "Fractional Shares",
-    title: "Own shares in the companies you love for as little as $1.",
-    back: "Fractional shares allow you to buy a portion of a stock, making investing accessible regardless of share price.",
+    category: "Issue Tracking",
+    icon: ListTodo,
+    title: "Create, assign, and track issues with real-time status updates.",
+    back: "Six workflow states from backlog to done. Priority levels from none to urgent. Labels, due dates, and assignees — all in one place.",
   },
   {
-    category: "Investment Transfers",
-    title: "Add to your wealth on a consolidated basis: never forget to invest.",
-    back: "Set up automatic recurring investments to build your portfolio consistently over time.",
+    category: "Sprint Cycles",
+    icon: Timer,
+    title: "Plan sprints with automatic progress tracking and cycle views.",
+    back: "Current and upcoming cycle views. Progress bars showing completion. Move issues between cycles effortlessly.",
   },
   {
-    category: "Dividend Reinvestment",
-    title: "Why pay you some guidance on your first stock if it costs us nothing? Not us.",
-    back: "Automatically reinvest your dividends to compound your returns over time.",
+    category: "Team Workspaces",
+    icon: Users,
+    title: "Organize work across multiple teams with isolated views.",
+    back: "Each team gets its own identifier, issue namespace, cycles, and filtered views. Navigate between teams instantly.",
   },
   {
-    category: "24/7 Support",
-    title: "With buy, why sell? Build a life while your first stock does its thing.",
-    back: "Our support team is available around the clock to help with any questions.",
+    category: "Saved Views",
+    icon: Eye,
+    title: "Build custom filter combinations and save them for quick access.",
+    back: "Filter by status, priority, assignee, label, cycle, and more. Save combinations and share with your team.",
   },
   {
-    category: "Recommendations",
-    title: "What if your equity guidance on your first stock costs it even on us? Not us.",
-    back: "Get personalized investment recommendations based on your goals and risk tolerance.",
+    category: "Command Palette",
+    icon: Search,
+    title: "Navigate anywhere instantly with a single keystroke.",
+    back: "Search issues, jump to teams, access settings, and create new issues — all without leaving the keyboard.",
   },
   {
-    category: "IPO Access",
-    title: "Be early. Get IPO access to buy shares at the IPO price.",
-    back: "Participate in initial public offerings before shares hit the open market.",
+    category: "Rich Editor",
+    icon: PenLine,
+    title: "Write detailed descriptions with a full-featured editor.",
+    back: "Markdown shortcuts, @mentions, image attachments, and auto-save. A writing experience that stays out of your way.",
   },
 ]
 
 function FlipCard({
   card,
 }: {
-  card: (typeof enhanceCards)[number]
+  card: (typeof featureCards)[number]
 }) {
   const [flipped, setFlipped] = useState(false)
 
@@ -559,9 +334,12 @@ function FlipCard({
       >
         {/* Front */}
         <div className="absolute inset-0 flex flex-col justify-between rounded-2xl bg-primary-foreground/10 p-8 [backface-visibility:hidden]">
-          <p className="text-xs font-medium uppercase tracking-wider opacity-60">
-            {card.category}
-          </p>
+          <div className="flex items-center gap-2">
+            <card.icon className="size-4 opacity-60" />
+            <p className="text-xs font-medium uppercase tracking-wider opacity-60">
+              {card.category}
+            </p>
+          </div>
           <p className="font-display text-lg font-bold leading-snug">
             {card.title}
           </p>
@@ -576,17 +354,17 @@ function FlipCard({
   )
 }
 
-function EnhanceSection() {
+function FeaturesSection() {
   return (
-    <section className="bg-primary px-6 py-24 text-primary-foreground">
+    <section id="features" className="bg-primary px-6 py-24 text-primary-foreground">
       <div className="mx-auto max-w-[1400px]">
         <h2 className="text-center font-display text-3xl font-bold tracking-tight md:text-5xl">
-          How to enhance your
+          Everything your team needs.
           <br />
-          investments at cnvx
+          Nothing it doesn&apos;t.
         </h2>
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {enhanceCards.map((card) => (
+          {featureCards.map((card) => (
             <FlipCard key={card.category} card={card} />
           ))}
         </div>
@@ -596,44 +374,140 @@ function EnhanceSection() {
 }
 
 /* ─────────────────────────────────────────────
-   Section 8 — Level Up / Gold APY
+   Section 5 — Workflow
    ───────────────────────────────────────────── */
 
-function GoldApySection() {
+function WorkflowSection() {
   return (
-    <section className="bg-surface-lowest px-6 py-24">
+    <section id="workflow" className="bg-surface-lowest px-6 py-24">
       <div className="mx-auto grid max-w-[1400px] items-center gap-12 md:grid-cols-[1fr_1fr]">
-        {/* Text left */}
+        {/* Text */}
         <div>
-          <h2 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-5xl">
-            Level Up with
+          <p className="text-xs font-medium tracking-wider text-on-surface-variant/60 uppercase">
+            Designed for flow
+          </p>
+          <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-foreground md:text-5xl">
+            From backlog to done, without friction
           </h2>
           <p className="mt-4 text-sm leading-relaxed text-on-surface-variant">
-            Your money makes money with 3.35% APY on eligible brokerage cash.
-            Your first 30 days are free, then you&apos;ll pay a subscription fee
-            ($5/month).
+            cnvx gives your team a clear path from idea to completion. Create
+            issues, assign priorities, track through cycles, and celebrate when
+            they ship.
           </p>
-          <div className="mt-3 flex items-center gap-2 text-xs text-on-surface-variant/50">
-            <Info className="size-3" />
-            <span>Terms and disclosures</span>
+          <div className="mt-6 space-y-3">
+            {[
+              "Drag between status columns",
+              "Automatic sprint progress tracking",
+              "Real-time activity feed",
+              "Keyboard-first navigation",
+            ].map((item) => (
+              <div key={item} className="flex items-center gap-3">
+                <div className="flex size-5 items-center justify-center rounded-full bg-primary/10">
+                  <Check className="size-3 text-primary" />
+                </div>
+                <span className="text-sm text-foreground">{item}</span>
+              </div>
+            ))}
           </div>
           <div className="mt-8">
-            <Button size="lg" className="px-8 shadow-glow">
-              Start earning with Gold
+            <Button
+              size="lg"
+              className="px-8 shadow-glow"
+              render={<Link to="/sign-up" />}
+            >
+              Start building
             </Button>
           </div>
         </div>
 
-        {/* Giant APY number right */}
-        <div className="text-right">
-          <span className="font-display text-8xl font-bold leading-none tracking-tight text-foreground/80 md:text-9xl">
-            3.35
-            <span className="text-4xl md:text-5xl">%</span>
-          </span>
-          <br />
-          <span className="font-display text-4xl font-bold text-foreground/50 md:text-5xl">
-            APY
-          </span>
+        {/* Issue detail mockup */}
+        <div className="flex justify-center md:justify-end">
+          <div className="w-full max-w-md rounded-2xl bg-surface-high p-5 shadow-xl ring-1 ring-foreground/10">
+            {/* Issue header */}
+            <div className="flex items-center gap-2 text-[11px] text-on-surface-variant/40">
+              <span className="font-medium">ENG-127</span>
+              <ChevronRight className="size-3" />
+              <span>Engineering</span>
+            </div>
+            <h3 className="mt-2 font-display text-base font-bold text-foreground">
+              Implement dark mode toggle
+            </h3>
+
+            {/* Properties */}
+            <div className="mt-4 space-y-2.5">
+              {[
+                { label: "Status", value: "In Progress", dot: "bg-primary" },
+                { label: "Priority", value: "High", dot: "bg-primary" },
+                { label: "Assignee", value: "Zaid B." },
+                { label: "Cycle", value: "Sprint 12" },
+              ].map((prop) => (
+                <div
+                  key={prop.label}
+                  className="flex items-center justify-between text-xs"
+                >
+                  <span className="text-on-surface-variant/50">
+                    {prop.label}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {prop.dot && (
+                      <span
+                        className={cn("size-2 rounded-full", prop.dot)}
+                      />
+                    )}
+                    <span className="text-foreground">{prop.value}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Description */}
+            <div className="mt-4 rounded-lg bg-surface-lowest/60 p-3">
+              <p className="text-xs leading-relaxed text-on-surface-variant/70">
+                Add a toggle in the settings page that switches between light
+                and dark themes. Should persist the user&apos;s preference
+                across sessions using localStorage.
+              </p>
+            </div>
+
+            {/* Activity */}
+            <div className="mt-4 space-y-2">
+              <p className="text-[10px] font-medium text-on-surface-variant/40 uppercase">
+                Activity
+              </p>
+              <div className="flex items-start gap-2">
+                <div className="mt-0.5 size-4 rounded-full bg-surface-low" />
+                <div>
+                  <p className="text-[11px] text-foreground">
+                    <span className="font-medium">Zaid</span>{" "}
+                    <span className="text-on-surface-variant/50">
+                      changed status to
+                    </span>{" "}
+                    <span className="font-medium text-primary">
+                      In Progress
+                    </span>
+                  </p>
+                  <p className="text-[10px] text-on-surface-variant/30">
+                    2 hours ago
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <div className="mt-0.5 size-4 rounded-full bg-surface-low" />
+                <div>
+                  <p className="text-[11px] text-foreground">
+                    <span className="font-medium">Amir</span>{" "}
+                    <span className="text-on-surface-variant/50">
+                      assigned to
+                    </span>{" "}
+                    <span className="font-medium">Zaid B.</span>
+                  </p>
+                  <p className="text-[10px] text-on-surface-variant/30">
+                    5 hours ago
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -641,49 +515,217 @@ function GoldApySection() {
 }
 
 /* ─────────────────────────────────────────────
-   Section 9 — Gold Feature Cards (3-col)
+   Section 6 — Dashboard Preview
    ───────────────────────────────────────────── */
 
-const goldFeatures = [
-  {
-    icon: Wallet,
-    title: "3.35% APY with High-Yield Cash",
-    description:
-      "Earn more interest on your eligible brokerage cash. There's no cap, and you can invest or withdraw anytime.*",
-  },
-  {
-    icon: Zap,
-    title: "Bigger Instant Deposits",
-    description:
-      "Trade right away, with deposits up to $1k of your portfolio's value.",
-  },
-  {
-    icon: TrendingUp,
-    title: "Get your first $1k of margin interest-free",
-    description:
-      "Then enjoy margin rates between 3.95% and 5%*.",
-  },
-]
-
-function GoldFeaturesSection() {
+function DashboardPreviewSection() {
   return (
-    <section className="bg-surface-lowest px-6 pb-16">
-      <div className="mx-auto max-w-[1400px]">
-        <div className="grid gap-6 md:grid-cols-3">
-          {goldFeatures.map((feature) => (
-            <div
-              key={feature.title}
-              className="rounded-2xl bg-surface-high p-6"
-            >
-              <div className="mb-4 flex size-10 items-center justify-center rounded-full bg-primary/10">
-                <feature.icon className="size-5 text-primary" />
+    <section className="bg-surface-lowest px-6 py-12">
+      <div className="mx-auto grid max-w-[1400px] gap-6 md:grid-cols-2">
+        {/* Dashboard card */}
+        <div className="flex flex-col rounded-2xl bg-surface-high p-8 ring-1 ring-foreground/10">
+          <h3 className="font-display text-2xl font-bold text-foreground md:text-3xl">
+            Dashboard
+          </h3>
+          <p className="mt-3 text-sm leading-relaxed text-on-surface-variant">
+            Get an at-a-glance overview of your workspace. Track metrics, see
+            assigned issues, and monitor cycle progress.
+          </p>
+          {/* Mini stats mockup */}
+          <div className="mt-6 grid flex-1 grid-cols-2 gap-2">
+            {[
+              { label: "Backlog", count: 12 },
+              { label: "Todo", count: 8 },
+              { label: "In Progress", count: 5 },
+              { label: "Done this week", count: 14 },
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                className="rounded-xl bg-surface-lowest/60 p-3"
+              >
+                <p className="text-[10px] text-on-surface-variant/40">
+                  {stat.label}
+                </p>
+                <p className="mt-1 font-display text-lg font-bold text-foreground">
+                  {stat.count}
+                </p>
               </div>
-              <h4 className="font-display text-base font-semibold text-foreground">
-                {feature.title}
-              </h4>
-              <p className="mt-2 text-sm leading-relaxed text-on-surface-variant">
-                {feature.description}
+            ))}
+          </div>
+        </div>
+
+        {/* Cycles card */}
+        <div className="flex flex-col rounded-2xl bg-surface-high p-8 ring-1 ring-foreground/10">
+          <h3 className="font-display text-2xl font-bold text-foreground md:text-3xl">
+            Cycles
+          </h3>
+          <p className="mt-3 text-sm leading-relaxed text-on-surface-variant">
+            Plan and track sprints with automatic progress calculation. See
+            what&apos;s current, upcoming, and shipped.
+          </p>
+          {/* Cycle progress mockup */}
+          <div className="mt-6 flex-1 space-y-4">
+            <div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium text-foreground">Sprint 12</span>
+                <span className="text-primary">68%</span>
+              </div>
+              <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-lowest/60">
+                <div
+                  className="h-full rounded-full bg-primary"
+                  style={{ width: "68%" }}
+                />
+              </div>
+              <p className="mt-1 text-[10px] text-on-surface-variant/40">
+                5 days remaining · 17 of 25 issues done
               </p>
+            </div>
+            <div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium text-foreground">Sprint 13</span>
+                <span className="text-on-surface-variant/50">Upcoming</span>
+              </div>
+              <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-lowest/60">
+                <div
+                  className="h-full rounded-full bg-surface-container"
+                  style={{ width: "0%" }}
+                />
+              </div>
+              <p className="mt-1 text-[10px] text-on-surface-variant/40">
+                Starts Mar 31 · 12 issues planned
+              </p>
+            </div>
+            <div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium text-foreground/60">
+                  Sprint 11
+                </span>
+                <span className="text-on-surface-variant/40">Complete</span>
+              </div>
+              <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-lowest/60">
+                <div
+                  className="h-full rounded-full bg-primary/40"
+                  style={{ width: "100%" }}
+                />
+              </div>
+              <p className="mt-1 text-[10px] text-on-surface-variant/40">
+                Completed Mar 14 · 22 issues shipped
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ─────────────────────────────────────────────
+   Section 7 — Speed / Command Palette
+   ───────────────────────────────────────────── */
+
+function SpeedSection() {
+  return (
+    <section className="bg-background px-6 py-24">
+      <div className="mx-auto max-w-3xl text-center">
+        <h2 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-5xl">
+          Built for speed
+        </h2>
+        <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-on-surface-variant">
+          Every action is reachable by keyboard. Navigate with{" "}
+          <kbd className="rounded bg-surface-high px-1.5 py-0.5 font-mono text-xs ring-1 ring-foreground/10">
+            &#8984;K
+          </kbd>
+          , create issues with shortcuts, and filter views without touching the
+          mouse.
+        </p>
+
+        {/* Command palette mockup */}
+        <div className="mx-auto mt-10 max-w-lg overflow-hidden rounded-2xl bg-surface-high shadow-xl ring-1 ring-foreground/10">
+          {/* Search input */}
+          <div className="flex items-center gap-3 border-b border-foreground/5 px-4 py-3">
+            <Search className="size-4 text-on-surface-variant/40" />
+            <span className="text-sm text-on-surface-variant/30">
+              Search issues, teams, actions...
+            </span>
+            <span className="ml-auto rounded bg-surface-lowest/60 px-1.5 py-0.5 font-mono text-[10px] text-on-surface-variant/30">
+              ESC
+            </span>
+          </div>
+
+          {/* Results */}
+          <div className="p-2">
+            <p className="px-2 py-1 text-[10px] font-medium text-on-surface-variant/30 uppercase">
+              Issues
+            </p>
+            <div className="rounded-lg bg-surface-lowest/40 px-3 py-2">
+              <div className="flex items-center gap-2">
+                <ArrowUpCircle className="size-3.5 text-primary" />
+                <span className="text-xs font-medium text-foreground">
+                  ENG-127
+                </span>
+                <span className="text-xs text-on-surface-variant/60">
+                  Implement dark mode toggle
+                </span>
+              </div>
+            </div>
+            <div className="mt-0.5 px-3 py-2">
+              <div className="flex items-center gap-2">
+                <Circle className="size-3.5 text-on-surface-variant/40" />
+                <span className="text-xs font-medium text-foreground">
+                  ENG-84
+                </span>
+                <span className="text-xs text-on-surface-variant/60">
+                  Add keyboard shortcuts docs
+                </span>
+              </div>
+            </div>
+
+            <p className="mt-2 px-2 py-1 text-[10px] font-medium text-on-surface-variant/30 uppercase">
+              Actions
+            </p>
+            <div className="mt-0.5 px-3 py-2">
+              <div className="flex items-center gap-2">
+                <ListTodo className="size-3.5 text-on-surface-variant/50" />
+                <span className="text-xs text-foreground">
+                  Create new issue
+                </span>
+                <span className="ml-auto font-mono text-[10px] text-on-surface-variant/30">
+                  C
+                </span>
+              </div>
+            </div>
+            <div className="mt-0.5 px-3 py-2">
+              <div className="flex items-center gap-2">
+                <Users className="size-3.5 text-on-surface-variant/50" />
+                <span className="text-xs text-foreground">
+                  Go to Engineering
+                </span>
+                <span className="ml-auto font-mono text-[10px] text-on-surface-variant/30">
+                  G E
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Keyboard shortcut badges */}
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          {[
+            { keys: "⌘K", label: "Search" },
+            { keys: "C", label: "New Issue" },
+            { keys: "F", label: "Filter" },
+            { keys: "G D", label: "Dashboard" },
+          ].map((shortcut) => (
+            <div
+              key={shortcut.keys}
+              className="flex items-center gap-2 rounded-full bg-surface-high px-3 py-1.5 ring-1 ring-foreground/10"
+            >
+              <kbd className="font-mono text-xs font-medium text-foreground">
+                {shortcut.keys}
+              </kbd>
+              <span className="text-xs text-on-surface-variant/50">
+                {shortcut.label}
+              </span>
             </div>
           ))}
         </div>
@@ -693,332 +735,10 @@ function GoldFeaturesSection() {
 }
 
 /* ─────────────────────────────────────────────
-   Section 10 — Gold Tools (2-col)
+   Section 8 — Final CTA (with rain)
    ───────────────────────────────────────────── */
 
-function GoldToolsSection() {
-  return (
-    <section className="bg-surface-lowest px-6 pb-12">
-      <div className="mx-auto max-w-[1400px]">
-        <div className="grid gap-6 md:grid-cols-2">
-          <div className="rounded-2xl bg-surface-high p-6">
-            <div className="mb-4 flex size-10 items-center justify-center rounded-full bg-primary/10">
-              <BrainCircuit className="size-5 text-primary" />
-            </div>
-            <h4 className="font-display text-base font-semibold text-foreground">
-              Your AI investing assistant
-            </h4>
-            <p className="mt-2 text-sm leading-relaxed text-on-surface-variant">
-              Use built-in intelligence to understand why markets are moving and
-              what it means for your holdings.
-            </p>
-          </div>
-          <div className="rounded-2xl bg-surface-high p-6">
-            <div className="mb-4 flex size-10 items-center justify-center rounded-full bg-primary/10">
-              <BookOpen className="size-5 text-primary" />
-            </div>
-            <h4 className="font-display text-base font-semibold text-foreground">
-              Professional research
-            </h4>
-            <p className="mt-2 text-sm leading-relaxed text-on-surface-variant">
-              Plan your next move with in-depth research by independent financial
-              analysts at Morningstar.
-            </p>
-          </div>
-        </div>
-        <p className="mt-6 text-xs text-on-surface-variant/40">
-          *Terms apply. Rates subject to change. Cash interest is obtained
-          through the High-Yield Cash program, a cash balance is needed. If you
-          have a cnvx Gold account, you can earn 3.35% APY.
-        </p>
-      </div>
-    </section>
-  )
-}
-
-/* ─────────────────────────────────────────────
-   Section 11 — Brand Label (cnvx Cortex)
-   ───────────────────────────────────────────── */
-
-function BrandLabel() {
-  return (
-    <section className="bg-surface-lowest px-6 py-8">
-      <div className="mx-auto flex max-w-[1400px] items-center justify-center gap-2">
-        <span className="font-display text-base font-semibold text-foreground">
-          cnvx Cortex
-        </span>
-        <Check className="size-4 text-primary" />
-      </div>
-    </section>
-  )
-}
-
-/* ─────────────────────────────────────────────
-   Section 12 — Built-in Intelligence
-   ───────────────────────────────────────────── */
-
-function IntelligenceSection() {
-  return (
-    <section className="bg-surface-lowest px-6 py-24">
-      <div className="mx-auto max-w-[1400px] text-center">
-        <h2 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-5xl">
-          Built-in intelligence for sharper trading
-        </h2>
-        <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-on-surface-variant">
-          Your AI-powered investing assistant that helps you understand the
-          markets and make your next move. Only with cnvx Gold.
-        </p>
-        <div className="mt-8">
-          <Button size="lg" className="px-8 shadow-glow" render={<Link to="/sign-up" />}>
-            Get started
-          </Button>
-        </div>
-
-        {/* Laptop + phone mockup */}
-        <div className="relative mx-auto mt-12 max-w-4xl">
-          <div className="rounded-2xl bg-surface-high p-4 shadow-xl">
-            <div className="h-64 rounded-xl bg-surface-lowest md:h-80">
-              {/* Trading chart placeholder */}
-              <div className="flex h-full items-end p-6">
-                <svg
-                  viewBox="0 0 400 120"
-                  className="h-32 w-full"
-                  preserveAspectRatio="none"
-                >
-                  <polyline
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    className="text-primary"
-                    points="0,100 30,90 60,95 90,70 120,75 150,50 180,55 210,40 240,45 270,30 300,35 330,20 360,25 400,10"
-                  />
-                  <polyline
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1"
-                    className="text-on-surface-variant/30"
-                    points="0,110 30,100 60,105 90,85 120,90 150,70 180,75 210,60 240,65 270,55 300,58 330,45 360,50 400,40"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
-          {/* Phone overlay */}
-          <div className="absolute -right-4 -bottom-4 w-32 rounded-[1.5rem] bg-surface-highest p-2 shadow-2xl md:w-40">
-            <div className="h-48 rounded-[1.2rem] bg-surface-lowest md:h-56" />
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-/* ─────────────────────────────────────────────
-   Section 13 — Digests + Trade Builder
-   ───────────────────────────────────────────── */
-
-function DigestsTradeSection() {
-  return (
-    <section className="bg-surface-lowest px-6 py-12">
-      <div className="mx-auto grid max-w-[1400px] gap-6 md:grid-cols-2">
-        {/* Digests */}
-        <div className="flex flex-col rounded-2xl bg-surface-high p-8">
-          <h3 className="font-display text-2xl font-bold text-foreground md:text-3xl">
-            Digests
-          </h3>
-          <p className="mt-3 text-sm leading-relaxed text-on-surface-variant">
-            Navigate market moves with insights on why prices are shifting.
-            Complex data, now in everyday language.
-          </p>
-          <div className="mt-4">
-            <Button size="sm" className="shadow-glow">
-              Unlock with Gold
-            </Button>
-          </div>
-          {/* Dot matrix pattern */}
-          <div className="mt-8 flex-1 overflow-hidden rounded-xl bg-surface-lowest p-4">
-            <div
-              className="h-full min-h-[200px] w-full"
-              style={{
-                backgroundImage:
-                  "radial-gradient(circle, var(--on-surface-variant) 0.5px, transparent 0.5px)",
-                backgroundSize: "12px 12px",
-                opacity: 0.15,
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Trade Builder */}
-        <div className="flex flex-col rounded-2xl bg-surface-high p-8">
-          <h3 className="font-display text-2xl font-bold text-foreground md:text-3xl">
-            Trade Builder
-          </h3>
-          <p className="mt-3 text-sm leading-relaxed text-on-surface-variant">
-            Turn your strategy into trade ideas effortlessly. Your outlook,
-            refined into relevant opportunities.
-          </p>
-          <div className="mt-4">
-            <span className="text-sm font-medium text-primary">
-              Coming soon
-            </span>
-          </div>
-          {/* Glowing orbs */}
-          <div className="relative mt-8 flex-1 overflow-hidden rounded-xl bg-surface-lowest p-4">
-            <div
-              className="h-full min-h-[200px] w-full"
-              style={{
-                backgroundImage:
-                  "radial-gradient(circle, var(--on-surface-variant) 0.5px, transparent 0.5px)",
-                backgroundSize: "12px 12px",
-                opacity: 0.1,
-              }}
-            />
-            {/* Colored orbs */}
-            <div className="absolute top-1/4 left-1/3 size-8 rounded-full bg-primary blur-sm opacity-70" />
-            <div className="absolute top-1/2 right-1/3 size-6 rounded-full bg-accent blur-sm opacity-70" />
-            <div className="absolute top-1/3 right-1/4 size-10 rounded-full bg-primary blur-sm opacity-60" />
-            <div className="absolute bottom-1/3 left-1/2 size-5 rounded-full bg-accent blur-sm opacity-60" />
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-/* ─────────────────────────────────────────────
-   Section 14 — Custom Indicators + Custom Scans
-   ───────────────────────────────────────────── */
-
-function CustomFeaturesSection() {
-  return (
-    <section className="bg-surface-lowest px-6 py-12">
-      <div className="mx-auto grid max-w-[1400px] gap-6 md:grid-cols-2">
-        {/* Custom Indicators */}
-        <div className="flex flex-col rounded-2xl bg-surface-high p-8">
-          <h3 className="font-display text-2xl font-bold text-foreground md:text-3xl">
-            Custom Indicators
-          </h3>
-          <p className="mt-3 text-sm leading-relaxed text-on-surface-variant">
-            Create your own trading signals without code. Define your strategy in
-            natural language — AI builds the rest.
-          </p>
-          <p className="mt-3 text-sm font-medium text-primary">
-            Coming soon to Legend
-          </p>
-
-          {/* Chat bubbles mockup */}
-          <div className="mt-6 space-y-3">
-            <div className="self-end rounded-2xl rounded-br-sm bg-surface-container px-4 py-3 text-sm text-foreground">
-              Help me spot bullish signals
-            </div>
-            <div className="self-start rounded-2xl rounded-bl-sm bg-surface-lowest px-4 py-3 text-sm text-foreground">
-              Sure thing — I&apos;ll build the Golden Crossover indicator.
-            </div>
-          </div>
-
-          {/* Chart placeholder */}
-          <div className="mt-6 flex-1 overflow-hidden rounded-xl bg-surface-lowest p-4">
-            <svg
-              viewBox="0 0 300 100"
-              className="h-32 w-full"
-              preserveAspectRatio="none"
-            >
-              <polyline
-                fill="none"
-                stroke="var(--primary)"
-                strokeWidth="2"
-                points="0,70 30,65 60,60 90,55 120,60 150,50 180,45 210,50 240,40 270,35 300,30"
-              />
-              <polyline
-                fill="none"
-                stroke="var(--secondary)"
-                strokeWidth="2"
-                points="0,80 30,78 60,75 90,70 120,65 150,68 180,60 210,55 240,58 270,50 300,45"
-              />
-              {/* Signal dots */}
-              <circle cx="90" cy="55" r="4" fill="var(--accent)" />
-              <circle cx="150" cy="50" r="4" fill="var(--primary)" />
-              <circle cx="210" cy="50" r="4" fill="var(--accent)" />
-              <circle cx="270" cy="35" r="4" fill="var(--primary)" />
-            </svg>
-          </div>
-          <p className="mt-4 text-xs text-on-surface-variant/40">
-            For illustrative purposes only. Not a recommendation.
-          </p>
-        </div>
-
-        {/* Custom Scans */}
-        <div className="flex flex-col rounded-2xl bg-surface-high p-8">
-          <h3 className="font-display text-2xl font-bold text-foreground md:text-3xl">
-            Custom Scans
-          </h3>
-          <p className="mt-3 text-sm leading-relaxed text-on-surface-variant">
-            Build custom scans with only your words. AI monitors the market for
-            assets that match your strategy.
-          </p>
-          <p className="mt-3 text-sm font-medium text-primary">
-            Coming soon to Legend
-          </p>
-
-          {/* Chat bubbles */}
-          <div className="mt-6 space-y-3">
-            <div className="self-end rounded-2xl rounded-br-sm bg-surface-container px-4 py-3 text-sm text-foreground">
-              Show me the top movers in tech today
-            </div>
-            <div className="self-start rounded-2xl rounded-bl-sm bg-surface-lowest px-4 py-3 text-sm text-foreground">
-              Got it — I&apos;m running a scan.
-            </div>
-          </div>
-
-          {/* Data table mockup */}
-          <div className="mt-6 flex-1 overflow-hidden rounded-xl bg-surface-lowest p-4">
-            <p className="mb-3 text-xs font-medium text-on-surface-variant/60">
-              Tech Sector Top Movers
-            </p>
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="text-on-surface-variant/40">
-                  <th className="pb-2 text-left font-medium">#</th>
-                  <th className="pb-2 text-left font-medium">Symbol</th>
-                  <th className="pb-2 text-left font-medium">Name</th>
-                  <th className="pb-2 text-right font-medium">Price</th>
-                  <th className="pb-2 text-right font-medium">Chg</th>
-                </tr>
-              </thead>
-              <tbody className="text-foreground/80">
-                {[
-                  { n: 1, sym: "AMD", name: "Advanced Micro", price: "$167.31", chg: "+4.2%" },
-                  { n: 2, sym: "CRM", name: "Salesforce", price: "$314.59", chg: "+3.1%" },
-                  { n: 3, sym: "CRDO", name: "Credo Systems", price: "$80.91", chg: "+2.8%" },
-                  { n: 4, sym: "DASH", name: "DoorDash", price: "$175.72", chg: "+2.3%" },
-                  { n: 5, sym: "SPAN", name: "SPAN Systems", price: "$52.71", chg: "+1.9%" },
-                ].map((row) => (
-                  <tr key={row.sym} className="border-t border-surface-container/30">
-                    <td className="py-2 text-on-surface-variant/40">{row.n}</td>
-                    <td className="py-2 font-medium">{row.sym}</td>
-                    <td className="py-2 text-on-surface-variant/60">{row.name}</td>
-                    <td className="py-2 text-right">{row.price}</td>
-                    <td className="py-2 text-right text-primary">{row.chg}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p className="mt-4 text-xs text-on-surface-variant/40">
-            For illustrative purposes only. Not a recommendation.
-          </p>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-/* ─────────────────────────────────────────────
-   Section 15 — Join CTA (with rain)
-   ───────────────────────────────────────────── */
-
-function JoinCtaSection() {
+function FinalCtaSection() {
   return (
     <section className="relative overflow-hidden bg-surface-lowest px-6 py-32 md:py-48">
       {/* Animated rain overlay */}
@@ -1040,13 +760,18 @@ function JoinCtaSection() {
 
       <div className="relative mx-auto max-w-3xl text-center">
         <h2 className="font-display text-4xl font-bold tracking-tight text-foreground md:text-6xl">
-          Join a new generation
-          <br />
-          of investors
+          Start shipping today
         </h2>
+        <p className="mx-auto mt-4 max-w-md text-sm text-on-surface-variant">
+          Free to start. No credit card required.
+        </p>
         <div className="mt-10">
-          <Button size="lg" className="px-8 shadow-glow" render={<Link to="/sign-up" />}>
-            Get started
+          <Button
+            size="lg"
+            className="px-8 shadow-glow"
+            render={<Link to="/sign-up" />}
+          >
+            Get started free
           </Button>
         </div>
       </div>
@@ -1063,19 +788,12 @@ function LandingPage() {
     <>
       <HeroSection />
       <SphereTransition />
-      <StocksSection />
-      <StrategiesSection />
-      <EtfsOptionsGrid />
-      <MarginCryptoGrid />
-      <EnhanceSection />
-      <GoldApySection />
-      <GoldFeaturesSection />
-      <GoldToolsSection />
-      <BrandLabel />
-      <IntelligenceSection />
-      <DigestsTradeSection />
-      <CustomFeaturesSection />
-      <JoinCtaSection />
+      <ProductShowcaseSection />
+      <FeaturesSection />
+      <WorkflowSection />
+      <DashboardPreviewSection />
+      <SpeedSection />
+      <FinalCtaSection />
     </>
   )
 }
