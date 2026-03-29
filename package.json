@@ -9,6 +9,7 @@
     "build": "vite build",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:migrate:prod": "source .env && TURSO_DATABASE_URL=$PROD_TURSO_DATABASE_URL TURSO_AUTH_TOKEN=$PROD_TURSO_AUTH_TOKEN drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "preview": "vite preview",
     "test": "vitest run",
