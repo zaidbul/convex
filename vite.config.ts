@@ -7,6 +7,11 @@ import tailwindcss from "@tailwindcss/vite"
 import { nitro } from "nitro/vite"
 
 const config = defineConfig({
+  resolve: {
+    alias: [
+      { find: /^@libsql\/client$/, replacement: "@libsql/client/web" },
+    ],
+  },
   optimizeDeps: {
     include: [
       "prismjs",
