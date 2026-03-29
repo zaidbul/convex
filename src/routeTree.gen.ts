@@ -26,16 +26,23 @@ import { Route as AuthSlugSettingsRouteRouteImport } from './routes/_auth/$slug/
 import { Route as AuthSlugTicketsIndexRouteImport } from './routes/_auth/$slug/tickets/index'
 import { Route as AuthSlugSettingsIndexRouteImport } from './routes/_auth/$slug/settings/index'
 import { Route as ApiChatFeedbackRunAnalysisRouteImport } from './routes/api/chat/feedback.run-analysis'
-import { Route as AuthSlugTicketsFeedbackRouteImport } from './routes/_auth/$slug/tickets/feedback'
 import { Route as AuthSlugTicketsDashboardRouteImport } from './routes/_auth/$slug/tickets/dashboard'
 import { Route as AuthSlugSettingsTeamsRouteImport } from './routes/_auth/$slug/settings/teams'
 import { Route as AuthSlugSettingsProfileRouteImport } from './routes/_auth/$slug/settings/profile'
 import { Route as AuthSlugSettingsMembersRouteImport } from './routes/_auth/$slug/settings/members'
 import { Route as AuthSlugSettingsGeneralRouteImport } from './routes/_auth/$slug/settings/general'
 import { Route as AuthSlugTicketsViewsRouteRouteImport } from './routes/_auth/$slug/tickets/views/route'
+import { Route as AuthSlugTicketsSynthesizeRouteRouteImport } from './routes/_auth/$slug/tickets/synthesize/route'
 import { Route as AuthSlugTicketsTeamSlugRouteRouteImport } from './routes/_auth/$slug/tickets/$teamSlug/route'
 import { Route as AuthSlugTicketsViewsIndexRouteImport } from './routes/_auth/$slug/tickets/views/index'
+import { Route as AuthSlugTicketsSynthesizeIndexRouteImport } from './routes/_auth/$slug/tickets/synthesize/index'
 import { Route as AuthSlugTicketsViewsViewIdRouteImport } from './routes/_auth/$slug/tickets/views/$viewId'
+import { Route as AuthSlugTicketsSynthesizeSuggestionsRouteImport } from './routes/_auth/$slug/tickets/synthesize/suggestions'
+import { Route as AuthSlugTicketsSynthesizeSignalsRouteImport } from './routes/_auth/$slug/tickets/synthesize/signals'
+import { Route as AuthSlugTicketsSynthesizeImportsRouteImport } from './routes/_auth/$slug/tickets/synthesize/imports'
+import { Route as AuthSlugTicketsSynthesizeDashboardRouteImport } from './routes/_auth/$slug/tickets/synthesize/dashboard'
+import { Route as AuthSlugTicketsSynthesizeClustersRouteImport } from './routes/_auth/$slug/tickets/synthesize/clusters'
+import { Route as AuthSlugTicketsSynthesizeChatRouteImport } from './routes/_auth/$slug/tickets/synthesize/chat'
 import { Route as AuthSlugTicketsTeamSlugIssuesRouteImport } from './routes/_auth/$slug/tickets/$teamSlug/issues'
 import { Route as AuthSlugTicketsTeamSlugCyclesRouteRouteImport } from './routes/_auth/$slug/tickets/$teamSlug/cycles/route'
 import { Route as AuthSlugTicketsTeamSlugIssueIssueIdRouteImport } from './routes/_auth/$slug/tickets/$teamSlug/issue.$issueId'
@@ -127,11 +134,6 @@ const ApiChatFeedbackRunAnalysisRoute =
     path: '/run-analysis',
     getParentRoute: () => ApiChatFeedbackRoute,
   } as any)
-const AuthSlugTicketsFeedbackRoute = AuthSlugTicketsFeedbackRouteImport.update({
-  id: '/feedback',
-  path: '/feedback',
-  getParentRoute: () => AuthSlugTicketsRouteRoute,
-} as any)
 const AuthSlugTicketsDashboardRoute =
   AuthSlugTicketsDashboardRouteImport.update({
     id: '/dashboard',
@@ -164,6 +166,12 @@ const AuthSlugTicketsViewsRouteRoute =
     path: '/views',
     getParentRoute: () => AuthSlugTicketsRouteRoute,
   } as any)
+const AuthSlugTicketsSynthesizeRouteRoute =
+  AuthSlugTicketsSynthesizeRouteRouteImport.update({
+    id: '/synthesize',
+    path: '/synthesize',
+    getParentRoute: () => AuthSlugTicketsRouteRoute,
+  } as any)
 const AuthSlugTicketsTeamSlugRouteRoute =
   AuthSlugTicketsTeamSlugRouteRouteImport.update({
     id: '/$teamSlug',
@@ -176,11 +184,53 @@ const AuthSlugTicketsViewsIndexRoute =
     path: '/',
     getParentRoute: () => AuthSlugTicketsViewsRouteRoute,
   } as any)
+const AuthSlugTicketsSynthesizeIndexRoute =
+  AuthSlugTicketsSynthesizeIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthSlugTicketsSynthesizeRouteRoute,
+  } as any)
 const AuthSlugTicketsViewsViewIdRoute =
   AuthSlugTicketsViewsViewIdRouteImport.update({
     id: '/$viewId',
     path: '/$viewId',
     getParentRoute: () => AuthSlugTicketsViewsRouteRoute,
+  } as any)
+const AuthSlugTicketsSynthesizeSuggestionsRoute =
+  AuthSlugTicketsSynthesizeSuggestionsRouteImport.update({
+    id: '/suggestions',
+    path: '/suggestions',
+    getParentRoute: () => AuthSlugTicketsSynthesizeRouteRoute,
+  } as any)
+const AuthSlugTicketsSynthesizeSignalsRoute =
+  AuthSlugTicketsSynthesizeSignalsRouteImport.update({
+    id: '/signals',
+    path: '/signals',
+    getParentRoute: () => AuthSlugTicketsSynthesizeRouteRoute,
+  } as any)
+const AuthSlugTicketsSynthesizeImportsRoute =
+  AuthSlugTicketsSynthesizeImportsRouteImport.update({
+    id: '/imports',
+    path: '/imports',
+    getParentRoute: () => AuthSlugTicketsSynthesizeRouteRoute,
+  } as any)
+const AuthSlugTicketsSynthesizeDashboardRoute =
+  AuthSlugTicketsSynthesizeDashboardRouteImport.update({
+    id: '/dashboard',
+    path: '/dashboard',
+    getParentRoute: () => AuthSlugTicketsSynthesizeRouteRoute,
+  } as any)
+const AuthSlugTicketsSynthesizeClustersRoute =
+  AuthSlugTicketsSynthesizeClustersRouteImport.update({
+    id: '/clusters',
+    path: '/clusters',
+    getParentRoute: () => AuthSlugTicketsSynthesizeRouteRoute,
+  } as any)
+const AuthSlugTicketsSynthesizeChatRoute =
+  AuthSlugTicketsSynthesizeChatRouteImport.update({
+    id: '/chat',
+    path: '/chat',
+    getParentRoute: () => AuthSlugTicketsSynthesizeRouteRoute,
   } as any)
 const AuthSlugTicketsTeamSlugIssuesRoute =
   AuthSlugTicketsTeamSlugIssuesRouteImport.update({
@@ -227,19 +277,26 @@ export interface FileRoutesByFullPath {
   '/api/chat/feedback': typeof ApiChatFeedbackRouteWithChildren
   '/api/internal/feedback-analysis': typeof ApiInternalFeedbackAnalysisRoute
   '/$slug/tickets/$teamSlug': typeof AuthSlugTicketsTeamSlugRouteRouteWithChildren
+  '/$slug/tickets/synthesize': typeof AuthSlugTicketsSynthesizeRouteRouteWithChildren
   '/$slug/tickets/views': typeof AuthSlugTicketsViewsRouteRouteWithChildren
   '/$slug/settings/general': typeof AuthSlugSettingsGeneralRoute
   '/$slug/settings/members': typeof AuthSlugSettingsMembersRoute
   '/$slug/settings/profile': typeof AuthSlugSettingsProfileRoute
   '/$slug/settings/teams': typeof AuthSlugSettingsTeamsRoute
   '/$slug/tickets/dashboard': typeof AuthSlugTicketsDashboardRoute
-  '/$slug/tickets/feedback': typeof AuthSlugTicketsFeedbackRoute
   '/api/chat/feedback/run-analysis': typeof ApiChatFeedbackRunAnalysisRoute
   '/$slug/settings/': typeof AuthSlugSettingsIndexRoute
   '/$slug/tickets/': typeof AuthSlugTicketsIndexRoute
   '/$slug/tickets/$teamSlug/cycles': typeof AuthSlugTicketsTeamSlugCyclesRouteRouteWithChildren
   '/$slug/tickets/$teamSlug/issues': typeof AuthSlugTicketsTeamSlugIssuesRoute
+  '/$slug/tickets/synthesize/chat': typeof AuthSlugTicketsSynthesizeChatRoute
+  '/$slug/tickets/synthesize/clusters': typeof AuthSlugTicketsSynthesizeClustersRoute
+  '/$slug/tickets/synthesize/dashboard': typeof AuthSlugTicketsSynthesizeDashboardRoute
+  '/$slug/tickets/synthesize/imports': typeof AuthSlugTicketsSynthesizeImportsRoute
+  '/$slug/tickets/synthesize/signals': typeof AuthSlugTicketsSynthesizeSignalsRoute
+  '/$slug/tickets/synthesize/suggestions': typeof AuthSlugTicketsSynthesizeSuggestionsRoute
   '/$slug/tickets/views/$viewId': typeof AuthSlugTicketsViewsViewIdRoute
+  '/$slug/tickets/synthesize/': typeof AuthSlugTicketsSynthesizeIndexRoute
   '/$slug/tickets/views/': typeof AuthSlugTicketsViewsIndexRoute
   '/$slug/tickets/$teamSlug/cycles/current': typeof AuthSlugTicketsTeamSlugCyclesCurrentRoute
   '/$slug/tickets/$teamSlug/cycles/upcoming': typeof AuthSlugTicketsTeamSlugCyclesUpcomingRoute
@@ -262,13 +319,19 @@ export interface FileRoutesByTo {
   '/$slug/settings/profile': typeof AuthSlugSettingsProfileRoute
   '/$slug/settings/teams': typeof AuthSlugSettingsTeamsRoute
   '/$slug/tickets/dashboard': typeof AuthSlugTicketsDashboardRoute
-  '/$slug/tickets/feedback': typeof AuthSlugTicketsFeedbackRoute
   '/api/chat/feedback/run-analysis': typeof ApiChatFeedbackRunAnalysisRoute
   '/$slug/settings': typeof AuthSlugSettingsIndexRoute
   '/$slug/tickets': typeof AuthSlugTicketsIndexRoute
   '/$slug/tickets/$teamSlug/cycles': typeof AuthSlugTicketsTeamSlugCyclesRouteRouteWithChildren
   '/$slug/tickets/$teamSlug/issues': typeof AuthSlugTicketsTeamSlugIssuesRoute
+  '/$slug/tickets/synthesize/chat': typeof AuthSlugTicketsSynthesizeChatRoute
+  '/$slug/tickets/synthesize/clusters': typeof AuthSlugTicketsSynthesizeClustersRoute
+  '/$slug/tickets/synthesize/dashboard': typeof AuthSlugTicketsSynthesizeDashboardRoute
+  '/$slug/tickets/synthesize/imports': typeof AuthSlugTicketsSynthesizeImportsRoute
+  '/$slug/tickets/synthesize/signals': typeof AuthSlugTicketsSynthesizeSignalsRoute
+  '/$slug/tickets/synthesize/suggestions': typeof AuthSlugTicketsSynthesizeSuggestionsRoute
   '/$slug/tickets/views/$viewId': typeof AuthSlugTicketsViewsViewIdRoute
+  '/$slug/tickets/synthesize': typeof AuthSlugTicketsSynthesizeIndexRoute
   '/$slug/tickets/views': typeof AuthSlugTicketsViewsIndexRoute
   '/$slug/tickets/$teamSlug/cycles/current': typeof AuthSlugTicketsTeamSlugCyclesCurrentRoute
   '/$slug/tickets/$teamSlug/cycles/upcoming': typeof AuthSlugTicketsTeamSlugCyclesUpcomingRoute
@@ -291,19 +354,26 @@ export interface FileRoutesById {
   '/api/chat/feedback': typeof ApiChatFeedbackRouteWithChildren
   '/api/internal/feedback-analysis': typeof ApiInternalFeedbackAnalysisRoute
   '/_auth/$slug/tickets/$teamSlug': typeof AuthSlugTicketsTeamSlugRouteRouteWithChildren
+  '/_auth/$slug/tickets/synthesize': typeof AuthSlugTicketsSynthesizeRouteRouteWithChildren
   '/_auth/$slug/tickets/views': typeof AuthSlugTicketsViewsRouteRouteWithChildren
   '/_auth/$slug/settings/general': typeof AuthSlugSettingsGeneralRoute
   '/_auth/$slug/settings/members': typeof AuthSlugSettingsMembersRoute
   '/_auth/$slug/settings/profile': typeof AuthSlugSettingsProfileRoute
   '/_auth/$slug/settings/teams': typeof AuthSlugSettingsTeamsRoute
   '/_auth/$slug/tickets/dashboard': typeof AuthSlugTicketsDashboardRoute
-  '/_auth/$slug/tickets/feedback': typeof AuthSlugTicketsFeedbackRoute
   '/api/chat/feedback/run-analysis': typeof ApiChatFeedbackRunAnalysisRoute
   '/_auth/$slug/settings/': typeof AuthSlugSettingsIndexRoute
   '/_auth/$slug/tickets/': typeof AuthSlugTicketsIndexRoute
   '/_auth/$slug/tickets/$teamSlug/cycles': typeof AuthSlugTicketsTeamSlugCyclesRouteRouteWithChildren
   '/_auth/$slug/tickets/$teamSlug/issues': typeof AuthSlugTicketsTeamSlugIssuesRoute
+  '/_auth/$slug/tickets/synthesize/chat': typeof AuthSlugTicketsSynthesizeChatRoute
+  '/_auth/$slug/tickets/synthesize/clusters': typeof AuthSlugTicketsSynthesizeClustersRoute
+  '/_auth/$slug/tickets/synthesize/dashboard': typeof AuthSlugTicketsSynthesizeDashboardRoute
+  '/_auth/$slug/tickets/synthesize/imports': typeof AuthSlugTicketsSynthesizeImportsRoute
+  '/_auth/$slug/tickets/synthesize/signals': typeof AuthSlugTicketsSynthesizeSignalsRoute
+  '/_auth/$slug/tickets/synthesize/suggestions': typeof AuthSlugTicketsSynthesizeSuggestionsRoute
   '/_auth/$slug/tickets/views/$viewId': typeof AuthSlugTicketsViewsViewIdRoute
+  '/_auth/$slug/tickets/synthesize/': typeof AuthSlugTicketsSynthesizeIndexRoute
   '/_auth/$slug/tickets/views/': typeof AuthSlugTicketsViewsIndexRoute
   '/_auth/$slug/tickets/$teamSlug/cycles/current': typeof AuthSlugTicketsTeamSlugCyclesCurrentRoute
   '/_auth/$slug/tickets/$teamSlug/cycles/upcoming': typeof AuthSlugTicketsTeamSlugCyclesUpcomingRoute
@@ -325,19 +395,26 @@ export interface FileRouteTypes {
     | '/api/chat/feedback'
     | '/api/internal/feedback-analysis'
     | '/$slug/tickets/$teamSlug'
+    | '/$slug/tickets/synthesize'
     | '/$slug/tickets/views'
     | '/$slug/settings/general'
     | '/$slug/settings/members'
     | '/$slug/settings/profile'
     | '/$slug/settings/teams'
     | '/$slug/tickets/dashboard'
-    | '/$slug/tickets/feedback'
     | '/api/chat/feedback/run-analysis'
     | '/$slug/settings/'
     | '/$slug/tickets/'
     | '/$slug/tickets/$teamSlug/cycles'
     | '/$slug/tickets/$teamSlug/issues'
+    | '/$slug/tickets/synthesize/chat'
+    | '/$slug/tickets/synthesize/clusters'
+    | '/$slug/tickets/synthesize/dashboard'
+    | '/$slug/tickets/synthesize/imports'
+    | '/$slug/tickets/synthesize/signals'
+    | '/$slug/tickets/synthesize/suggestions'
     | '/$slug/tickets/views/$viewId'
+    | '/$slug/tickets/synthesize/'
     | '/$slug/tickets/views/'
     | '/$slug/tickets/$teamSlug/cycles/current'
     | '/$slug/tickets/$teamSlug/cycles/upcoming'
@@ -360,13 +437,19 @@ export interface FileRouteTypes {
     | '/$slug/settings/profile'
     | '/$slug/settings/teams'
     | '/$slug/tickets/dashboard'
-    | '/$slug/tickets/feedback'
     | '/api/chat/feedback/run-analysis'
     | '/$slug/settings'
     | '/$slug/tickets'
     | '/$slug/tickets/$teamSlug/cycles'
     | '/$slug/tickets/$teamSlug/issues'
+    | '/$slug/tickets/synthesize/chat'
+    | '/$slug/tickets/synthesize/clusters'
+    | '/$slug/tickets/synthesize/dashboard'
+    | '/$slug/tickets/synthesize/imports'
+    | '/$slug/tickets/synthesize/signals'
+    | '/$slug/tickets/synthesize/suggestions'
     | '/$slug/tickets/views/$viewId'
+    | '/$slug/tickets/synthesize'
     | '/$slug/tickets/views'
     | '/$slug/tickets/$teamSlug/cycles/current'
     | '/$slug/tickets/$teamSlug/cycles/upcoming'
@@ -388,19 +471,26 @@ export interface FileRouteTypes {
     | '/api/chat/feedback'
     | '/api/internal/feedback-analysis'
     | '/_auth/$slug/tickets/$teamSlug'
+    | '/_auth/$slug/tickets/synthesize'
     | '/_auth/$slug/tickets/views'
     | '/_auth/$slug/settings/general'
     | '/_auth/$slug/settings/members'
     | '/_auth/$slug/settings/profile'
     | '/_auth/$slug/settings/teams'
     | '/_auth/$slug/tickets/dashboard'
-    | '/_auth/$slug/tickets/feedback'
     | '/api/chat/feedback/run-analysis'
     | '/_auth/$slug/settings/'
     | '/_auth/$slug/tickets/'
     | '/_auth/$slug/tickets/$teamSlug/cycles'
     | '/_auth/$slug/tickets/$teamSlug/issues'
+    | '/_auth/$slug/tickets/synthesize/chat'
+    | '/_auth/$slug/tickets/synthesize/clusters'
+    | '/_auth/$slug/tickets/synthesize/dashboard'
+    | '/_auth/$slug/tickets/synthesize/imports'
+    | '/_auth/$slug/tickets/synthesize/signals'
+    | '/_auth/$slug/tickets/synthesize/suggestions'
     | '/_auth/$slug/tickets/views/$viewId'
+    | '/_auth/$slug/tickets/synthesize/'
     | '/_auth/$slug/tickets/views/'
     | '/_auth/$slug/tickets/$teamSlug/cycles/current'
     | '/_auth/$slug/tickets/$teamSlug/cycles/upcoming'
@@ -540,13 +630,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiChatFeedbackRunAnalysisRouteImport
       parentRoute: typeof ApiChatFeedbackRoute
     }
-    '/_auth/$slug/tickets/feedback': {
-      id: '/_auth/$slug/tickets/feedback'
-      path: '/feedback'
-      fullPath: '/$slug/tickets/feedback'
-      preLoaderRoute: typeof AuthSlugTicketsFeedbackRouteImport
-      parentRoute: typeof AuthSlugTicketsRouteRoute
-    }
     '/_auth/$slug/tickets/dashboard': {
       id: '/_auth/$slug/tickets/dashboard'
       path: '/dashboard'
@@ -589,6 +672,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSlugTicketsViewsRouteRouteImport
       parentRoute: typeof AuthSlugTicketsRouteRoute
     }
+    '/_auth/$slug/tickets/synthesize': {
+      id: '/_auth/$slug/tickets/synthesize'
+      path: '/synthesize'
+      fullPath: '/$slug/tickets/synthesize'
+      preLoaderRoute: typeof AuthSlugTicketsSynthesizeRouteRouteImport
+      parentRoute: typeof AuthSlugTicketsRouteRoute
+    }
     '/_auth/$slug/tickets/$teamSlug': {
       id: '/_auth/$slug/tickets/$teamSlug'
       path: '/$teamSlug'
@@ -603,12 +693,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSlugTicketsViewsIndexRouteImport
       parentRoute: typeof AuthSlugTicketsViewsRouteRoute
     }
+    '/_auth/$slug/tickets/synthesize/': {
+      id: '/_auth/$slug/tickets/synthesize/'
+      path: '/'
+      fullPath: '/$slug/tickets/synthesize/'
+      preLoaderRoute: typeof AuthSlugTicketsSynthesizeIndexRouteImport
+      parentRoute: typeof AuthSlugTicketsSynthesizeRouteRoute
+    }
     '/_auth/$slug/tickets/views/$viewId': {
       id: '/_auth/$slug/tickets/views/$viewId'
       path: '/$viewId'
       fullPath: '/$slug/tickets/views/$viewId'
       preLoaderRoute: typeof AuthSlugTicketsViewsViewIdRouteImport
       parentRoute: typeof AuthSlugTicketsViewsRouteRoute
+    }
+    '/_auth/$slug/tickets/synthesize/suggestions': {
+      id: '/_auth/$slug/tickets/synthesize/suggestions'
+      path: '/suggestions'
+      fullPath: '/$slug/tickets/synthesize/suggestions'
+      preLoaderRoute: typeof AuthSlugTicketsSynthesizeSuggestionsRouteImport
+      parentRoute: typeof AuthSlugTicketsSynthesizeRouteRoute
+    }
+    '/_auth/$slug/tickets/synthesize/signals': {
+      id: '/_auth/$slug/tickets/synthesize/signals'
+      path: '/signals'
+      fullPath: '/$slug/tickets/synthesize/signals'
+      preLoaderRoute: typeof AuthSlugTicketsSynthesizeSignalsRouteImport
+      parentRoute: typeof AuthSlugTicketsSynthesizeRouteRoute
+    }
+    '/_auth/$slug/tickets/synthesize/imports': {
+      id: '/_auth/$slug/tickets/synthesize/imports'
+      path: '/imports'
+      fullPath: '/$slug/tickets/synthesize/imports'
+      preLoaderRoute: typeof AuthSlugTicketsSynthesizeImportsRouteImport
+      parentRoute: typeof AuthSlugTicketsSynthesizeRouteRoute
+    }
+    '/_auth/$slug/tickets/synthesize/dashboard': {
+      id: '/_auth/$slug/tickets/synthesize/dashboard'
+      path: '/dashboard'
+      fullPath: '/$slug/tickets/synthesize/dashboard'
+      preLoaderRoute: typeof AuthSlugTicketsSynthesizeDashboardRouteImport
+      parentRoute: typeof AuthSlugTicketsSynthesizeRouteRoute
+    }
+    '/_auth/$slug/tickets/synthesize/clusters': {
+      id: '/_auth/$slug/tickets/synthesize/clusters'
+      path: '/clusters'
+      fullPath: '/$slug/tickets/synthesize/clusters'
+      preLoaderRoute: typeof AuthSlugTicketsSynthesizeClustersRouteImport
+      parentRoute: typeof AuthSlugTicketsSynthesizeRouteRoute
+    }
+    '/_auth/$slug/tickets/synthesize/chat': {
+      id: '/_auth/$slug/tickets/synthesize/chat'
+      path: '/chat'
+      fullPath: '/$slug/tickets/synthesize/chat'
+      preLoaderRoute: typeof AuthSlugTicketsSynthesizeChatRouteImport
+      parentRoute: typeof AuthSlugTicketsSynthesizeRouteRoute
     }
     '/_auth/$slug/tickets/$teamSlug/issues': {
       id: '/_auth/$slug/tickets/$teamSlug/issues'
@@ -707,6 +846,37 @@ const AuthSlugTicketsTeamSlugRouteRouteWithChildren =
     AuthSlugTicketsTeamSlugRouteRouteChildren,
   )
 
+interface AuthSlugTicketsSynthesizeRouteRouteChildren {
+  AuthSlugTicketsSynthesizeChatRoute: typeof AuthSlugTicketsSynthesizeChatRoute
+  AuthSlugTicketsSynthesizeClustersRoute: typeof AuthSlugTicketsSynthesizeClustersRoute
+  AuthSlugTicketsSynthesizeDashboardRoute: typeof AuthSlugTicketsSynthesizeDashboardRoute
+  AuthSlugTicketsSynthesizeImportsRoute: typeof AuthSlugTicketsSynthesizeImportsRoute
+  AuthSlugTicketsSynthesizeSignalsRoute: typeof AuthSlugTicketsSynthesizeSignalsRoute
+  AuthSlugTicketsSynthesizeSuggestionsRoute: typeof AuthSlugTicketsSynthesizeSuggestionsRoute
+  AuthSlugTicketsSynthesizeIndexRoute: typeof AuthSlugTicketsSynthesizeIndexRoute
+}
+
+const AuthSlugTicketsSynthesizeRouteRouteChildren: AuthSlugTicketsSynthesizeRouteRouteChildren =
+  {
+    AuthSlugTicketsSynthesizeChatRoute: AuthSlugTicketsSynthesizeChatRoute,
+    AuthSlugTicketsSynthesizeClustersRoute:
+      AuthSlugTicketsSynthesizeClustersRoute,
+    AuthSlugTicketsSynthesizeDashboardRoute:
+      AuthSlugTicketsSynthesizeDashboardRoute,
+    AuthSlugTicketsSynthesizeImportsRoute:
+      AuthSlugTicketsSynthesizeImportsRoute,
+    AuthSlugTicketsSynthesizeSignalsRoute:
+      AuthSlugTicketsSynthesizeSignalsRoute,
+    AuthSlugTicketsSynthesizeSuggestionsRoute:
+      AuthSlugTicketsSynthesizeSuggestionsRoute,
+    AuthSlugTicketsSynthesizeIndexRoute: AuthSlugTicketsSynthesizeIndexRoute,
+  }
+
+const AuthSlugTicketsSynthesizeRouteRouteWithChildren =
+  AuthSlugTicketsSynthesizeRouteRoute._addFileChildren(
+    AuthSlugTicketsSynthesizeRouteRouteChildren,
+  )
+
 interface AuthSlugTicketsViewsRouteRouteChildren {
   AuthSlugTicketsViewsViewIdRoute: typeof AuthSlugTicketsViewsViewIdRoute
   AuthSlugTicketsViewsIndexRoute: typeof AuthSlugTicketsViewsIndexRoute
@@ -725,18 +895,19 @@ const AuthSlugTicketsViewsRouteRouteWithChildren =
 
 interface AuthSlugTicketsRouteRouteChildren {
   AuthSlugTicketsTeamSlugRouteRoute: typeof AuthSlugTicketsTeamSlugRouteRouteWithChildren
+  AuthSlugTicketsSynthesizeRouteRoute: typeof AuthSlugTicketsSynthesizeRouteRouteWithChildren
   AuthSlugTicketsViewsRouteRoute: typeof AuthSlugTicketsViewsRouteRouteWithChildren
   AuthSlugTicketsDashboardRoute: typeof AuthSlugTicketsDashboardRoute
-  AuthSlugTicketsFeedbackRoute: typeof AuthSlugTicketsFeedbackRoute
   AuthSlugTicketsIndexRoute: typeof AuthSlugTicketsIndexRoute
 }
 
 const AuthSlugTicketsRouteRouteChildren: AuthSlugTicketsRouteRouteChildren = {
   AuthSlugTicketsTeamSlugRouteRoute:
     AuthSlugTicketsTeamSlugRouteRouteWithChildren,
+  AuthSlugTicketsSynthesizeRouteRoute:
+    AuthSlugTicketsSynthesizeRouteRouteWithChildren,
   AuthSlugTicketsViewsRouteRoute: AuthSlugTicketsViewsRouteRouteWithChildren,
   AuthSlugTicketsDashboardRoute: AuthSlugTicketsDashboardRoute,
-  AuthSlugTicketsFeedbackRoute: AuthSlugTicketsFeedbackRoute,
   AuthSlugTicketsIndexRoute: AuthSlugTicketsIndexRoute,
 }
 

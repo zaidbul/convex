@@ -5,8 +5,15 @@ import {
   type ErrorComponentProps,
   createRootRouteWithContext,
 } from "@tanstack/react-router"
-import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
-import { TanStackDevtools } from "@tanstack/react-devtools"
+import React from "react"
+
+const TanStackRouterDevtools = import.meta.env.DEV
+  ? React.lazy(() =>
+      import("@tanstack/react-router-devtools").then((mod) => ({
+        default: mod.TanStackRouterDevtools,
+      }))
+    )
+  : () => null
 import { ClerkProvider } from "@clerk/tanstack-react-start"
 import { ThemeProvider } from "next-themes"
 import { QueryClientProvider, type QueryClient } from "@tanstack/react-query"
@@ -65,6 +72,9 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
+      <React.Suspense>
+        <TanStackRouterDevtools position="bottom-right" />
+      </React.Suspense>
     </QueryClientProvider>
   )
 }
@@ -88,19 +98,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             <Toaster />
           </ThemeProvider>
         </ClerkProvider>
-        {import.meta.env.DEV && (
-          <TanStackDevtools
-            config={{
-              position: "bottom-right",
-            }}
-            plugins={[
-              {
-                name: "Tanstack Router",
-                render: <TanStackRouterDevtoolsPanel />,
-              },
-            ]}
-          />
-        )}
         <Scripts />
       </body>
     </html>

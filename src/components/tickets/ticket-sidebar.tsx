@@ -1,17 +1,28 @@
 import { useState } from "react"
-import { Link, useParams } from "@tanstack/react-router"
+import { Link, useLocation, useParams } from "@tanstack/react-router"
 import { useSuspenseQuery } from "@tanstack/react-query"
 import {
   LayoutDashboard,
   Inbox,
   CircleUser,
-  Sparkles,
+  Layers,
   Search,
   Plus,
   Eye,
   Settings,
   HelpCircle,
+  ChevronRight,
+  MessageSquare,
+  Lightbulb,
+  Network,
+  Radio,
+  Upload,
 } from "lucide-react"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 import {
   SidebarContent,
   SidebarFooter,
@@ -22,6 +33,9 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
   SidebarRail,
   SidebarSeparator,
 } from "@/components/ui/sidebar"
@@ -38,8 +52,10 @@ import { useCommandPalette } from "./command-palette-provider"
 
 export function TicketSidebar() {
   const params = useParams({ strict: false })
+  const location = useLocation()
   const slug = (params as { slug?: string }).slug
   const activeViewId = (params as { viewId?: string }).viewId
+  const isSynthesizeActive = location.pathname.includes("/synthesize")
   const { data: workspace } = useSuspenseQuery(workspaceQueryOptions())
   const { data: teams } = useSuspenseQuery(teamsQueryOptions())
   const { data: savedViews } = useSuspenseQuery(savedViewsQueryOptions())
@@ -72,20 +88,44 @@ export function TicketSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  render={
-                    <Link
-                      to="/$slug/tickets/feedback"
-                      params={{ slug: slug! }}
-                      search={{ suggestionId: undefined }}
-                    />
-                  }
-                >
-                  <Sparkles className="size-4" strokeWidth={1.5} />
-                  <span>Feedback</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              <Collapsible defaultOpen={isSynthesizeActive} className="group/synthesize">
+                <SidebarMenuItem>
+                  <CollapsibleTrigger
+                    render={<SidebarMenuButton className="font-medium" />}
+                  >
+                    <Layers className="size-4" strokeWidth={1.5} />
+                    <span>Synthesize</span>
+                    <ChevronRight className="ml-auto size-4 transition-transform group-data-[state=open]/synthesize:rotate-90" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {[
+                        { label: "Chat", icon: MessageSquare, path: "chat" },
+                        { label: "Dashboard", icon: LayoutDashboard, path: "dashboard" },
+                        { label: "Suggestions", icon: Lightbulb, path: "suggestions" },
+                        { label: "Clusters", icon: Network, path: "clusters" },
+                        { label: "Signals", icon: Radio, path: "signals" },
+                        { label: "Imports", icon: Upload, path: "imports" },
+                      ].map((item) => (
+                        <SidebarMenuSubItem key={item.path}>
+                          <SidebarMenuSubButton
+                            isActive={location.pathname.includes(`/synthesize/${item.path}`)}
+                            render={
+                              <Link
+                                to={`/$slug/tickets/synthesize/${item.path}`}
+                                params={{ slug: slug! }}
+                              />
+                            }
+                          >
+                            <item.icon className="size-4" />
+                            <span>{item.label}</span>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   render={

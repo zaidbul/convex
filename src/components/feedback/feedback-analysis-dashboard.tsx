@@ -11,7 +11,7 @@ import {
   Pie,
   Cell,
 } from "recharts"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { BarChart3, PieChart as PieChartIcon, TrendingUp, Zap } from "lucide-react"
@@ -53,7 +53,6 @@ export function FeedbackAnalysisDashboard({
   onAutoCreateTickets,
   isAutoCreating,
 }: FeedbackAnalysisDashboardProps) {
-  // Severity distribution
   const severityData = useMemo(() => {
     const counts = { high: 0, medium: 0, low: 0, unknown: 0 }
     for (const item of items) {
@@ -69,7 +68,6 @@ export function FeedbackAnalysisDashboard({
     ].filter((d) => d.value > 0)
   }, [items])
 
-  // Feature area breakdown
   const featureAreaData = useMemo(() => {
     const counts = new Map<string, number>()
     for (const item of items) {
@@ -82,7 +80,6 @@ export function FeedbackAnalysisDashboard({
       .map(([name, value]) => ({ name, value }))
   }, [items])
 
-  // Import source breakdown
   const sourceData = useMemo(() => {
     const counts = new Map<string, number>()
     for (const imp of imports) {
@@ -94,7 +91,6 @@ export function FeedbackAnalysisDashboard({
       .map(([name, value]) => ({ name, value }))
   }, [imports])
 
-  // Top suggestions ranked by priority
   const topSuggestions = useMemo(
     () =>
       suggestions
@@ -103,173 +99,145 @@ export function FeedbackAnalysisDashboard({
     [suggestions]
   )
 
-  // Stats
   const analyzedCount = items.filter((i) => i.analyzedAt).length
   const highConfidenceSuggestions = suggestions.filter(
     (s) => s.confidence >= 75 && s.status === "new"
   )
 
-  const isEmpty = items.length === 0
-
-  if (isEmpty) {
+  if (items.length === 0) {
     return (
-      <Card className="border-outline-variant/10">
-        <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-          <BarChart3 className="size-10 text-muted-foreground/40" />
-          <p className="text-sm text-muted-foreground">
-            No feedback data to analyze yet. Import feedback via the Chat or
-            Imports tab, then run analysis.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col items-center gap-3 py-20 text-center">
+        <BarChart3 className="size-10 text-muted-foreground/40" />
+        <p className="text-sm text-muted-foreground">
+          No feedback data to analyze yet. Import feedback via the Chat or
+          Imports tab, then run analysis.
+        </p>
+      </div>
     )
   }
 
   return (
-    <div className="space-y-4">
-      {/* Stats row */}
+    <div className="space-y-10">
+      {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Total Signals"
           value={items.length}
           subtitle={`${analyzedCount} analyzed`}
-          icon={<BarChart3 className="size-4" />}
+          icon={<BarChart3 className="size-5" />}
         />
         <StatCard
           title="Clusters"
           value={clusters.length}
           subtitle={`${clusters.reduce((sum, c) => sum + c.signalCount, 0)} signals grouped`}
-          icon={<PieChartIcon className="size-4" />}
+          icon={<PieChartIcon className="size-5" />}
         />
         <StatCard
           title="Suggestions"
           value={suggestions.length}
           subtitle={`${highConfidenceSuggestions.length} high confidence`}
-          icon={<TrendingUp className="size-4" />}
+          icon={<TrendingUp className="size-5" />}
         />
         <StatCard
           title="Sources"
           value={imports.length}
           subtitle={`${new Set(imports.map((i) => i.kind)).size} formats`}
-          icon={<Zap className="size-4" />}
+          icon={<Zap className="size-5" />}
         />
       </div>
 
-      {/* Charts row */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        {/* Severity distribution */}
+      {/* Charts */}
+      <div className="grid gap-10 lg:grid-cols-2">
         {severityData.length > 0 && (
-          <Card className="border-outline-variant/10">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">
-                Severity Distribution
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie
-                    data={severityData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={80}
-                    paddingAngle={4}
-                    dataKey="value"
-                  >
-                    {severityData.map((entry, i) => (
-                      <Cell key={i} fill={entry.fill} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="flex justify-center gap-4">
-                {severityData.map((d) => (
-                  <div key={d.name} className="flex items-center gap-1.5 text-xs">
-                    <span
-                      className="size-2.5 rounded-full"
-                      style={{ backgroundColor: d.fill }}
-                    />
-                    {d.name}: {d.value}
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Feature area breakdown */}
-        {featureAreaData.length > 0 && (
-          <Card className="border-outline-variant/10">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">
-                By Feature Area
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={featureAreaData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                  <XAxis type="number" />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
-                    width={120}
-                    tick={{ fontSize: 12 }}
-                  />
-                  <Tooltip />
-                  <Bar
-                    dataKey="value"
-                    fill="hsl(var(--primary))"
-                    radius={[0, 4, 4, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
-      {/* Source breakdown */}
-      {sourceData.length > 0 && (
-        <Card className="border-outline-variant/10">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">By Source</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
+          <section>
+            <h3 className="mb-4 text-base font-medium">Severity Distribution</h3>
+            <ResponsiveContainer width="100%" height={220}>
               <PieChart>
                 <Pie
-                  data={sourceData}
+                  data={severityData}
                   cx="50%"
                   cy="50%"
-                  outerRadius={80}
-                  paddingAngle={2}
+                  innerRadius={50}
+                  outerRadius={85}
+                  paddingAngle={4}
                   dataKey="value"
-                  label={({ name, value }) => `${name} (${value})`}
                 >
-                  {sourceData.map((_, i) => (
-                    <Cell
-                      key={i}
-                      fill={PIE_COLORS[i % PIE_COLORS.length]}
-                    />
+                  {severityData.map((entry, i) => (
+                    <Cell key={i} fill={entry.fill} />
                   ))}
                 </Pie>
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
+            <div className="flex justify-center gap-4">
+              {severityData.map((d) => (
+                <div key={d.name} className="flex items-center gap-1.5 text-xs">
+                  <span
+                    className="size-2.5 rounded-full"
+                    style={{ backgroundColor: d.fill }}
+                  />
+                  {d.name}: {d.value}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {featureAreaData.length > 0 && (
+          <section>
+            <h3 className="mb-4 text-base font-medium">By Feature Area</h3>
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={featureAreaData} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                <XAxis type="number" />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  width={120}
+                  tick={{ fontSize: 12 }}
+                />
+                <Tooltip />
+                <Bar
+                  dataKey="value"
+                  fill="hsl(var(--primary))"
+                  radius={[0, 4, 4, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </section>
+        )}
+      </div>
+
+      {/* Source breakdown */}
+      {sourceData.length > 0 && (
+        <section className="border-t pt-8">
+          <h3 className="mb-4 text-base font-medium">By Source</h3>
+          <ResponsiveContainer width="100%" height={220}>
+            <PieChart>
+              <Pie
+                data={sourceData}
+                cx="50%"
+                cy="50%"
+                outerRadius={85}
+                paddingAngle={2}
+                dataKey="value"
+                label={({ name, value }) => `${name} (${value})`}
+              >
+                {sourceData.map((_, i) => (
+                  <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </section>
       )}
 
       {/* Top suggestions */}
       {topSuggestions.length > 0 && (
-        <Card className="border-outline-variant/10">
-          <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <CardTitle className="text-sm font-medium">
-              Top Actionable Suggestions
-            </CardTitle>
+        <section className="border-t pt-8">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-base font-medium">Top Actionable Suggestions</h3>
             {onAutoCreateTickets && highConfidenceSuggestions.length > 0 && (
               <Button
                 size="sm"
@@ -282,18 +250,23 @@ export function FeedbackAnalysisDashboard({
                   : `Auto-create ${highConfidenceSuggestions.length} ticket${highConfidenceSuggestions.length > 1 ? "s" : ""}`}
               </Button>
             )}
-          </CardHeader>
-          <CardContent className="space-y-3 pb-4">
+          </div>
+          <div className="space-y-1">
             {topSuggestions.map((s) => (
               <div
                 key={s.id}
-                className="flex items-start justify-between gap-3 rounded-md border px-3 py-2"
+                className="flex items-center justify-between gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-muted/50"
               >
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium">{s.title}</p>
-                  <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
-                    {s.summary}
-                  </p>
+                <div className="flex min-w-0 flex-1 items-start gap-3">
+                  <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <TrendingUp className="size-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium">{s.title}</p>
+                    <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+                      {s.summary}
+                    </p>
+                  </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <Badge variant="outline" className="text-[10px]">
@@ -308,8 +281,8 @@ export function FeedbackAnalysisDashboard({
                 </div>
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </section>
       )}
     </div>
   )
@@ -328,8 +301,8 @@ function StatCard({
 }) {
   return (
     <Card className="border-outline-variant/10">
-      <CardContent className="flex items-center gap-3 py-4">
-        <div className="flex size-9 items-center justify-center rounded-md bg-muted text-muted-foreground">
+      <CardContent className="flex items-center gap-4 py-5">
+        <div className="flex size-11 items-center justify-center rounded-lg bg-muted text-muted-foreground">
           {icon}
         </div>
         <div>

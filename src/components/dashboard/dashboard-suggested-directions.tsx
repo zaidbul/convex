@@ -42,9 +42,8 @@ export function DashboardSuggestedDirections({
           size="sm"
           render={
             <Link
-              to="/$slug/tickets/feedback"
+              to="/$slug/tickets/synthesize/suggestions"
               params={{ slug }}
-              search={{ suggestionId: undefined }}
             />
           }
         >
