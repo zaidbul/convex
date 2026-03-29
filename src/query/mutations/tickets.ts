@@ -18,6 +18,7 @@ import {
   updateIssueStatus,
   updateIssueTitle,
   updateSavedView,
+  seedDemoData,
 } from "@/server/functions/tickets"
 import {
   autoCreateTicketsFromFeedback,
@@ -540,6 +541,17 @@ export function useAutoCreateTicketsMutation() {
       queryClient.invalidateQueries({ queryKey: ["issues"], refetchType: "active" })
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] })
       queryClient.invalidateQueries({ queryKey: ["my-issues"] })
+    },
+  })
+}
+
+export function useSeedDemoDataMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => seedDemoData(),
+    onSuccess: () => {
+      queryClient.invalidateQueries()
     },
   })
 }

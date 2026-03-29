@@ -26,6 +26,7 @@ import { Route as AuthSlugSettingsRouteRouteImport } from './routes/_auth/$slug/
 import { Route as AuthSlugTicketsIndexRouteImport } from './routes/_auth/$slug/tickets/index'
 import { Route as AuthSlugSettingsIndexRouteImport } from './routes/_auth/$slug/settings/index'
 import { Route as ApiChatFeedbackRunAnalysisRouteImport } from './routes/api/chat/feedback.run-analysis'
+import { Route as AuthSlugTicketsMvpPreviewRouteImport } from './routes/_auth/$slug/tickets/mvp-preview'
 import { Route as AuthSlugTicketsDashboardRouteImport } from './routes/_auth/$slug/tickets/dashboard'
 import { Route as AuthSlugSettingsTeamsRouteImport } from './routes/_auth/$slug/settings/teams'
 import { Route as AuthSlugSettingsProfileRouteImport } from './routes/_auth/$slug/settings/profile'
@@ -133,6 +134,12 @@ const ApiChatFeedbackRunAnalysisRoute =
     id: '/run-analysis',
     path: '/run-analysis',
     getParentRoute: () => ApiChatFeedbackRoute,
+  } as any)
+const AuthSlugTicketsMvpPreviewRoute =
+  AuthSlugTicketsMvpPreviewRouteImport.update({
+    id: '/mvp-preview',
+    path: '/mvp-preview',
+    getParentRoute: () => AuthSlugTicketsRouteRoute,
   } as any)
 const AuthSlugTicketsDashboardRoute =
   AuthSlugTicketsDashboardRouteImport.update({
@@ -284,6 +291,7 @@ export interface FileRoutesByFullPath {
   '/$slug/settings/profile': typeof AuthSlugSettingsProfileRoute
   '/$slug/settings/teams': typeof AuthSlugSettingsTeamsRoute
   '/$slug/tickets/dashboard': typeof AuthSlugTicketsDashboardRoute
+  '/$slug/tickets/mvp-preview': typeof AuthSlugTicketsMvpPreviewRoute
   '/api/chat/feedback/run-analysis': typeof ApiChatFeedbackRunAnalysisRoute
   '/$slug/settings/': typeof AuthSlugSettingsIndexRoute
   '/$slug/tickets/': typeof AuthSlugTicketsIndexRoute
@@ -319,6 +327,7 @@ export interface FileRoutesByTo {
   '/$slug/settings/profile': typeof AuthSlugSettingsProfileRoute
   '/$slug/settings/teams': typeof AuthSlugSettingsTeamsRoute
   '/$slug/tickets/dashboard': typeof AuthSlugTicketsDashboardRoute
+  '/$slug/tickets/mvp-preview': typeof AuthSlugTicketsMvpPreviewRoute
   '/api/chat/feedback/run-analysis': typeof ApiChatFeedbackRunAnalysisRoute
   '/$slug/settings': typeof AuthSlugSettingsIndexRoute
   '/$slug/tickets': typeof AuthSlugTicketsIndexRoute
@@ -361,6 +370,7 @@ export interface FileRoutesById {
   '/_auth/$slug/settings/profile': typeof AuthSlugSettingsProfileRoute
   '/_auth/$slug/settings/teams': typeof AuthSlugSettingsTeamsRoute
   '/_auth/$slug/tickets/dashboard': typeof AuthSlugTicketsDashboardRoute
+  '/_auth/$slug/tickets/mvp-preview': typeof AuthSlugTicketsMvpPreviewRoute
   '/api/chat/feedback/run-analysis': typeof ApiChatFeedbackRunAnalysisRoute
   '/_auth/$slug/settings/': typeof AuthSlugSettingsIndexRoute
   '/_auth/$slug/tickets/': typeof AuthSlugTicketsIndexRoute
@@ -402,6 +412,7 @@ export interface FileRouteTypes {
     | '/$slug/settings/profile'
     | '/$slug/settings/teams'
     | '/$slug/tickets/dashboard'
+    | '/$slug/tickets/mvp-preview'
     | '/api/chat/feedback/run-analysis'
     | '/$slug/settings/'
     | '/$slug/tickets/'
@@ -437,6 +448,7 @@ export interface FileRouteTypes {
     | '/$slug/settings/profile'
     | '/$slug/settings/teams'
     | '/$slug/tickets/dashboard'
+    | '/$slug/tickets/mvp-preview'
     | '/api/chat/feedback/run-analysis'
     | '/$slug/settings'
     | '/$slug/tickets'
@@ -478,6 +490,7 @@ export interface FileRouteTypes {
     | '/_auth/$slug/settings/profile'
     | '/_auth/$slug/settings/teams'
     | '/_auth/$slug/tickets/dashboard'
+    | '/_auth/$slug/tickets/mvp-preview'
     | '/api/chat/feedback/run-analysis'
     | '/_auth/$slug/settings/'
     | '/_auth/$slug/tickets/'
@@ -629,6 +642,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/chat/feedback/run-analysis'
       preLoaderRoute: typeof ApiChatFeedbackRunAnalysisRouteImport
       parentRoute: typeof ApiChatFeedbackRoute
+    }
+    '/_auth/$slug/tickets/mvp-preview': {
+      id: '/_auth/$slug/tickets/mvp-preview'
+      path: '/mvp-preview'
+      fullPath: '/$slug/tickets/mvp-preview'
+      preLoaderRoute: typeof AuthSlugTicketsMvpPreviewRouteImport
+      parentRoute: typeof AuthSlugTicketsRouteRoute
     }
     '/_auth/$slug/tickets/dashboard': {
       id: '/_auth/$slug/tickets/dashboard'
@@ -898,6 +918,7 @@ interface AuthSlugTicketsRouteRouteChildren {
   AuthSlugTicketsSynthesizeRouteRoute: typeof AuthSlugTicketsSynthesizeRouteRouteWithChildren
   AuthSlugTicketsViewsRouteRoute: typeof AuthSlugTicketsViewsRouteRouteWithChildren
   AuthSlugTicketsDashboardRoute: typeof AuthSlugTicketsDashboardRoute
+  AuthSlugTicketsMvpPreviewRoute: typeof AuthSlugTicketsMvpPreviewRoute
   AuthSlugTicketsIndexRoute: typeof AuthSlugTicketsIndexRoute
 }
 
@@ -908,6 +929,7 @@ const AuthSlugTicketsRouteRouteChildren: AuthSlugTicketsRouteRouteChildren = {
     AuthSlugTicketsSynthesizeRouteRouteWithChildren,
   AuthSlugTicketsViewsRouteRoute: AuthSlugTicketsViewsRouteRouteWithChildren,
   AuthSlugTicketsDashboardRoute: AuthSlugTicketsDashboardRoute,
+  AuthSlugTicketsMvpPreviewRoute: AuthSlugTicketsMvpPreviewRoute,
   AuthSlugTicketsIndexRoute: AuthSlugTicketsIndexRoute,
 }
 

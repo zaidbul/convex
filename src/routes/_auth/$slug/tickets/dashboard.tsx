@@ -14,7 +14,9 @@ import { DashboardCycleProgress } from "@/components/dashboard/dashboard-cycle-p
 import { DashboardActivityFeed } from "@/components/dashboard/dashboard-activity-feed"
 import { DashboardQuickActions } from "@/components/dashboard/dashboard-quick-actions"
 import { DashboardSuggestedDirections } from "@/components/dashboard/dashboard-suggested-directions"
+import { DashboardMvpPreviewCard } from "@/components/dashboard/dashboard-mvp-preview-card"
 import { feedbackSuggestionsQueryOptions } from "@/query/options/tickets"
+import { useSeedDemoDataMutation } from "@/query/mutations/tickets"
 
 export const Route = createFileRoute("/_auth/$slug/tickets/dashboard")({
   loader: async ({ context }) => {
@@ -44,18 +46,29 @@ function DashboardPage() {
   const { data: teams } = useSuspenseQuery(teamsQueryOptions())
   const { data: workspace } = useSuspenseQuery(workspaceQueryOptions())
 
+  const seedMutation = useSeedDemoDataMutation()
+
   return (
     <div className="mx-auto max-w-7xl px-6 py-8 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="font-heading text-2xl font-semibold text-foreground">
-          Dashboard
-        </h1>
-        {workspace && (
-          <p className="mt-1 text-sm text-muted-foreground">
-            Overview of {workspace.name}
-          </p>
-        )}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="font-heading text-2xl font-semibold text-foreground">
+            Dashboard
+          </h1>
+          {workspace && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              Overview of {workspace.name}
+            </p>
+          )}
+        </div>
+        <button
+          onClick={() => seedMutation.mutate()}
+          disabled={seedMutation.isPending}
+          className="text-xs text-transparent select-none disabled:pointer-events-none px-2 py-1"
+        >
+          {seedMutation.isPending ? "Populating..." : "Populate demo data"}
+        </button>
       </div>
 
       {/* Stats row */}
@@ -72,6 +85,7 @@ function DashboardPage() {
 
         {/* Right column */}
         <div className="space-y-6">
+          <DashboardMvpPreviewCard slug={slug} />
           <DashboardQuickActions teams={teams} slug={slug} />
           <DashboardActivityFeed notifications={notifications} slug={slug} />
         </div>

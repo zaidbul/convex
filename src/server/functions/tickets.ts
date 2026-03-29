@@ -38,6 +38,7 @@ import {
   updateIssueTitleForViewer,
   updateSavedViewForViewer,
 } from "./tickets-data"
+import { seedDemoDataForViewer } from "./seed-data"
 import { getViewerContext } from "./viewer-context"
 import {
   teamSlugSchema,
@@ -377,5 +378,16 @@ export const getActiveCycles = createServerFn({ method: "GET" }).handler(
   async () => {
     const viewerContext = await getViewerContext()
     return listActiveCyclesAcrossTeams(db, viewerContext)
+  }
+)
+
+// ---------------------------------------------------------------------------
+// Seed data
+// ---------------------------------------------------------------------------
+
+export const seedDemoData = createServerFn({ method: "POST" }).handler(
+  async () => {
+    const viewerContext = await getViewerContext()
+    return seedDemoDataForViewer(db, viewerContext)
   }
 )
