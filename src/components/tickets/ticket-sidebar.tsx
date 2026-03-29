@@ -11,7 +11,6 @@ import {
   Eye,
   MoreHorizontal,
   HelpCircle,
-  FileText,
 } from "lucide-react"
 import {
   SidebarContent,
@@ -122,19 +121,6 @@ export function TicketSidebar() {
                 <SidebarMenuButton>
                   <Eye className="size-4" strokeWidth={1.5} />
                   <span>Views</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  render={
-                    <Link
-                      to="/$slug/notes"
-                      params={{ slug: slug! }}
-                    />
-                  }
-                >
-                  <FileText className="size-4" strokeWidth={1.5} />
-                  <span>Notes</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>

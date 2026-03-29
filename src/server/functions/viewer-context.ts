@@ -17,20 +17,26 @@ export async function getViewerContext() {
       : Promise.resolve(null),
   ])
 
-  return syncViewerContext(db, {
-    auth: {
-      userId: authState.userId,
-      orgId: authState.orgId ?? null,
-      orgRole: authState.orgRole ?? null,
-      orgSlug: authState.orgSlug ?? null,
-    },
-    clerkUser,
-    organization: organization
-      ? {
-          id: organization.id,
-          name: organization.name,
-          slug: organization.slug,
-        }
-      : null,
-  })
+  try {
+    return await syncViewerContext(db, {
+      auth: {
+        userId: authState.userId,
+        orgId: authState.orgId ?? null,
+        orgRole: authState.orgRole ?? null,
+        orgSlug: authState.orgSlug ?? null,
+      },
+      clerkUser,
+      organization: organization
+        ? {
+            id: organization.id,
+            name: organization.name,
+            slug: organization.slug,
+          }
+        : null,
+    })
+  } catch (error) {
+    console.error("[syncViewerContext] Failed:", error)
+    console.error("[syncViewerContext] Cause:", (error as any)?.cause)
+    throw error
+  }
 }

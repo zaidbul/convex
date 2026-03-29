@@ -18,12 +18,12 @@ import { Route as SignInIndexRouteImport } from './routes/sign-in/index'
 import { Route as DefaultIndexRouteImport } from './routes/_default.index'
 import { Route as SignInSplatRouteImport } from './routes/sign-in/$'
 import { Route as AuthSlugRouteRouteImport } from './routes/_auth/$slug/route'
-import { Route as AuthSlugNotesRouteImport } from './routes/_auth/$slug/notes'
 import { Route as AuthSlugDashboardRouteImport } from './routes/_auth/$slug.dashboard'
 import { Route as AuthSlugTicketsRouteRouteImport } from './routes/_auth/$slug/tickets/route'
 import { Route as AuthSlugTicketsIndexRouteImport } from './routes/_auth/$slug/tickets/index'
 import { Route as AuthSlugTicketsTeamSlugRouteRouteImport } from './routes/_auth/$slug/tickets/$teamSlug/route'
 import { Route as AuthSlugTicketsTeamSlugIssuesRouteImport } from './routes/_auth/$slug/tickets/$teamSlug/issues'
+import { Route as AuthSlugTicketsTeamSlugIssueIssueIdRouteImport } from './routes/_auth/$slug/tickets/$teamSlug/issue.$issueId'
 
 const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
@@ -68,11 +68,6 @@ const AuthSlugRouteRoute = AuthSlugRouteRouteImport.update({
   path: '/$slug',
   getParentRoute: () => AuthRouteRoute,
 } as any)
-const AuthSlugNotesRoute = AuthSlugNotesRouteImport.update({
-  id: '/notes',
-  path: '/notes',
-  getParentRoute: () => AuthSlugRouteRoute,
-} as any)
 const AuthSlugDashboardRoute = AuthSlugDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -100,6 +95,12 @@ const AuthSlugTicketsTeamSlugIssuesRoute =
     path: '/issues',
     getParentRoute: () => AuthSlugTicketsTeamSlugRouteRoute,
   } as any)
+const AuthSlugTicketsTeamSlugIssueIssueIdRoute =
+  AuthSlugTicketsTeamSlugIssueIssueIdRouteImport.update({
+    id: '/issue/$issueId',
+    path: '/issue/$issueId',
+    getParentRoute: () => AuthSlugTicketsTeamSlugRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof DefaultIndexRoute
@@ -111,10 +112,10 @@ export interface FileRoutesByFullPath {
   '/sign-in/': typeof SignInIndexRoute
   '/$slug/tickets': typeof AuthSlugTicketsRouteRouteWithChildren
   '/$slug/dashboard': typeof AuthSlugDashboardRoute
-  '/$slug/notes': typeof AuthSlugNotesRoute
   '/$slug/tickets/$teamSlug': typeof AuthSlugTicketsTeamSlugRouteRouteWithChildren
   '/$slug/tickets/': typeof AuthSlugTicketsIndexRoute
   '/$slug/tickets/$teamSlug/issues': typeof AuthSlugTicketsTeamSlugIssuesRoute
+  '/$slug/tickets/$teamSlug/issue/$issueId': typeof AuthSlugTicketsTeamSlugIssueIssueIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof DefaultIndexRoute
@@ -125,10 +126,10 @@ export interface FileRoutesByTo {
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-in': typeof SignInIndexRoute
   '/$slug/dashboard': typeof AuthSlugDashboardRoute
-  '/$slug/notes': typeof AuthSlugNotesRoute
   '/$slug/tickets/$teamSlug': typeof AuthSlugTicketsTeamSlugRouteRouteWithChildren
   '/$slug/tickets': typeof AuthSlugTicketsIndexRoute
   '/$slug/tickets/$teamSlug/issues': typeof AuthSlugTicketsTeamSlugIssuesRoute
+  '/$slug/tickets/$teamSlug/issue/$issueId': typeof AuthSlugTicketsTeamSlugIssueIssueIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -143,10 +144,10 @@ export interface FileRoutesById {
   '/sign-in/': typeof SignInIndexRoute
   '/_auth/$slug/tickets': typeof AuthSlugTicketsRouteRouteWithChildren
   '/_auth/$slug/dashboard': typeof AuthSlugDashboardRoute
-  '/_auth/$slug/notes': typeof AuthSlugNotesRoute
   '/_auth/$slug/tickets/$teamSlug': typeof AuthSlugTicketsTeamSlugRouteRouteWithChildren
   '/_auth/$slug/tickets/': typeof AuthSlugTicketsIndexRoute
   '/_auth/$slug/tickets/$teamSlug/issues': typeof AuthSlugTicketsTeamSlugIssuesRoute
+  '/_auth/$slug/tickets/$teamSlug/issue/$issueId': typeof AuthSlugTicketsTeamSlugIssueIssueIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -160,10 +161,10 @@ export interface FileRouteTypes {
     | '/sign-in/'
     | '/$slug/tickets'
     | '/$slug/dashboard'
-    | '/$slug/notes'
     | '/$slug/tickets/$teamSlug'
     | '/$slug/tickets/'
     | '/$slug/tickets/$teamSlug/issues'
+    | '/$slug/tickets/$teamSlug/issue/$issueId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -174,10 +175,10 @@ export interface FileRouteTypes {
     | '/sign-in/$'
     | '/sign-in'
     | '/$slug/dashboard'
-    | '/$slug/notes'
     | '/$slug/tickets/$teamSlug'
     | '/$slug/tickets'
     | '/$slug/tickets/$teamSlug/issues'
+    | '/$slug/tickets/$teamSlug/issue/$issueId'
   id:
     | '__root__'
     | '/_auth'
@@ -191,10 +192,10 @@ export interface FileRouteTypes {
     | '/sign-in/'
     | '/_auth/$slug/tickets'
     | '/_auth/$slug/dashboard'
-    | '/_auth/$slug/notes'
     | '/_auth/$slug/tickets/$teamSlug'
     | '/_auth/$slug/tickets/'
     | '/_auth/$slug/tickets/$teamSlug/issues'
+    | '/_auth/$slug/tickets/$teamSlug/issue/$issueId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -272,13 +273,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSlugRouteRouteImport
       parentRoute: typeof AuthRouteRoute
     }
-    '/_auth/$slug/notes': {
-      id: '/_auth/$slug/notes'
-      path: '/notes'
-      fullPath: '/$slug/notes'
-      preLoaderRoute: typeof AuthSlugNotesRouteImport
-      parentRoute: typeof AuthSlugRouteRoute
-    }
     '/_auth/$slug/dashboard': {
       id: '/_auth/$slug/dashboard'
       path: '/dashboard'
@@ -314,16 +308,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSlugTicketsTeamSlugIssuesRouteImport
       parentRoute: typeof AuthSlugTicketsTeamSlugRouteRoute
     }
+    '/_auth/$slug/tickets/$teamSlug/issue/$issueId': {
+      id: '/_auth/$slug/tickets/$teamSlug/issue/$issueId'
+      path: '/issue/$issueId'
+      fullPath: '/$slug/tickets/$teamSlug/issue/$issueId'
+      preLoaderRoute: typeof AuthSlugTicketsTeamSlugIssueIssueIdRouteImport
+      parentRoute: typeof AuthSlugTicketsTeamSlugRouteRoute
+    }
   }
 }
 
 interface AuthSlugTicketsTeamSlugRouteRouteChildren {
   AuthSlugTicketsTeamSlugIssuesRoute: typeof AuthSlugTicketsTeamSlugIssuesRoute
+  AuthSlugTicketsTeamSlugIssueIssueIdRoute: typeof AuthSlugTicketsTeamSlugIssueIssueIdRoute
 }
 
 const AuthSlugTicketsTeamSlugRouteRouteChildren: AuthSlugTicketsTeamSlugRouteRouteChildren =
   {
     AuthSlugTicketsTeamSlugIssuesRoute: AuthSlugTicketsTeamSlugIssuesRoute,
+    AuthSlugTicketsTeamSlugIssueIssueIdRoute:
+      AuthSlugTicketsTeamSlugIssueIssueIdRoute,
   }
 
 const AuthSlugTicketsTeamSlugRouteRouteWithChildren =
@@ -348,13 +352,11 @@ const AuthSlugTicketsRouteRouteWithChildren =
 interface AuthSlugRouteRouteChildren {
   AuthSlugTicketsRouteRoute: typeof AuthSlugTicketsRouteRouteWithChildren
   AuthSlugDashboardRoute: typeof AuthSlugDashboardRoute
-  AuthSlugNotesRoute: typeof AuthSlugNotesRoute
 }
 
 const AuthSlugRouteRouteChildren: AuthSlugRouteRouteChildren = {
   AuthSlugTicketsRouteRoute: AuthSlugTicketsRouteRouteWithChildren,
   AuthSlugDashboardRoute: AuthSlugDashboardRoute,
-  AuthSlugNotesRoute: AuthSlugNotesRoute,
 }
 
 const AuthSlugRouteRouteWithChildren = AuthSlugRouteRoute._addFileChildren(

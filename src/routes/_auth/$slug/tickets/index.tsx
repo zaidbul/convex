@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_auth/$slug/tickets/")({
       throw redirect({
         to: "/$slug/tickets/$teamSlug/issues",
         params: { slug: params.slug, teamSlug: teams[0].slug },
-        search: { issueId: undefined, filter: undefined },
+        search: { filter: undefined },
       })
     }
   },

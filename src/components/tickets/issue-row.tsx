@@ -1,4 +1,4 @@
-import { useNavigate } from "@tanstack/react-router"
+import { useNavigate, useParams } from "@tanstack/react-router"
 import { MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -30,11 +30,17 @@ function formatDate(dateStr: string): string {
 
 export function IssueRow({ issue }: { issue: Issue }) {
   const navigate = useNavigate()
+  const params = useParams({ strict: false }) as { slug?: string; teamSlug?: string }
 
   function handleClick() {
     navigate({
-      search: (prev) => ({ ...prev, issueId: issue.id }),
-    } as Parameters<typeof navigate>[0])
+      to: "/$slug/tickets/$teamSlug/issue/$issueId",
+      params: {
+        slug: params.slug!,
+        teamSlug: params.teamSlug!,
+        issueId: issue.id,
+      },
+    })
   }
 
   return (

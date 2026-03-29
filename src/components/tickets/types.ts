@@ -33,11 +33,6 @@ export interface Issue {
   updatedAt: string
 }
 
-export interface IssueDetail extends Issue {
-  description: string | null
-  creator: User
-}
-
 export interface Cycle {
   id: string
   name: string
@@ -58,6 +53,28 @@ export interface Team {
 export interface Workspace {
   id: string
   name: string
+}
+
+export interface IssueDetail extends Issue {
+  description: string | null
+  creator: User
+  teamId: string
+}
+
+export interface ActivityEntry {
+  id: string
+  type: string
+  actor: User | null
+  data: Record<string, string | number | boolean | null | string[]>
+  createdAt: string
+}
+
+export interface IssueCommentDetail {
+  id: string
+  author: User
+  body: string
+  createdAt: string
+  updatedAt: string
 }
 
 export type IssueFilter =

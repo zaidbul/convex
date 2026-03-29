@@ -2,12 +2,15 @@ import { and, asc, desc, eq, gt, gte, inArray, sql } from "drizzle-orm"
 import type { LibSQLDatabase } from "drizzle-orm/libsql"
 import * as schema from "@/db/schema"
 import type {
+  ActivityEntry,
   Cycle as TicketCycle,
   Issue as TicketIssue,
+  IssueCommentDetail,
   IssueDetail as TicketIssueDetail,
   IssueFilter,
   IssuePriority,
   IssueStatus,
+  Label as TicketLabel,
   Team as TicketTeam,
   User as TicketUser,
   Workspace as TicketWorkspace,
@@ -652,6 +655,7 @@ export async function getIssueByIdForViewer(
     createdAt: issue.createdAt,
     updatedAt: issue.updatedAt,
     creator: creator ? mapUser(creator) : { id: issue.creatorUserId, name: "Unknown", initials: "??" },
+    teamId: issue.teamId,
   }
 }
 
@@ -701,4 +705,310 @@ export async function updateIssueDescriptionForViewer(
         eq(schema.issues.workspaceId, context.workspaceId)
       )
     )
+}
+
+async function verifyIssueAccess(
+  db: TicketsDatabase,
+  context: ViewerContext,
+  issueId: string
+) {
+  if (!context.workspaceId) {
+    throw new Error("No active workspace")
+  }
+
+  const issue = await db.query.issues.findFirst({
+    where: and(
+      eq(schema.issues.id, issueId),
+      eq(schema.issues.workspaceId, context.workspaceId),
+    ),
+  })
+
+  if (!issue) {
+    throw new Error("Issue not found")
+  }
+
+  const membership = await db
+    .select({ teamId: schema.teamMemberships.teamId })
+    .from(schema.teamMemberships)
+    .where(
+      and(
+        eq(schema.teamMemberships.teamId, issue.teamId),
+        eq(schema.teamMemberships.userId, context.userId),
+      )
+    )
+    .limit(1)
+
+  if (membership.length === 0) {
+    throw new Error("Not authorized to update this issue")
+  }
+
+  return issue
+}
+
+export async function updateIssueStatusForViewer(
+  db: TicketsDatabase,
+  context: ViewerContext,
+  issueId: string,
+  status: IssueStatus
+): Promise<void> {
+  const issue = await verifyIssueAccess(db, context, issueId)
+  const timestamp = nowIso()
+
+  const updates: Record<string, unknown> = { status, updatedAt: timestamp }
+  if (status === "done") updates.completedAt = timestamp
+  else if (status === "cancelled") updates.cancelledAt = timestamp
+
+  await db
+    .update(schema.issues)
+    .set(updates)
+    .where(eq(schema.issues.id, issueId))
+
+  await db.insert(schema.issueActivity).values({
+    id: crypto.randomUUID(),
+    issueId,
+    actorUserId: context.userId,
+    type: "status_change",
+    data: { from: issue.status, to: status },
+    createdAt: timestamp,
+  })
+}
+
+export async function updateIssuePriorityForViewer(
+  db: TicketsDatabase,
+  context: ViewerContext,
+  issueId: string,
+  priority: IssuePriority
+): Promise<void> {
+  const issue = await verifyIssueAccess(db, context, issueId)
+  const timestamp = nowIso()
+
+  await db
+    .update(schema.issues)
+    .set({ priority, priorityScore: priorityScoreMap[priority], updatedAt: timestamp })
+    .where(eq(schema.issues.id, issueId))
+
+  await db.insert(schema.issueActivity).values({
+    id: crypto.randomUUID(),
+    issueId,
+    actorUserId: context.userId,
+    type: "priority_change",
+    data: { from: issue.priority, to: priority },
+    createdAt: timestamp,
+  })
+}
+
+export async function updateIssueAssigneeForViewer(
+  db: TicketsDatabase,
+  context: ViewerContext,
+  issueId: string,
+  assigneeUserId: string | null
+): Promise<void> {
+  await verifyIssueAccess(db, context, issueId)
+  const timestamp = nowIso()
+
+  await db
+    .update(schema.issues)
+    .set({ assigneeUserId, updatedAt: timestamp })
+    .where(eq(schema.issues.id, issueId))
+
+  await db.insert(schema.issueActivity).values({
+    id: crypto.randomUUID(),
+    issueId,
+    actorUserId: context.userId,
+    type: "assignee_change",
+    data: { assigneeUserId },
+    createdAt: timestamp,
+  })
+}
+
+export async function updateIssueCycleForViewer(
+  db: TicketsDatabase,
+  context: ViewerContext,
+  issueId: string,
+  cycleId: string | null
+): Promise<void> {
+  await verifyIssueAccess(db, context, issueId)
+
+  await db
+    .update(schema.issues)
+    .set({ cycleId, updatedAt: nowIso() })
+    .where(eq(schema.issues.id, issueId))
+}
+
+export async function updateIssueLabelsForViewer(
+  db: TicketsDatabase,
+  context: ViewerContext,
+  issueId: string,
+  labelIds: string[]
+): Promise<void> {
+  await verifyIssueAccess(db, context, issueId)
+  const timestamp = nowIso()
+
+  await db
+    .delete(schema.issueLabels)
+    .where(eq(schema.issueLabels.issueId, issueId))
+
+  if (labelIds.length > 0) {
+    await db.insert(schema.issueLabels).values(
+      labelIds.map((labelId) => ({
+        issueId,
+        labelId,
+        createdAt: timestamp,
+      }))
+    )
+  }
+
+  await db.insert(schema.issueActivity).values({
+    id: crypto.randomUUID(),
+    issueId,
+    actorUserId: context.userId,
+    type: "label_change",
+    data: { labelIds },
+    createdAt: timestamp,
+  })
+}
+
+export async function updateIssueTitleForViewer(
+  db: TicketsDatabase,
+  context: ViewerContext,
+  issueId: string,
+  title: string
+): Promise<void> {
+  await verifyIssueAccess(db, context, issueId)
+
+  await db
+    .update(schema.issues)
+    .set({ title, updatedAt: nowIso() })
+    .where(eq(schema.issues.id, issueId))
+}
+
+export async function listTeamMembersForViewer(
+  db: TicketsDatabase,
+  context: ViewerContext,
+  teamId: string
+): Promise<TicketUser[]> {
+  if (!context.workspaceId) {
+    return []
+  }
+
+  const rows = await db
+    .select({ user: schema.users })
+    .from(schema.teamMemberships)
+    .innerJoin(schema.users, eq(schema.teamMemberships.userId, schema.users.id))
+    .where(eq(schema.teamMemberships.teamId, teamId))
+    .orderBy(asc(schema.users.name))
+
+  return rows.map((row) => mapUser(row.user))
+}
+
+export async function listLabelsForViewer(
+  db: TicketsDatabase,
+  context: ViewerContext
+): Promise<TicketLabel[]> {
+  if (!context.workspaceId) {
+    return []
+  }
+
+  const rows = await db.query.labels.findMany({
+    where: eq(schema.labels.workspaceId, context.workspaceId),
+    orderBy: [asc(schema.labels.name)],
+  })
+
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    color: row.color,
+  }))
+}
+
+export async function listIssueActivityForViewer(
+  db: TicketsDatabase,
+  context: ViewerContext,
+  issueId: string
+): Promise<ActivityEntry[]> {
+  if (!context.workspaceId) {
+    return []
+  }
+
+  const rows = await db
+    .select({
+      activity: schema.issueActivity,
+      actor: schema.users,
+    })
+    .from(schema.issueActivity)
+    .leftJoin(schema.users, eq(schema.issueActivity.actorUserId, schema.users.id))
+    .where(eq(schema.issueActivity.issueId, issueId))
+    .orderBy(asc(schema.issueActivity.createdAt))
+
+  return rows.map((row) => ({
+    id: row.activity.id,
+    type: row.activity.type,
+    actor: row.actor ? mapUser(row.actor) : null,
+    data: (row.activity.data ?? {}) as ActivityEntry["data"],
+    createdAt: row.activity.createdAt,
+  }))
+}
+
+export async function listIssueCommentsForViewer(
+  db: TicketsDatabase,
+  context: ViewerContext,
+  issueId: string
+): Promise<IssueCommentDetail[]> {
+  if (!context.workspaceId) {
+    return []
+  }
+
+  const rows = await db
+    .select({
+      comment: schema.issueComments,
+      author: schema.users,
+    })
+    .from(schema.issueComments)
+    .innerJoin(schema.users, eq(schema.issueComments.authorUserId, schema.users.id))
+    .where(
+      and(
+        eq(schema.issueComments.issueId, issueId),
+        sql`${schema.issueComments.deletedAt} IS NULL`,
+      )
+    )
+    .orderBy(asc(schema.issueComments.createdAt))
+
+  return rows.map((row) => ({
+    id: row.comment.id,
+    author: mapUser(row.author),
+    body: row.comment.body,
+    createdAt: row.comment.createdAt,
+    updatedAt: row.comment.updatedAt,
+  }))
+}
+
+export async function createIssueCommentForViewer(
+  db: TicketsDatabase,
+  context: ViewerContext,
+  issueId: string,
+  body: string
+): Promise<{ id: string }> {
+  await verifyIssueAccess(db, context, issueId)
+  const timestamp = nowIso()
+  const commentId = crypto.randomUUID()
+
+  await db.insert(schema.issueComments).values({
+    id: commentId,
+    issueId,
+    authorUserId: context.userId,
+    body,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  })
+
+  await db.insert(schema.issueActivity).values({
+    id: crypto.randomUUID(),
+    issueId,
+    actorUserId: context.userId,
+    type: "comment",
+    data: { commentId },
+    createdAt: timestamp,
+  })
+
+  return { id: commentId }
 }

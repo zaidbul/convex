@@ -89,7 +89,7 @@ function TeamItem({ team, isActive }: { team: Team; isActive: boolean }) {
                     <Link
                       to="/$slug/tickets/$teamSlug/issues"
                       params={{ slug: slug!, teamSlug: team.slug }}
-                      search={{ issueId: undefined, filter: undefined }}
+                      search={{ filter: undefined }}
                     />
                   }
                 >

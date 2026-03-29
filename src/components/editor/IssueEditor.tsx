@@ -32,7 +32,6 @@ import { Check, Loader2, TriangleAlert, Paperclip } from "lucide-react";
 import { FormattingToolbar } from "./plugins/FormattingToolbar";
 import { SlashCommandPlugin } from "./plugins/SlashCommandPlugin";
 import { MentionsPlugin, type MemberUser } from "./plugins/MentionsPlugin";
-import { NoteAutoSavePlugin } from "./plugins/NoteAutoSavePlugin";
 import { TRIGGER_IMAGE_UPLOAD_COMMAND } from "./plugins/AttachmentPlugin";
 
 const URL_REG_EXP = /https?:\/\/(?:www\.)?[a-zA-Z0-9\-_]+(?:\.[a-zA-Z0-9\-_]+)+(?:[/?#][^\s]*)?/g;
@@ -142,7 +141,6 @@ export type IssueEditorProps = {
   initialMarkdown?: string | null;
   members?: MemberUser[];
   autoSave?: boolean;
-  saveMode?: "issue" | "note";
   onStatusChange?: (status: "idle" | "scheduled" | "saving" | "saved" | "error") => void;
 };
 
@@ -154,7 +152,6 @@ export function IssueEditor(props: IssueEditorProps) {
     initialMarkdown,
     members,
     autoSave = true,
-    saveMode = "issue",
     onStatusChange,
   } = props;
 
@@ -285,20 +282,11 @@ export function IssueEditor(props: IssueEditorProps) {
         {/* Plugins */}
         <HistoryPlugin />
         <CustomMarkdownShortcutPlugin transformers={MARKDOWN_SHORTCUT_TRANSFORMERS} />
-        {autoSave && issueId && saveMode === "issue" && (
+        {autoSave && issueId && (
           <IssueAutoSavePlugin
             issueId={issueId}
             transformers={MARKDOWN_CONVERT_TRANSFORMERS}
             debounceMs={800}
-            onStatusChange={statusCallback}
-          />
-        )}
-        {autoSave && issueId && saveMode === "note" && (
-          <NoteAutoSavePlugin
-            noteId={issueId}
-            transformers={MARKDOWN_CONVERT_TRANSFORMERS}
-            debounceMs={800}
-            title={title}
             onStatusChange={statusCallback}
           />
         )}
