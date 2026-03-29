@@ -211,8 +211,8 @@ function SignUpPage() {
     try {
       const { error } = await signUp.sso({
         strategy: "oauth_google",
-        redirectUrl: "/org-select",
-        redirectCallbackUrl: "/sign-in/sso-callback",
+        redirectUrl: "/sign-in/sso-callback",
+        redirectCallbackUrl: "/org-select",
       })
       if (error) {
         setClerkError(
