@@ -12,6 +12,7 @@ import { ThemeProvider } from "next-themes"
 import { QueryClientProvider, type QueryClient } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
 import { Toaster } from "@/components/ui/sonner"
+import { RouteLoadingIndicator } from "@/components/route-loading-indicator"
 import { sessionQuery } from "@/query/options/session"
 
 import appCss from "../styles.css?url"
@@ -83,6 +84,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             enableSystem
             disableTransitionOnChange
           >
+            <RouteLoadingIndicator />
             {children}
             <Toaster />
           </ThemeProvider>

@@ -1,13 +1,22 @@
 import {
   Bell,
-  List,
-  SlidersHorizontal,
   LayoutGrid,
+  List,
   PanelRight,
+  SlidersHorizontal,
 } from "lucide-react"
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { useNavigate, useParams } from "@tanstack/react-router"
+import { AdvancedFiltersSheet } from "./advanced-filters-sheet"
+import { FilterPills } from "./filter-pills"
+import { useIssuePanelSafe } from "./issue-panel-provider"
+import type { ViewMode } from "./filter-state"
+import type {
+  IssueAdvancedFilters,
+  IssueFilter,
+  Team,
+} from "./types"
 import { NotificationList } from "@/components/notifications/notification-list"
 import { navigateToNotification } from "@/components/notifications/notification-navigation"
 import { Button } from "@/components/ui/button"
@@ -27,15 +36,6 @@ import {
   unreadNotificationCountQueryOptions,
 } from "@/query/options/tickets"
 import { cn } from "@/lib/utils"
-import { AdvancedFiltersSheet } from "./advanced-filters-sheet"
-import { FilterPills } from "./filter-pills"
-import type { ViewMode } from "./filter-state"
-import { useIssuePanel } from "./issue-panel-provider"
-import type {
-  IssueAdvancedFilters,
-  IssueFilter,
-  Team,
-} from "./types"
 
 export function TicketHeader({
   team,
@@ -60,10 +60,10 @@ export function TicketHeader({
   onSaveView?: () => void
   onUpdateView?: () => void
 }) {
-  const { slug } = useParams({ strict: false }) as { slug?: string }
+  const { slug } = useParams({ strict: false })
   const navigate = useNavigate()
   const [filtersOpen, setFiltersOpen] = useState(false)
-  const { panelOpen, togglePanel } = useIssuePanel()
+  const issuePanel = useIssuePanelSafe()
   const { data: unreadCount = 0 } = useQuery(unreadNotificationCountQueryOptions())
   const { data: recentNotifications = [] } = useQuery(recentNotificationsQueryOptions(10))
   const markAsRead = useMarkNotificationAsReadMutation()
@@ -101,13 +101,14 @@ export function TicketHeader({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() =>
+                    onClick={() => {
+                      if (!slug) return
                       navigate({
                         to: "/$slug/tickets",
-                        params: { slug: slug! },
+                        params: { slug },
                         search: {},
                       })
-                    }
+                    }}
                   >
                     Open inbox
                   </Button>
@@ -167,15 +168,17 @@ export function TicketHeader({
           >
             <LayoutGrid className="size-3.5 text-on-surface-variant" strokeWidth={1.5} />
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className={cn("size-7", panelOpen && "bg-surface-high")}
-            onClick={togglePanel}
-            title={panelOpen ? "Close panel" : "Open panel"}
-          >
-            <PanelRight className="size-3.5 text-on-surface-variant" strokeWidth={1.5} />
-          </Button>
+          {issuePanel ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn("size-7", issuePanel.panelOpen && "bg-surface-high")}
+              onClick={issuePanel.togglePanel}
+              title={issuePanel.panelOpen ? "Close panel" : "Open panel"}
+            >
+              <PanelRight className="size-3.5 text-on-surface-variant" strokeWidth={1.5} />
+            </Button>
+          ) : null}
         </div>
       </div>
 
