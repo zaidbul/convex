@@ -19,13 +19,18 @@ import {
 import { SidebarMenuButton } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import type { Workspace } from "./types"
+import {
+  getOrganizationDashboardPath,
+  getOrganizationSlug,
+  hardNavigate,
+} from "@/lib/auth-routing"
 
 export function WorkspaceDropdown({ workspace }: { workspace: Workspace | null }) {
   const navigate = useNavigate()
   const { user } = useUser()
   const { organization: currentOrg } = useOrganization()
   const { userMemberships, setActive } = useOrganizationList({
-    userMemberships: { infinite: true },
+    userMemberships: true,
   })
   const { signOut } = useClerk()
 
@@ -34,15 +39,38 @@ export function WorkspaceDropdown({ workspace }: { workspace: Workspace | null }
 
   async function handleSwitchOrg(orgId: string, orgSlug: string | null) {
     if (orgId === currentOrg?.id) return
-    await setActive?.({ organization: orgId })
-    if (orgSlug) {
-      navigate({ to: "/$slug/tickets", params: { slug: orgSlug }, search: {} })
+    if (!setActive) {
+      return
+    }
+    const selectedOrg = userMemberships?.data?.find(
+      (membership) => membership.organization.id === orgId
+    )?.organization
+    const destination = getOrganizationDashboardPath(
+      getOrganizationSlug({
+        slug: orgSlug,
+        name: selectedOrg?.name,
+      })
+    )
+    let handledNavigation = false
+
+    await setActive({
+      organization: orgId,
+      redirectUrl: destination,
+      navigate: async ({ decorateUrl }) => {
+        handledNavigation = true
+        hardNavigate(
+          decorateUrl(destination)
+        )
+      },
+    })
+
+    if (!handledNavigation) {
+      hardNavigate(destination)
     }
   }
 
   async function handleSignOut() {
-    await signOut()
-    navigate({ to: "/sign-in" })
+    await signOut({ redirectUrl: "/sign-in" })
   }
 
   return (

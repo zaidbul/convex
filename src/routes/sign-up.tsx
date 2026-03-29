@@ -3,16 +3,16 @@ import {
   createFileRoute,
   redirect,
   Link,
-  useNavigate,
 } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
 import { auth } from "@clerk/tanstack-react-start/server"
-import { useSignUp, useAuth } from "@clerk/tanstack-react-start"
+import { useSignUp } from "@clerk/tanstack-react-start"
 import { useForm } from "@tanstack/react-form"
 import { ChevronLeft } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import { hardNavigate } from "@/lib/auth-routing"
 
 const fetchAuthForRedirect = createServerFn({ method: "GET" }).handler(
   async () => {
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/sign-up")({
     const authState = await fetchAuthForRedirect()
     if (authState.userId && authState.orgSlug) {
       throw redirect({
-        to: "/$slug/tickets",
+        to: "/$slug/tickets/dashboard",
         params: { slug: authState.orgSlug },
         search: {},
       })
@@ -40,10 +40,8 @@ export const Route = createFileRoute("/sign-up")({
 
 type AuthMethod = "google" | "email"
 
-function SignUpPage() {
+export function SignUpPage() {
   const { signUp, errors } = useSignUp()
-  const { isSignedIn } = useAuth()
-  const navigate = useNavigate()
   const [clerkError, setClerkError] = React.useState<string | null>(null)
   const [step, setStep] = React.useState<"email" | "password" | "verifying">(
     "email"
@@ -61,12 +59,6 @@ function SignUpPage() {
       if (stored) setLastUsedMethod(stored)
     }
   }, [])
-
-  React.useEffect(() => {
-    if (isSignedIn) {
-      navigate({ to: "/org-select", replace: true })
-    }
-  }, [isSignedIn, navigate])
 
   // Surface Clerk signal errors
   React.useEffect(() => {
@@ -149,7 +141,7 @@ function SignUpPage() {
           if (signUp.status === "complete") {
             saveLastUsedMethod("email")
             await signUp.finalize()
-            navigate({ to: "/org-select" })
+            hardNavigate("/org-select")
             return
           }
 
@@ -191,7 +183,7 @@ function SignUpPage() {
           if (signUp.status === "complete") {
             saveLastUsedMethod("email")
             await signUp.finalize()
-            navigate({ to: "/org-select" })
+            hardNavigate("/org-select")
             return
           }
 

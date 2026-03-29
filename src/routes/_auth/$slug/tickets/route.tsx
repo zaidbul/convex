@@ -26,13 +26,7 @@ export const Route = createFileRoute("/_auth/$slug/tickets")({
 function TicketsLayout() {
   return (
     <CommandPaletteProvider>
-      <SidebarProvider
-        style={
-          {
-            "--sidebar-width": "330px",
-          } as React.CSSProperties
-        }
-      >
+      <SidebarProvider>
         <Sidebar side="left" collapsible="offcanvas">
           <TicketSidebar />
         </Sidebar>

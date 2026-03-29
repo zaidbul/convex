@@ -1,9 +1,9 @@
-import { useState } from "react"
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router"
-import { createServerFn } from "@tanstack/react-start"
-import { auth } from "@clerk/tanstack-react-start/server"
+import React, { useState } from "react"
+import { createFileRoute } from "@tanstack/react-router"
 import {
+  useAuth,
   useUser,
+  useOrganization,
   useOrganizationList,
   useClerk,
 } from "@clerk/tanstack-react-start"
@@ -12,56 +12,167 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Spinner } from "@/components/ui/spinner"
-
-function slugify(value: string): string {
-  return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "workspace"
-}
-
-const fetchAuthForOrgSelect = createServerFn({ method: "GET" }).handler(
-  async () => {
-    const { userId, orgSlug } = await auth()
-    return { userId: userId ?? null, orgSlug: orgSlug ?? null }
-  }
-)
+import {
+  getDefaultWorkspaceName,
+  getOrganizationDashboardPath,
+  getOrganizationSlug,
+  hardNavigate,
+} from "@/lib/auth-routing"
 
 export const Route = createFileRoute("/org-select")({
-  beforeLoad: async () => {
-    const authState = await fetchAuthForOrgSelect()
-    if (!authState.userId) {
-      throw redirect({ to: "/sign-in" })
-    }
-    if (authState.orgSlug) {
-      throw redirect({
-        to: "/$slug/tickets",
-        params: { slug: authState.orgSlug },
-        search: {},
-      })
-    }
-  },
   component: OrgSelectPage,
 })
 
-function OrgSelectPage() {
-  const navigate = useNavigate()
-  const { user } = useUser()
+export function OrgSelectPage() {
+  const { isLoaded: isAuthLoaded, isSignedIn, orgSlug } = useAuth()
+  const { isLoaded: isUserLoaded, user } = useUser()
+  const { organization } = useOrganization()
   const { signOut } = useClerk()
   const { isLoaded, userMemberships, setActive, createOrganization } =
     useOrganizationList({
-      userMemberships: { infinite: true },
+      userMemberships: true,
     })
 
   const [showCreate, setShowCreate] = useState(false)
   const [newOrgName, setNewOrgName] = useState("")
   const [isCreating, setIsCreating] = useState(false)
   const [isSwitching, setSwitching] = useState<string | null>(null)
+  const [resolverError, setResolverError] = useState<string | null>(null)
+  const [isResolving, setIsResolving] = useState(false)
+  const hasResolvedRef = React.useRef(false)
+  const memberships = userMemberships?.data ?? []
+  const activeOrgSlug =
+    orgSlug ?? (organization ? getOrganizationSlug(organization) : null)
 
-  async function handleSelectOrg(orgId: string, orgSlug: string | null) {
-    setSwitching(orgId)
-    try {
-      await setActive?.({ organization: orgId })
-      if (orgSlug) {
-        navigate({ to: "/$slug/tickets", params: { slug: orgSlug }, search: {} })
+  const activateOrganization = React.useCallback(
+    async (orgId: string, orgSlugValue: string) => {
+      if (!setActive) {
+        throw new Error("Workspace activation is unavailable right now.")
       }
+
+      const destination = getOrganizationDashboardPath(orgSlugValue)
+      let handledNavigation = false
+
+      await setActive({
+        organization: orgId,
+        redirectUrl: destination,
+        navigate: async ({ decorateUrl }) => {
+          handledNavigation = true
+          // Clerk may return an external URL here to refresh cookies before redirecting.
+          hardNavigate(decorateUrl(destination))
+        },
+      })
+
+      if (!handledNavigation) {
+        hardNavigate(destination)
+      }
+    },
+    [setActive]
+  )
+
+  React.useEffect(() => {
+    if (!isAuthLoaded || hasResolvedRef.current) {
+      return
+    }
+
+    if (!isSignedIn) {
+      hasResolvedRef.current = true
+      hardNavigate("/sign-in")
+      return
+    }
+
+    if (activeOrgSlug) {
+      hasResolvedRef.current = true
+      hardNavigate(getOrganizationDashboardPath(activeOrgSlug))
+      return
+    }
+
+    if (!isLoaded) {
+      return
+    }
+
+    if (memberships.length === 0 && !isUserLoaded) {
+      return
+    }
+
+    if (memberships.length === 0) {
+      hasResolvedRef.current = true
+      setIsResolving(true)
+      setResolverError(null)
+
+      void (async () => {
+        try {
+          const org = await createOrganization?.({
+            name: getDefaultWorkspaceName(user),
+          })
+          if (!org) {
+            throw new Error("Failed to create your workspace.")
+          }
+
+          await activateOrganization(org.id, getOrganizationSlug(org))
+        } catch (error) {
+          setResolverError(
+            error instanceof Error
+              ? error.message
+              : "Failed to create your workspace."
+          )
+          setShowCreate(true)
+        } finally {
+          setIsResolving(false)
+        }
+      })()
+
+      return
+    }
+
+    if (memberships.length === 1) {
+      const nextOrg = memberships[0]?.organization
+      if (!nextOrg) {
+        return
+      }
+
+      hasResolvedRef.current = true
+      setIsResolving(true)
+      setResolverError(null)
+
+      void (async () => {
+        try {
+          await activateOrganization(nextOrg.id, getOrganizationSlug(nextOrg))
+        } catch (error) {
+          setResolverError(
+            error instanceof Error
+              ? error.message
+              : "Failed to open your workspace."
+          )
+        } finally {
+          setIsResolving(false)
+        }
+      })()
+    }
+  }, [
+    activateOrganization,
+    createOrganization,
+    isAuthLoaded,
+    isLoaded,
+    isSignedIn,
+    isUserLoaded,
+    memberships,
+    orgSlug,
+    organization,
+    user,
+  ])
+
+  async function handleSelectOrg(orgId: string, orgSlugValue: string) {
+    setSwitching(orgId)
+    setResolverError(null)
+    try {
+      await activateOrganization(orgId, orgSlugValue)
+    } catch (error) {
+      setResolverError(
+        error instanceof Error
+          ? error.message
+          : "Failed to switch workspaces."
+      )
     } finally {
       setSwitching(null)
     }
@@ -71,28 +182,42 @@ function OrgSelectPage() {
     e.preventDefault()
     if (!newOrgName.trim()) return
     setIsCreating(true)
+    setResolverError(null)
     try {
       const org = await createOrganization?.({ name: newOrgName.trim() })
-      if (org) {
-        await setActive?.({ organization: org.id })
-        const slug = org.slug ?? slugify(org.name)
-        navigate({
-          to: "/$slug/tickets",
-          params: { slug },
-          search: {},
-        })
+      if (!org) {
+        throw new Error("Failed to create your workspace.")
       }
+
+      await activateOrganization(org.id, getOrganizationSlug(org))
+    } catch (error) {
+      setResolverError(
+        error instanceof Error
+          ? error.message
+          : "Failed to create your workspace."
+      )
     } finally {
       setIsCreating(false)
     }
   }
 
   async function handleSignOut() {
-    await signOut()
-    navigate({ to: "/sign-in" })
+    await signOut({ redirectUrl: "/sign-in" })
   }
 
-  const memberships = userMemberships?.data ?? []
+  const shouldBlockOnLoad =
+    !isAuthLoaded ||
+    (isAuthLoaded && (!isSignedIn || Boolean(activeOrgSlug))) ||
+    (isSignedIn && (!isLoaded || (memberships.length === 0 && !isUserLoaded))) ||
+    isResolving
+
+  if (shouldBlockOnLoad) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-background px-4">
+        <Spinner className="size-5 text-muted-foreground" />
+      </div>
+    )
+  }
 
   return (
     <div className="grid min-h-screen place-items-center bg-background px-4">
@@ -117,10 +242,18 @@ function OrgSelectPage() {
             Select a workspace
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Choose a workspace to continue
+            {memberships.length > 1
+              ? "Choose a workspace to continue"
+              : "Finishing your workspace setup"}
             {user?.firstName ? `, ${user.firstName}` : ""}
           </p>
         </div>
+
+        {resolverError && (
+          <div className="mb-4 rounded-xl bg-destructive/10 px-4 py-3">
+            <p className="text-sm text-destructive">{resolverError}</p>
+          </div>
+        )}
 
         {/* Workspace list */}
         <div className="space-y-2">
@@ -157,7 +290,7 @@ function OrgSelectPage() {
                 return (
                   <button
                     key={org.id}
-                    onClick={() => handleSelectOrg(org.id, org.slug)}
+                    onClick={() => handleSelectOrg(org.id, getOrganizationSlug(org))}
                     disabled={isSelecting}
                     className="group flex w-full items-center gap-3 rounded-xl bg-surface-low px-4 py-3 text-left transition-colors hover:bg-surface-high disabled:opacity-70"
                   >

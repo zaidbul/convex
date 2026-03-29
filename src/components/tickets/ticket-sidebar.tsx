@@ -22,6 +22,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarRail,
   SidebarSeparator,
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
@@ -217,6 +218,8 @@ export function TicketSidebar() {
         onOpenChange={setCreateDialogOpen}
         teams={teams}
       />
+
+      <SidebarRail />
     </>
   )
 }

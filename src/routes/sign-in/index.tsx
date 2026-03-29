@@ -3,16 +3,16 @@ import {
   createFileRoute,
   redirect,
   Link,
-  useNavigate,
 } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
 import { auth } from "@clerk/tanstack-react-start/server"
-import { useSignIn, useAuth } from "@clerk/tanstack-react-start"
+import { useSignIn } from "@clerk/tanstack-react-start"
 import { useForm } from "@tanstack/react-form"
 import { ChevronLeft } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import { hardNavigate } from "@/lib/auth-routing"
 
 const fetchAuthForRedirect = createServerFn({ method: "GET" }).handler(
   async () => {
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/sign-in/")({
     const authState = await fetchAuthForRedirect()
     if (authState.userId && authState.orgSlug) {
       throw redirect({
-        to: "/$slug/tickets",
+        to: "/$slug/tickets/dashboard",
         params: { slug: authState.orgSlug },
         search: {},
       })
@@ -40,10 +40,8 @@ export const Route = createFileRoute("/sign-in/")({
 
 type AuthMethod = "google" | "email"
 
-function SignInPage() {
+export function SignInPage() {
   const { signIn, errors } = useSignIn()
-  const { isSignedIn } = useAuth()
-  const navigate = useNavigate()
   const [clerkError, setClerkError] = React.useState<string | null>(null)
   const [step, setStep] = React.useState<
     "email" | "password" | "forgotPassword" | "newPassword"
@@ -62,12 +60,6 @@ function SignInPage() {
       if (stored) setLastUsedMethod(stored)
     }
   }, [])
-
-  React.useEffect(() => {
-    if (isSignedIn) {
-      navigate({ to: "/org-select", replace: true })
-    }
-  }, [isSignedIn, navigate])
 
   // Surface Clerk signal errors
   React.useEffect(() => {
@@ -129,7 +121,7 @@ function SignInPage() {
           if (signIn.status === "complete") {
             saveLastUsedMethod("email")
             await signIn.finalize()
-            navigate({ to: "/org-select" })
+            hardNavigate("/org-select")
           }
         } catch (err: unknown) {
           const message =
@@ -175,7 +167,7 @@ function SignInPage() {
             setStep("newPassword")
           } else if (signIn.status === "complete") {
             await signIn.finalize()
-            navigate({ to: "/org-select" })
+            hardNavigate("/org-select")
           }
         } catch (err: unknown) {
           setClerkError(
@@ -212,7 +204,7 @@ function SignInPage() {
 
           if (signIn.status === "complete") {
             await signIn.finalize()
-            navigate({ to: "/org-select" })
+            hardNavigate("/org-select")
           }
         } catch (err: unknown) {
           setClerkError(
