@@ -21,12 +21,20 @@ import {
 } from "@/components/tickets/filter-state"
 import { TeamIssuesScreen } from "@/components/tickets/team-issues-screen"
 import { useCreateSavedViewMutation } from "@/query/mutations/tickets"
-import { teamQueryOptions } from "@/query/options/tickets"
+import { issuesQueryOptions, teamQueryOptions } from "@/query/options/tickets"
 
 export const Route = createFileRoute(
   "/_auth/$slug/tickets/$teamSlug/issues"
 )({
   validateSearch: normalizeTicketRouteSearch,
+  loaderDeps: ({ search }) => ({
+    filters: parseIssueQueryFilters(search, { defaultPresetFilter: "all" }),
+  }),
+  loader: async ({ context, params, deps }) => {
+    await context.queryClient.ensureQueryData(
+      issuesQueryOptions(params.teamSlug, deps.filters)
+    )
+  },
   component: IssuesPage,
 })
 
@@ -36,7 +44,7 @@ function IssuesPage() {
   const navigate = useNavigate()
   const { data: team } = useSuspenseQuery(teamQueryOptions(teamSlug))
   const createSavedView = useCreateSavedViewMutation()
-  const filters = parseIssueQueryFilters(search, { defaultPresetFilter: "active" })
+  const filters = parseIssueQueryFilters(search, { defaultPresetFilter: "all" })
   const viewMode = getViewMode(search)
 
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
@@ -46,7 +54,7 @@ function IssuesPage() {
     navigate({
       to: ".",
       search: {
-        ...serializeIssueQueryFilters(nextFilters, { omitActivePreset: true }),
+        ...serializeIssueQueryFilters(nextFilters, { defaultPresetFilter: "all" }),
         view: viewMode === "board" ? "board" : undefined,
       },
     })
@@ -98,7 +106,7 @@ function IssuesPage() {
         viewMode={viewMode}
         onPresetChange={(presetFilter) => updateSearch({ presetFilter })}
         onAdvancedFiltersChange={(advancedFilters) =>
-          updateSearch(advancedFilters ? { advancedFilters } : { presetFilter: "active" })
+          updateSearch(advancedFilters ? { advancedFilters } : { presetFilter: "all" })
         }
         onViewModeChange={handleViewModeChange}
         onSaveView={handleSaveView}

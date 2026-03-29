@@ -1,5 +1,9 @@
 import { useState } from "react"
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
+import {
+  keepPreviousData,
+  useQuery,
+  useSuspenseQuery,
+} from "@tanstack/react-query"
 import { useNavigate, useParams } from "@tanstack/react-router"
 import { CalendarRange, RefreshCw, Target } from "lucide-react"
 import {
@@ -47,9 +51,10 @@ export function CyclePage({ teamSlug, filters, viewKind }: CyclePageProps) {
   const [createCycleOpen, setCreateCycleOpen] = useState(false)
   const { data: team } = useSuspenseQuery(teamQueryOptions(teamSlug))
   const { data: cycles } = useSuspenseQuery(cyclesQueryOptions(teamSlug))
-  const { data: filteredIssues } = useSuspenseQuery(
-    issuesQueryOptions(teamSlug, filters)
-  )
+  const { data: filteredIssues = [] } = useQuery({
+    ...issuesQueryOptions(teamSlug, filters),
+    placeholderData: keepPreviousData,
+  })
   const { data: allIssues = [] } = useQuery(
     issuesQueryOptions(teamSlug, { presetFilter: "all" })
   )
@@ -61,14 +66,14 @@ export function CyclePage({ teamSlug, filters, viewKind }: CyclePageProps) {
     <div className="flex h-screen flex-col bg-surface-low">
       <TicketHeader
         team={team}
-        activeFilter={getFilterPillSelection(filters, "active")}
+        activeFilter={getFilterPillSelection(filters, "all")}
         advancedFilters={filters.advancedFilters}
         onFilterChange={(presetFilter) =>
           navigate({
             to: ".",
             search: serializeIssueQueryFilters(
               { presetFilter },
-              { omitActivePreset: true }
+              { defaultPresetFilter: "all" }
             ),
           })
         }
@@ -78,8 +83,8 @@ export function CyclePage({ teamSlug, filters, viewKind }: CyclePageProps) {
             search: serializeIssueQueryFilters(
               advancedFilters
                 ? { advancedFilters }
-                : { presetFilter: "active" },
-              { omitActivePreset: true }
+                : { presetFilter: "all" },
+              { defaultPresetFilter: "all" }
             ),
           })
         }
@@ -161,6 +166,8 @@ export function CyclePageBody({
 
   const progress = getCycleProgress(allCycleIssues)
   const openIssues = Math.max(progress.total - progress.completed, 0)
+  const hasNonDefaultFilter =
+    Boolean(filters.advancedFilters) || Boolean(filters.presetFilter && filters.presetFilter !== "all")
 
   return (
     <ScrollArea className="flex-1">
@@ -237,7 +244,7 @@ export function CyclePageBody({
             <div>
               <h3 className="text-sm font-medium text-foreground">Issues</h3>
               <p className="text-xs text-muted-foreground">
-                {filters.presetFilter || filters.advancedFilters
+                {hasNonDefaultFilter
                   ? `${visibleIssues.length} issues match the current filter`
                   : `${visibleIssues.length} issues in this cycle`}
               </p>

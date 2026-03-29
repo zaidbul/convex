@@ -1,5 +1,9 @@
 import { useState } from "react"
-import { useSuspenseQuery } from "@tanstack/react-query"
+import {
+  keepPreviousData,
+  useQuery,
+  useSuspenseQuery,
+} from "@tanstack/react-query"
 import { IssueList } from "@/components/tickets/issue-list"
 import { IssueBoard } from "@/components/tickets/issue-board"
 import { CreateCycleDialog } from "@/components/tickets/create-cycle-dialog"
@@ -23,7 +27,7 @@ import type { IssueFilter, IssueQueryFilters } from "./types"
 function IssueContent({
   teamSlug,
   filters,
-  defaultFilter = "active",
+  defaultFilter = "all",
   savedViewName,
   viewMode = "list",
   onPresetChange,
@@ -48,9 +52,10 @@ function IssueContent({
   const [createCycleOpen, setCreateCycleOpen] = useState(false)
   const { data: team } = useSuspenseQuery(teamQueryOptions(teamSlug))
   const { data: cycles } = useSuspenseQuery(cyclesQueryOptions(teamSlug))
-  const { data: issues } = useSuspenseQuery(
-    issuesQueryOptions(teamSlug, filters)
-  )
+  const { data: issues = [] } = useQuery({
+    ...issuesQueryOptions(teamSlug, filters),
+    placeholderData: keepPreviousData,
+  })
   const { panelOpen } = useIssuePanel()
 
   const listOrBoard =

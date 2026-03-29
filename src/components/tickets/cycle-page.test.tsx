@@ -99,7 +99,7 @@ describe("CyclePageBody", () => {
         cycle={cycle}
         allCycleIssues={allCycleIssues}
         visibleIssues={[allCycleIssues[1]!]}
-        filters={{ presetFilter: "active" }}
+        filters={{ presetFilter: "all" }}
         onCreateCycle={() => undefined}
       />
     )
@@ -109,6 +109,7 @@ describe("CyclePageBody", () => {
     expect(screen.getByText("50% complete")).toBeTruthy()
     expect(screen.getByText("PLT-2")).toBeTruthy()
     expect(screen.queryByText("PLT-1")).toBeNull()
+    expect(screen.getByText("1 issues in this cycle")).toBeTruthy()
   })
 
   test("renders a non-error empty state when the selected cycle is missing", () => {

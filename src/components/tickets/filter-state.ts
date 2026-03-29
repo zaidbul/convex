@@ -130,7 +130,7 @@ export function parseIssueQueryFilters(
 
 export function serializeIssueQueryFilters(
   filters: IssueQueryFilters,
-  options?: { omitActivePreset?: boolean },
+  options?: { defaultPresetFilter?: IssueFilter },
 ): TicketRouteSearch {
   if (filters.advancedFilters && hasAdvancedFilters(filters.advancedFilters)) {
     return {
@@ -145,8 +145,9 @@ export function serializeIssueQueryFilters(
     }
   }
 
+  const defaultPresetFilter = options?.defaultPresetFilter ?? "all"
   const presetFilter =
-    options?.omitActivePreset && filters.presetFilter === "active"
+    filters.presetFilter === defaultPresetFilter
       ? undefined
       : filters.presetFilter
 
@@ -157,7 +158,7 @@ export function serializeIssueQueryFilters(
 
 export function getFilterPillSelection(
   filters: IssueQueryFilters,
-  fallback: IssueFilter = "active",
+  fallback: IssueFilter = "all",
 ) {
   if (filters.advancedFilters && hasAdvancedFilters(filters.advancedFilters)) {
     return undefined

@@ -107,7 +107,7 @@ function SavedViewPage() {
         viewMode={viewMode}
         onPresetChange={(presetFilter) => setFilters({ presetFilter })}
         onAdvancedFiltersChange={(advancedFilters) =>
-          setFilters(advancedFilters ? { advancedFilters } : { presetFilter: "active" })
+          setFilters(advancedFilters ? { advancedFilters } : { presetFilter: "all" })
         }
         onViewModeChange={setViewMode}
         onSaveView={handleSaveAsNew}

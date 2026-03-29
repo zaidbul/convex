@@ -45,7 +45,6 @@
     "@react-aria/i18n": "^3.12.15",
     "@react-stately/calendar": "^3.9.2",
     "@react-stately/datepicker": "^3.16.0",
-    "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.2.1",
     "@tanstack/react-form": "^1.28.5",
     "@tanstack/react-pacer": "^0.21.0",

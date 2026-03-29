@@ -56,7 +56,6 @@ export const Route = createRootRouteWithContext<{
   component: RootComponent,
   errorComponent: RootErrorComponent,
   notFoundComponent: RootNotFoundComponent,
-  pendingComponent: RootPendingComponent,
   shellComponent: RootDocument,
 })
 
@@ -123,14 +122,6 @@ function RootNotFoundComponent() {
           Go home
         </Button>
       </div>
-    </div>
-  )
-}
-
-function RootPendingComponent() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-surface-low">
-      <div className="size-6 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
     </div>
   )
 }
