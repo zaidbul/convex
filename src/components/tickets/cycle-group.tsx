@@ -6,24 +6,17 @@ import {
 } from "@/components/ui/collapsible"
 import { Button } from "@/components/ui/button"
 import { useUpdateCycleStatusMutation } from "@/query/mutations/tickets"
+import { CycleIssuePicker } from "./cycle-issue-picker"
 import { IssueRow } from "./issue-row"
+import { formatCycleDateRange } from "./cycle-utils"
 import type { Cycle, Issue } from "./types"
 
-function formatDateRange(start: string, end: string): string {
-  const s = new Date(start + "T00:00:00")
-  const e = new Date(end + "T00:00:00")
-  const sMonth = s.toLocaleString("en-US", { month: "short" })
-  const eMonth = e.toLocaleString("en-US", { month: "short" })
-  const sDay = s.getDate()
-  const eDay = e.getDate()
-
-  return `${sMonth} ${sDay} — ${eMonth} ${eDay}`
-}
-
 export function CycleGroup({
+  teamSlug,
   cycle,
   issues,
 }: {
+  teamSlug: string
   cycle: Cycle
   issues: Issue[]
 }) {
@@ -59,27 +52,31 @@ export function CycleGroup({
             {issues.length}
           </span>
           <span className="text-xs text-on-surface-variant">
-            {formatDateRange(cycle.startDate, cycle.endDate)}
+            {formatCycleDateRange(cycle.startDate, cycle.endDate)}
           </span>
         </CollapsibleTrigger>
 
-        {action ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 shrink-0 gap-1.5 px-2 text-xs"
-            onClick={() =>
-              updateCycleStatus.mutate({
-                cycleId: cycle.id,
-                status: action.nextStatus,
-              })
-            }
-            disabled={updateCycleStatus.isPending}
-          >
-            <action.icon className="size-3.5" strokeWidth={1.5} />
-            {action.label}
-          </Button>
-        ) : null}
+        <div className="flex items-center gap-1.5">
+          <CycleIssuePicker cycle={cycle} teamSlug={teamSlug} />
+
+          {action ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 shrink-0 gap-1.5 px-2 text-xs"
+              onClick={() =>
+                updateCycleStatus.mutate({
+                  cycleId: cycle.id,
+                  status: action.nextStatus,
+                })
+              }
+              disabled={updateCycleStatus.isPending}
+            >
+              <action.icon className="size-3.5" strokeWidth={1.5} />
+              {action.label}
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       <CollapsibleContent>

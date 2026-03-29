@@ -54,6 +54,7 @@ export function CreateIssueDialog({
   const [title, setTitle] = useState("")
   const [status, setStatus] = useState<IssueStatus>("backlog")
   const [priority, setPriority] = useState<IssuePriority>("none")
+  const [dueDate, setDueDate] = useState("")
   const [teamId, setTeamId] = useState(defaultTeamId ?? teams[0]?.id ?? "")
   const editorRef = useRef<CompactIssueEditorHandle>(null)
   const { data: teamMembers = [] } = useQuery(teamMembersQueryOptions(teamId))
@@ -64,6 +65,7 @@ export function CreateIssueDialog({
     setTitle("")
     setStatus("backlog")
     setPriority("none")
+    setDueDate("")
     setTeamId(defaultTeamId ?? teams[0]?.id ?? "")
     editorRef.current?.clearEditor()
   }
@@ -80,6 +82,7 @@ export function CreateIssueDialog({
         description,
         status,
         priority,
+        dueDate: dueDate || null,
       })
       toast.success(`Issue ${result.identifier} created`)
       resetForm()
@@ -159,6 +162,13 @@ export function CreateIssueDialog({
                 ))}
               </SelectContent>
             </Select>
+
+            <Input
+              type="date"
+              value={dueDate}
+              onChange={(event) => setDueDate(event.target.value)}
+              className="w-auto min-w-[160px]"
+            />
           </div>
 
           <DialogFooter>

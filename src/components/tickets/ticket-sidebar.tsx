@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Link, useParams } from "@tanstack/react-router"
 import { useSuspenseQuery } from "@tanstack/react-query"
 import {
+  LayoutDashboard,
   Inbox,
   CircleUser,
   Search,
@@ -27,6 +28,7 @@ import {
 import { Button } from "@/components/ui/button"
 import {
   teamsQueryOptions,
+  savedViewsQueryOptions,
   workspaceQueryOptions,
 } from "@/query/options/tickets"
 import { TeamTree } from "./team-tree"
@@ -37,8 +39,10 @@ import { useCommandPalette } from "./command-palette-provider"
 export function TicketSidebar() {
   const params = useParams({ strict: false })
   const slug = (params as { slug?: string }).slug
+  const activeViewId = (params as { viewId?: string }).viewId
   const { data: workspace } = useSuspenseQuery(workspaceQueryOptions())
   const { data: teams } = useSuspenseQuery(teamsQueryOptions())
+  const { data: savedViews } = useSuspenseQuery(savedViewsQueryOptions())
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const { setOpen: setCommandPaletteOpen } = useCommandPalette()
 
@@ -68,6 +72,19 @@ export function TicketSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  render={
+                    <Link
+                      to="/$slug/tickets/dashboard"
+                      params={{ slug: slug! }}
+                    />
+                  }
+                >
+                  <LayoutDashboard className="size-4" strokeWidth={1.5} />
+                  <span>Dashboard</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   render={
@@ -150,6 +167,26 @@ export function TicketSidebar() {
                   <span>Views</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              {savedViews.map((view) => (
+                <SidebarMenuItem key={view.id}>
+                  <SidebarMenuButton
+                    isActive={activeViewId === view.id}
+                    render={
+                      <Link
+                        to="/$slug/tickets/views/$viewId"
+                        params={{ slug: slug!, viewId: view.id }}
+                      />
+                    }
+                    className="pl-8"
+                  >
+                    <span
+                      className="size-2.5 shrink-0 rounded-sm"
+                      style={{ backgroundColor: view.teamColor }}
+                    />
+                    <span className="truncate">{view.name}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
               <SidebarMenuItem>
                 <SidebarMenuButton
                   render={

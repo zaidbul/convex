@@ -7,6 +7,7 @@ import {
 import { TicketSidebar } from "@/components/tickets/ticket-sidebar"
 import { CommandPaletteProvider } from "@/components/tickets/command-palette-provider"
 import {
+  savedViewsQueryOptions,
   teamsQueryOptions,
   workspaceQueryOptions,
 } from "@/query/options/tickets"
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/_auth/$slug/tickets")({
     await Promise.all([
       context.queryClient.ensureQueryData(workspaceQueryOptions()),
       context.queryClient.ensureQueryData(teamsQueryOptions()),
+      context.queryClient.ensureQueryData(savedViewsQueryOptions()),
     ])
   },
   component: TicketsLayout,

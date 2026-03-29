@@ -31,6 +31,7 @@ export interface Issue {
   labels: Label[]
   assignees: User[]
   cycleId: string | null
+  dueDate: string | null
   createdAt: string
   updatedAt: string
 }
@@ -90,6 +91,37 @@ export interface Project {
   leadUserId: string | null
   createdAt: string
   updatedAt: string
+}
+
+export type FilterLogic = "and" | "or"
+
+export interface IssueAdvancedFilters {
+  logic: FilterLogic
+  statuses: IssueStatus[]
+  priorities: IssuePriority[]
+  assigneeIds: string[]
+  labelIds: string[]
+  cycleIds: string[]
+  dueFrom?: string
+  dueTo?: string
+}
+
+export interface IssueQueryFilters {
+  presetFilter?: IssueFilter
+  advancedFilters?: IssueAdvancedFilters
+}
+
+export interface SavedView {
+  id: string
+  name: string
+  teamId: string
+  teamSlug: string
+  teamName: string
+  teamColor: string
+  createdAt: string
+  updatedAt: string
+  presetFilter?: IssueFilter
+  advancedFilters?: IssueAdvancedFilters
 }
 
 export type IssueFilter =

@@ -1,4 +1,3 @@
-import { useState } from "react"
 import { BarChart3, Inbox, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { IssueFilter } from "./types"
@@ -19,23 +18,20 @@ const filters: FilterOption[] = [
 ]
 
 export function FilterPills({
-  activeFilter = "active",
+  activeFilter,
   onFilterChange,
 }: {
   activeFilter?: IssueFilter
   onFilterChange?: (filter: IssueFilter) => void
 }) {
-  const [selected, setSelected] = useState<IssueFilter>(activeFilter)
-
   const handleClick = (value: IssueFilter) => {
-    setSelected(value)
     onFilterChange?.(value)
   }
 
   return (
     <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
       {filters.map((filter) => {
-        const isActive = filter.value === selected
+        const isActive = filter.value === activeFilter
         return (
           <button
             key={filter.value}

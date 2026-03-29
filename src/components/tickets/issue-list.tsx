@@ -10,9 +10,11 @@ import { IssueRow } from "./issue-row"
 import type { Cycle, Issue } from "./types"
 
 export function IssueList({
+  teamSlug,
   cycles,
   issues,
 }: {
+  teamSlug: string
   cycles: Cycle[]
   issues: Issue[]
 }) {
@@ -47,6 +49,7 @@ export function IssueList({
         {issuesByCycle.map(({ cycle, issues: cycleIssues }) => (
           <CycleGroup
             key={cycle.id}
+            teamSlug={teamSlug}
             cycle={cycle}
             issues={cycleIssues}
           />

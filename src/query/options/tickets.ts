@@ -1,5 +1,7 @@
 import { queryOptions } from "@tanstack/react-query"
 import {
+  getSavedView,
+  getSavedViews,
   getWorkspace,
   getTeams,
   getProjects,
@@ -12,7 +14,11 @@ import {
   getLabels,
   getIssueActivity,
   getIssueComments,
+  getDashboardStats,
+  getMyIssues,
+  getActiveCycles,
 } from "@/server/functions/tickets"
+import type { IssueFilter, IssueQueryFilters } from "@/components/tickets/types"
 import {
   getUnreadNotificationCount,
   listNotifications,
@@ -49,11 +55,31 @@ export const cyclesQueryOptions = (teamSlug: string) =>
     queryFn: () => getCycles({ data: { teamSlug } }),
   })
 
-export const issuesQueryOptions = (teamSlug: string, filter?: string) =>
-  queryOptions({
-    queryKey: ["issues", teamSlug, filter ?? "all"],
-    queryFn: () => getIssues({ data: { teamSlug, filter } }),
+function normalizeIssueFilters(
+  filters?: string | IssueFilter | IssueQueryFilters,
+): IssueQueryFilters | undefined {
+  if (!filters) {
+    return undefined
+  }
+
+  if (typeof filters === "string") {
+    return { presetFilter: filters as IssueFilter }
+  }
+
+  return filters
+}
+
+export const issuesQueryOptions = (
+  teamSlug: string,
+  filters?: string | IssueFilter | IssueQueryFilters,
+) => {
+  const normalizedFilters = normalizeIssueFilters(filters)
+
+  return queryOptions({
+    queryKey: ["issues", teamSlug, JSON.stringify(normalizedFilters ?? {})],
+    queryFn: () => getIssues({ data: { teamSlug, filter: normalizedFilters } }),
   })
+}
 
 export const issueDetailQueryOptions = (issueId: string) =>
   queryOptions({
@@ -73,6 +99,19 @@ export const labelsQueryOptions = () =>
   queryOptions({
     queryKey: ["labels"],
     queryFn: () => getLabels(),
+  })
+
+export const savedViewsQueryOptions = () =>
+  queryOptions({
+    queryKey: ["saved-views"],
+    queryFn: () => getSavedViews(),
+  })
+
+export const savedViewQueryOptions = (viewId: string) =>
+  queryOptions({
+    queryKey: ["saved-view", viewId],
+    queryFn: () => getSavedView({ data: { viewId } }),
+    enabled: !!viewId,
   })
 
 export const issueActivityQueryOptions = (issueId: string) =>
@@ -126,4 +165,26 @@ export const unreadNotificationCountQueryOptions = () =>
     queryKey: ["notifications", "unread-count"],
     queryFn: () => getUnreadNotificationCount(),
     refetchInterval: 15_000,
+  })
+
+// ---------------------------------------------------------------------------
+// Dashboard
+// ---------------------------------------------------------------------------
+
+export const dashboardStatsQueryOptions = () =>
+  queryOptions({
+    queryKey: ["dashboard-stats"],
+    queryFn: () => getDashboardStats(),
+  })
+
+export const myIssuesQueryOptions = (limit = 20) =>
+  queryOptions({
+    queryKey: ["my-issues", limit],
+    queryFn: () => getMyIssues({ data: { limit } }),
+  })
+
+export const activeCyclesQueryOptions = () =>
+  queryOptions({
+    queryKey: ["active-cycles"],
+    queryFn: () => getActiveCycles(),
   })

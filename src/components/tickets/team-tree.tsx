@@ -1,4 +1,4 @@
-import { Link, useParams } from "@tanstack/react-router"
+import { Link, useLocation, useParams } from "@tanstack/react-router"
 import {
   ChevronRight,
   CircleDot,
@@ -23,7 +23,18 @@ const teamNavItems = [
   { label: "Issues", icon: CircleDot, path: "issues" as const },
 ]
 
-const cycleSubItems = [{ label: "Current" }, { label: "Upcoming" }]
+const cycleSubItems = [
+  {
+    label: "Current",
+    path: "current" as const,
+    to: "/$slug/tickets/$teamSlug/cycles/current" as const,
+  },
+  {
+    label: "Upcoming",
+    path: "upcoming" as const,
+    to: "/$slug/tickets/$teamSlug/cycles/upcoming" as const,
+  },
+]
 
 export function TeamTree({ teams }: { teams: Team[] }) {
   const params = useParams({ strict: false })
@@ -52,6 +63,7 @@ export function TeamTree({ teams }: { teams: Team[] }) {
 
 function TeamItem({ team, isActive }: { team: Team; isActive: boolean }) {
   const params = useParams({ strict: false })
+  const location = useLocation()
   const slug = (params as { slug?: string }).slug
   const activeTeamSlug = (params as { teamSlug?: string }).teamSlug
 
@@ -107,10 +119,21 @@ function TeamItem({ team, isActive }: { team: Team; isActive: boolean }) {
                   <ul className="ml-4 flex flex-col gap-0.5 py-0.5">
                     {cycleSubItems.map((sub) => (
                       <li key={sub.label}>
-                        <SidebarMenuSubButton size="sm" className="opacity-50 pointer-events-none">
-                          <span className="text-on-surface-variant">
-                            {sub.label}
-                          </span>
+                        <SidebarMenuSubButton
+                          size="sm"
+                          isActive={
+                            location.pathname ===
+                            `/${slug}/tickets/${team.slug}/cycles/${sub.path}`
+                          }
+                          render={
+                            <Link
+                              to={sub.to}
+                              params={{ slug: slug!, teamSlug: team.slug }}
+                              search={{ filter: undefined }}
+                            />
+                          }
+                        >
+                          <span>{sub.label}</span>
                         </SidebarMenuSubButton>
                       </li>
                     ))}

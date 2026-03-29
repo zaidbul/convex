@@ -3,6 +3,7 @@ import { Check, ChevronDown, Circle, Plus, User as UserIcon } from "lucide-react
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +24,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command"
+import { Input } from "@/components/ui/input"
 import { issueStatuses, issuePriorities } from "@/db/schema"
 import {
   teamMembersQueryOptions,
@@ -34,6 +36,7 @@ import {
   useUpdateIssuePriorityMutation,
   useUpdateIssueAssigneeMutation,
   useUpdateIssueCycleMutation,
+  useUpdateIssueDueDateMutation,
   useUpdateIssueLabelsMutation,
 } from "@/query/mutations/tickets"
 import { statusConfig, priorityConfig, labelColorMap } from "./constants"
@@ -241,6 +244,41 @@ function CycleDropdown({ issue, teamSlug }: { issue: IssueDetail; teamSlug: stri
   )
 }
 
+function DueDateField({ issue }: { issue: IssueDetail }) {
+  const updateDueDate = useUpdateIssueDueDateMutation()
+
+  return (
+    <div className="flex items-center gap-2">
+      <Input
+        type="date"
+        value={issue.dueDate ?? ""}
+        onChange={(event) =>
+          updateDueDate.mutate({
+            issueId: issue.id,
+            dueDate: event.target.value || null,
+          })
+        }
+        className="h-8 w-[148px]"
+      />
+      {issue.dueDate ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() =>
+            updateDueDate.mutate({
+              issueId: issue.id,
+              dueDate: null,
+            })
+          }
+        >
+          Clear
+        </Button>
+      ) : null}
+    </div>
+  )
+}
+
 function LabelsSection({ issue }: { issue: IssueDetail }) {
   const updateLabels = useUpdateIssueLabelsMutation()
   const { data: allLabels = [] } = useQuery(labelsQueryOptions())
@@ -331,6 +369,9 @@ export function IssuePropertiesPanel({
         </PropertyRow>
         <PropertyRow label="Cycle">
           <CycleDropdown issue={issue} teamSlug={teamSlug} />
+        </PropertyRow>
+        <PropertyRow label="Due date">
+          <DueDateField issue={issue} />
         </PropertyRow>
       </div>
 

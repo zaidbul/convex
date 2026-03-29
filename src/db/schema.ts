@@ -266,6 +266,7 @@ export const issues = sqliteTable(
     status: text("status", { enum: issueStatuses }).notNull(),
     priority: text("priority", { enum: issuePriorities }).notNull(),
     priorityScore: integer("priority_score").notNull().default(0),
+    dueDate: text("due_date"),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
     completedAt: text("completed_at"),
@@ -280,6 +281,7 @@ export const issues = sqliteTable(
     cycleIdIdx: index("issues_cycle_id_idx").on(table.cycleId),
     assigneeUserIdIdx: index("issues_assignee_user_id_idx").on(table.assigneeUserId),
     creatorUserIdIdx: index("issues_creator_user_id_idx").on(table.creatorUserId),
+    dueDateIdx: index("issues_due_date_idx").on(table.dueDate),
     workspaceIdentifierUnique: uniqueIndex("issues_workspace_identifier_uq").on(
       table.workspaceId,
       table.identifier
@@ -287,6 +289,37 @@ export const issues = sqliteTable(
     teamSequenceUnique: uniqueIndex("issues_team_sequence_uq").on(
       table.teamId,
       table.sequenceNumber
+    ),
+  })
+)
+
+export const savedViews = sqliteTable(
+  "saved_views",
+  {
+    id: text("id").primaryKey(),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    teamId: text("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    ownerUserId: text("owner_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    presetFilter: text("preset_filter"),
+    advancedFiltersJson: text("advanced_filters_json", { mode: "json" }),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => ({
+    workspaceIdIdx: index("saved_views_workspace_id_idx").on(table.workspaceId),
+    teamIdIdx: index("saved_views_team_id_idx").on(table.teamId),
+    ownerUserIdIdx: index("saved_views_owner_user_id_idx").on(table.ownerUserId),
+    ownerTeamUpdatedIdx: index("saved_views_owner_team_updated_idx").on(
+      table.ownerUserId,
+      table.teamId,
+      table.updatedAt
     ),
   })
 )
@@ -447,6 +480,7 @@ export type Project = typeof projects.$inferSelect
 export type Cycle = typeof cycles.$inferSelect
 export type Label = typeof labels.$inferSelect
 export type Issue = typeof issues.$inferSelect
+export type SavedView = typeof savedViews.$inferSelect
 export type IssueFavorite = typeof issueFavorites.$inferSelect
 export type IssueComment = typeof issueComments.$inferSelect
 export type IssueActivity = typeof issueActivity.$inferSelect

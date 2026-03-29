@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, gte, inArray, sql } from "drizzle-orm"
+import { and, asc, desc, eq, gt, gte, inArray, lte, or, sql } from "drizzle-orm"
 import type { LibSQLDatabase } from "drizzle-orm/libsql"
 import * as schema from "@/db/schema"
 import type {
@@ -8,11 +8,14 @@ import type {
   Issue as TicketIssue,
   IssueCommentDetail,
   IssueDetail as TicketIssueDetail,
+  IssueAdvancedFilters,
   IssueFilter,
   IssuePriority,
+  IssueQueryFilters,
   IssueStatus,
   Label as TicketLabel,
   Project as TicketProject,
+  SavedView as TicketSavedView,
   Team as TicketTeam,
   User as TicketUser,
   Workspace as TicketWorkspace,
@@ -309,6 +312,24 @@ function mapUser(row: typeof schema.users.$inferSelect): TicketUser {
   }
 }
 
+function mapSavedView(
+  row: typeof schema.savedViews.$inferSelect,
+  team: typeof schema.teams.$inferSelect,
+): TicketSavedView {
+  return {
+    id: row.id,
+    name: row.name,
+    teamId: row.teamId,
+    teamSlug: team.slug,
+    teamName: team.name,
+    teamColor: team.color,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    presetFilter: row.presetFilter as IssueFilter | undefined,
+    advancedFilters: (row.advancedFiltersJson as IssueAdvancedFilters | null) ?? undefined,
+  }
+}
+
 async function getTeamRecordById(
   db: TicketsDatabase,
   teamId: string,
@@ -588,7 +609,7 @@ export async function listCyclesForViewerTeam(
   return rows.map(mapCycle)
 }
 
-function buildIssueFilter(filter?: string, viewerUserId?: string) {
+function buildPresetIssueFilter(filter?: IssueFilter | string, viewerUserId?: string) {
   if (!filter || filter === "all") {
     return undefined
   }
@@ -621,23 +642,79 @@ function buildIssueFilter(filter?: string, viewerUserId?: string) {
   return undefined
 }
 
+function buildDueDateClause(filters: IssueAdvancedFilters) {
+  const clauses = [
+    filters.dueFrom ? gte(schema.issues.dueDate, filters.dueFrom) : undefined,
+    filters.dueTo ? lte(schema.issues.dueDate, filters.dueTo) : undefined,
+  ].filter(Boolean)
+
+  if (clauses.length === 0) {
+    return undefined
+  }
+
+  return and(...clauses)
+}
+
+async function buildAdvancedIssueFilter(
+  db: TicketsDatabase,
+  filters: IssueAdvancedFilters,
+) {
+  const fieldClauses = [
+    filters.statuses.length > 0 ? inArray(schema.issues.status, filters.statuses) : undefined,
+    filters.priorities.length > 0 ? inArray(schema.issues.priority, filters.priorities) : undefined,
+    filters.assigneeIds.length > 0 ? inArray(schema.issues.assigneeUserId, filters.assigneeIds) : undefined,
+    filters.cycleIds.length > 0 ? inArray(schema.issues.cycleId, filters.cycleIds) : undefined,
+    buildDueDateClause(filters),
+  ].filter(Boolean)
+
+  if (filters.labelIds.length > 0) {
+    const matchingIssueRows = await db
+      .selectDistinct({ issueId: schema.issueLabels.issueId })
+      .from(schema.issueLabels)
+      .where(inArray(schema.issueLabels.labelId, filters.labelIds))
+
+    if (matchingIssueRows.length === 0) {
+      return sql`1 = 0`
+    }
+
+    fieldClauses.push(
+      inArray(
+        schema.issues.id,
+        matchingIssueRows.map((row) => row.issueId),
+      ),
+    )
+  }
+
+  if (fieldClauses.length === 0) {
+    return undefined
+  }
+
+  return filters.logic === "or" ? or(...fieldClauses) : and(...fieldClauses)
+}
+
 export async function listIssuesForViewerTeam(
   db: TicketsDatabase,
   context: ViewerContext,
   teamSlug: string,
-  filter?: IssueFilter | string
+  filters?: IssueQueryFilters
 ): Promise<TicketIssue[]> {
   const team = await getAccessibleTeamRecord(db, context, teamSlug)
   if (!team || !context.workspaceId) {
     return []
   }
 
+  const issueFilter = filters?.presetFilter
+    ? buildPresetIssueFilter(filters.presetFilter, context.userId)
+    : filters?.advancedFilters
+      ? await buildAdvancedIssueFilter(db, filters.advancedFilters)
+      : undefined
+
   const whereClause = and(
     eq(schema.issues.workspaceId, context.workspaceId),
     eq(schema.issues.teamId, team.id),
     sql`${schema.issues.deletedAt} IS NULL`,
     sql`${schema.issues.archivedAt} IS NULL`,
-    buildIssueFilter(filter, context.userId)
+    issueFilter
   )
 
   const issueRows = await db.query.issues.findMany({
@@ -702,6 +779,7 @@ export async function listIssuesForViewerTeam(
       labels: labelsByIssueId.get(issue.id) ?? [],
       assignees: assignee ? [assignee] : [],
       cycleId: issue.cycleId,
+      dueDate: issue.dueDate,
       createdAt: issue.createdAt,
       updatedAt: issue.updatedAt,
     }
@@ -725,6 +803,7 @@ export async function createIssueForViewer(
     description?: string
     status: IssueStatus
     priority: IssuePriority
+    dueDate?: string | null
   }
 ): Promise<{ id: string; identifier: string }> {
   if (!context.workspaceId) {
@@ -787,6 +866,7 @@ export async function createIssueForViewer(
     status: input.status,
     priority: input.priority,
     priorityScore: priorityScoreMap[input.priority],
+    dueDate: input.dueDate ?? null,
     createdAt: timestamp,
     updatedAt: timestamp,
   })
@@ -882,6 +962,7 @@ export async function getIssueByIdForViewer(
     })),
     assignees: assignee ? [mapUser(assignee)] : [],
     cycleId: issue.cycleId,
+    dueDate: issue.dueDate,
     createdAt: issue.createdAt,
     updatedAt: issue.updatedAt,
     completedAt: issue.completedAt,
@@ -1106,6 +1187,24 @@ export async function updateIssueCycleForViewer(
     .where(eq(schema.issues.id, issueId))
 }
 
+export async function updateIssueDueDateForViewer(
+  db: TicketsDatabase,
+  context: ViewerContext,
+  issueId: string,
+  dueDate: string | null,
+): Promise<void> {
+  const issue = await verifyIssueAccess(db, context, issueId)
+
+  if ((issue.dueDate ?? null) === dueDate) {
+    return
+  }
+
+  await db
+    .update(schema.issues)
+    .set({ dueDate, updatedAt: nowIso() })
+    .where(eq(schema.issues.id, issueId))
+}
+
 export async function updateCycleStatusForViewer(
   db: TicketsDatabase,
   context: ViewerContext,
@@ -1241,6 +1340,198 @@ export async function listTeamMembersForViewer(
     .orderBy(asc(schema.users.name))
 
   return rows.map((row) => mapUser(row.user))
+}
+
+async function getAccessibleOwnedSavedViewRecord(
+  db: TicketsDatabase,
+  context: ViewerContext,
+  viewId: string,
+) {
+  if (!context.workspaceId) {
+    throw new Error("No active workspace")
+  }
+
+  const rows = await db
+    .select({
+      view: schema.savedViews,
+      team: schema.teams,
+    })
+    .from(schema.savedViews)
+    .innerJoin(schema.teams, eq(schema.savedViews.teamId, schema.teams.id))
+    .innerJoin(schema.teamMemberships, eq(schema.teamMemberships.teamId, schema.teams.id))
+    .where(
+      and(
+        eq(schema.savedViews.id, viewId),
+        eq(schema.savedViews.workspaceId, context.workspaceId),
+        eq(schema.savedViews.ownerUserId, context.userId),
+        eq(schema.teamMemberships.userId, context.userId),
+      ),
+    )
+    .limit(1)
+
+  const row = rows[0]
+
+  if (!row) {
+    throw new Error("Saved view not found")
+  }
+
+  return row
+}
+
+export async function listSavedViewsForViewer(
+  db: TicketsDatabase,
+  context: ViewerContext,
+): Promise<TicketSavedView[]> {
+  if (!context.workspaceId) {
+    return []
+  }
+
+  const rows = await db
+    .select({
+      view: schema.savedViews,
+      team: schema.teams,
+    })
+    .from(schema.savedViews)
+    .innerJoin(schema.teams, eq(schema.savedViews.teamId, schema.teams.id))
+    .innerJoin(schema.teamMemberships, eq(schema.teamMemberships.teamId, schema.teams.id))
+    .where(
+      and(
+        eq(schema.savedViews.workspaceId, context.workspaceId),
+        eq(schema.savedViews.ownerUserId, context.userId),
+        eq(schema.teamMemberships.userId, context.userId),
+      ),
+    )
+    .orderBy(desc(schema.savedViews.updatedAt), asc(schema.savedViews.name))
+
+  return rows.map((row) => mapSavedView(row.view, row.team))
+}
+
+export async function getSavedViewForViewer(
+  db: TicketsDatabase,
+  context: ViewerContext,
+  viewId: string,
+): Promise<TicketSavedView | null> {
+  if (!context.workspaceId) {
+    return null
+  }
+
+  const row = await getAccessibleOwnedSavedViewRecord(db, context, viewId)
+  return mapSavedView(row.view, row.team)
+}
+
+export async function createSavedViewForViewer(
+  db: TicketsDatabase,
+  context: ViewerContext,
+  input: {
+    teamId: string
+    name: string
+    presetFilter?: IssueFilter
+    advancedFilters?: IssueAdvancedFilters
+  },
+): Promise<TicketSavedView> {
+  if (!context.workspaceId) {
+    throw new Error("No active workspace")
+  }
+
+  const teamRows = await db
+    .select({ team: schema.teams })
+    .from(schema.teams)
+    .innerJoin(schema.teamMemberships, eq(schema.teamMemberships.teamId, schema.teams.id))
+    .where(
+      and(
+        eq(schema.teams.id, input.teamId),
+        eq(schema.teams.workspaceId, context.workspaceId),
+        eq(schema.teamMemberships.userId, context.userId),
+      ),
+    )
+    .limit(1)
+
+  const team = teamRows[0]?.team
+
+  if (!team) {
+    throw new Error("Team not found")
+  }
+
+  const timestamp = nowIso()
+  const viewId = crypto.randomUUID()
+
+  await db.insert(schema.savedViews).values({
+    id: viewId,
+    workspaceId: context.workspaceId,
+    teamId: team.id,
+    ownerUserId: context.userId,
+    name: input.name,
+    presetFilter: input.advancedFilters ? null : (input.presetFilter ?? null),
+    advancedFiltersJson: input.advancedFilters ?? null,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  })
+
+  return {
+    id: viewId,
+    name: input.name,
+    teamId: team.id,
+    teamSlug: team.slug,
+    teamName: team.name,
+    teamColor: team.color,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    presetFilter: input.advancedFilters ? undefined : input.presetFilter,
+    advancedFilters: input.advancedFilters,
+  }
+}
+
+export async function updateSavedViewForViewer(
+  db: TicketsDatabase,
+  context: ViewerContext,
+  viewId: string,
+  updates: {
+    name?: string
+    presetFilter?: IssueFilter | null
+    advancedFilters?: IssueAdvancedFilters | null
+  },
+): Promise<TicketSavedView> {
+  const row = await getAccessibleOwnedSavedViewRecord(db, context, viewId)
+  const timestamp = nowIso()
+
+  const nextAdvancedFilters =
+    updates.advancedFilters === undefined
+      ? (row.view.advancedFiltersJson as IssueAdvancedFilters | null)
+      : updates.advancedFilters
+  const nextPresetFilter =
+    nextAdvancedFilters
+      ? null
+      : updates.presetFilter === undefined
+        ? (row.view.presetFilter as IssueFilter | null)
+        : updates.presetFilter
+
+  await db
+    .update(schema.savedViews)
+    .set({
+      name: updates.name ?? row.view.name,
+      presetFilter: nextPresetFilter,
+      advancedFiltersJson: nextAdvancedFilters,
+      updatedAt: timestamp,
+    })
+    .where(eq(schema.savedViews.id, viewId))
+
+  return {
+    ...mapSavedView(row.view, row.team),
+    name: updates.name ?? row.view.name,
+    presetFilter: nextPresetFilter ?? undefined,
+    advancedFilters: nextAdvancedFilters ?? undefined,
+    updatedAt: timestamp,
+  }
+}
+
+export async function deleteSavedViewForViewer(
+  db: TicketsDatabase,
+  context: ViewerContext,
+  viewId: string,
+): Promise<void> {
+  await getAccessibleOwnedSavedViewRecord(db, context, viewId)
+
+  await db.delete(schema.savedViews).where(eq(schema.savedViews.id, viewId))
 }
 
 export async function listLabelsForViewer(
@@ -1487,4 +1778,193 @@ export async function listProjectsForViewer(
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }))
+}
+
+// ---------------------------------------------------------------------------
+// Dashboard aggregation queries (workspace-level)
+// ---------------------------------------------------------------------------
+
+export async function getDashboardStatsForViewer(
+  db: TicketsDatabase,
+  context: ViewerContext
+): Promise<{ byStatus: Record<string, number>; total: number }> {
+  if (!context.workspaceId) {
+    return { byStatus: {}, total: 0 }
+  }
+
+  const rows = await db
+    .select({
+      status: schema.issues.status,
+      count: sql<number>`count(*)`.as("count"),
+    })
+    .from(schema.issues)
+    .where(
+      and(
+        eq(schema.issues.workspaceId, context.workspaceId),
+        sql`${schema.issues.deletedAt} IS NULL`,
+        sql`${schema.issues.archivedAt} IS NULL`
+      )
+    )
+    .groupBy(schema.issues.status)
+
+  const byStatus: Record<string, number> = {}
+  let total = 0
+  for (const row of rows) {
+    byStatus[row.status] = Number(row.count)
+    total += Number(row.count)
+  }
+
+  return { byStatus, total }
+}
+
+export type CrossTeamIssue = TicketIssue & { teamSlug: string }
+
+export async function listMyIssuesAcrossTeams(
+  db: TicketsDatabase,
+  context: ViewerContext,
+  limit = 20
+): Promise<CrossTeamIssue[]> {
+  if (!context.workspaceId) {
+    return []
+  }
+
+  const issueRows = await db
+    .select({
+      issue: schema.issues,
+      teamSlug: schema.teams.slug,
+    })
+    .from(schema.issues)
+    .innerJoin(schema.teams, eq(schema.issues.teamId, schema.teams.id))
+    .where(
+      and(
+        eq(schema.issues.workspaceId, context.workspaceId),
+        eq(schema.issues.assigneeUserId, context.userId),
+        sql`${schema.issues.deletedAt} IS NULL`,
+        sql`${schema.issues.archivedAt} IS NULL`
+      )
+    )
+    .orderBy(desc(schema.issues.priorityScore), desc(schema.issues.updatedAt))
+    .limit(limit)
+
+  if (issueRows.length === 0) {
+    return []
+  }
+
+  const issueIds = issueRows.map((r) => r.issue.id)
+
+  const labelRows = await db
+    .select({
+      issueId: schema.issueLabels.issueId,
+      labelId: schema.labels.id,
+      labelName: schema.labels.name,
+      labelColor: schema.labels.color,
+    })
+    .from(schema.issueLabels)
+    .innerJoin(schema.labels, eq(schema.issueLabels.labelId, schema.labels.id))
+    .where(inArray(schema.issueLabels.issueId, issueIds))
+
+  const labelsByIssueId = new Map<string, TicketIssue["labels"]>()
+  for (const row of labelRows) {
+    const current = labelsByIssueId.get(row.issueId) ?? []
+    current.push({ id: row.labelId, name: row.labelName, color: row.labelColor })
+    labelsByIssueId.set(row.issueId, current)
+  }
+
+  const assignee = await db.query.users.findFirst({
+    where: eq(schema.users.id, context.userId),
+  })
+  const mappedAssignee = assignee ? mapUser(assignee) : undefined
+
+  return issueRows.map(({ issue, teamSlug }) => ({
+    id: issue.id,
+    identifier: issue.identifier,
+    title: issue.title,
+    status: issue.status,
+    priority: issue.priority,
+    priorityScore: issue.priorityScore,
+    labels: labelsByIssueId.get(issue.id) ?? [],
+    assignees: mappedAssignee ? [mappedAssignee] : [],
+    cycleId: issue.cycleId,
+    dueDate: issue.dueDate,
+    createdAt: issue.createdAt,
+    updatedAt: issue.updatedAt,
+    teamSlug,
+  }))
+}
+
+export type ActiveCycleWithProgress = {
+  cycle: TicketCycle
+  teamName: string
+  teamSlug: string
+  totalIssues: number
+  completedIssues: number
+}
+
+export async function listActiveCyclesAcrossTeams(
+  db: TicketsDatabase,
+  context: ViewerContext
+): Promise<ActiveCycleWithProgress[]> {
+  if (!context.workspaceId) {
+    return []
+  }
+
+  const cycleRows = await db
+    .select({
+      cycle: schema.cycles,
+      teamName: schema.teams.name,
+      teamSlug: schema.teams.slug,
+    })
+    .from(schema.cycles)
+    .innerJoin(schema.teams, eq(schema.cycles.teamId, schema.teams.id))
+    .innerJoin(
+      schema.teamMemberships,
+      eq(schema.teamMemberships.teamId, schema.teams.id)
+    )
+    .where(
+      and(
+        eq(schema.teams.workspaceId, context.workspaceId),
+        eq(schema.teamMemberships.userId, context.userId),
+        eq(schema.cycles.status, "active")
+      )
+    )
+    .orderBy(asc(schema.cycles.startDate))
+
+  if (cycleRows.length === 0) {
+    return []
+  }
+
+  const cycleIds = cycleRows.map((r) => r.cycle.id)
+
+  const issueCountRows = await db
+    .select({
+      cycleId: schema.issues.cycleId,
+      total: sql<number>`count(*)`.as("total"),
+      completed: sql<number>`sum(case when ${schema.issues.status} in ('done', 'cancelled') then 1 else 0 end)`.as("completed"),
+    })
+    .from(schema.issues)
+    .where(
+      and(
+        inArray(schema.issues.cycleId, cycleIds),
+        sql`${schema.issues.deletedAt} IS NULL`
+      )
+    )
+    .groupBy(schema.issues.cycleId)
+
+  const countsByCycleId = new Map(
+    issueCountRows.map((r) => [
+      r.cycleId,
+      { total: Number(r.total), completed: Number(r.completed) },
+    ])
+  )
+
+  return cycleRows.map(({ cycle, teamName, teamSlug }) => {
+    const counts = countsByCycleId.get(cycle.id) ?? { total: 0, completed: 0 }
+    return {
+      cycle: mapCycle(cycle),
+      teamName,
+      teamSlug,
+      totalIssues: counts.total,
+      completedIssues: counts.completed,
+    }
+  })
 }

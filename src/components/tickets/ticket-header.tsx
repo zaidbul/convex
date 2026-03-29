@@ -4,6 +4,7 @@ import {
   LayoutGrid,
   PanelRight,
 } from "lucide-react"
+import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { useNavigate, useParams } from "@tanstack/react-router"
 import { NotificationList } from "@/components/notifications/notification-list"
@@ -24,12 +25,36 @@ import {
   recentNotificationsQueryOptions,
   unreadNotificationCountQueryOptions,
 } from "@/query/options/tickets"
+import { AdvancedFiltersSheet } from "./advanced-filters-sheet"
 import { FilterPills } from "./filter-pills"
-import type { IssueFilter, Team } from "./types"
+import type {
+  IssueAdvancedFilters,
+  IssueFilter,
+  Team,
+} from "./types"
 
-export function TicketHeader({ team, activeFilter, onFilterChange }: { team: Team; activeFilter?: IssueFilter; onFilterChange?: (filter: IssueFilter) => void }) {
+export function TicketHeader({
+  team,
+  activeFilter,
+  advancedFilters,
+  savedViewName,
+  onFilterChange,
+  onAdvancedFiltersChange,
+  onSaveView,
+  onUpdateView,
+}: {
+  team: Team
+  activeFilter?: IssueFilter
+  advancedFilters?: IssueAdvancedFilters
+  savedViewName?: string
+  onFilterChange?: (filter: IssueFilter) => void
+  onAdvancedFiltersChange?: (filters?: IssueAdvancedFilters) => void
+  onSaveView?: () => void
+  onUpdateView?: () => void
+}) {
   const { slug } = useParams({ strict: false }) as { slug?: string }
   const navigate = useNavigate()
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const { data: unreadCount = 0 } = useQuery(unreadNotificationCountQueryOptions())
   const { data: recentNotifications = [] } = useQuery(recentNotificationsQueryOptions(10))
   const markAsRead = useMarkNotificationAsReadMutation()
@@ -106,7 +131,13 @@ export function TicketHeader({ team, activeFilter, onFilterChange }: { team: Tea
           <FilterPills activeFilter={activeFilter} onFilterChange={onFilterChange} />
         </div>
         <div className="flex items-center gap-1 shrink-0">
-          <Button variant="ghost" size="icon" className="size-7" disabled title="Coming soon">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-7"
+            onClick={() => setFiltersOpen(true)}
+            title="Advanced filters"
+          >
             <SlidersHorizontal className="size-3.5 text-on-surface-variant" strokeWidth={1.5} />
           </Button>
           <Button variant="ghost" size="icon" className="size-7" disabled title="Coming soon">
@@ -117,6 +148,19 @@ export function TicketHeader({ team, activeFilter, onFilterChange }: { team: Tea
           </Button>
         </div>
       </div>
+
+      <AdvancedFiltersSheet
+        open={filtersOpen}
+        onOpenChange={setFiltersOpen}
+        teamId={team.id}
+        teamSlug={team.slug}
+        presetFilter={activeFilter}
+        advancedFilters={advancedFilters}
+        savedViewName={savedViewName}
+        onAdvancedFiltersChange={onAdvancedFiltersChange ?? (() => undefined)}
+        onSaveView={onSaveView}
+        onUpdateView={onUpdateView}
+      />
     </div>
   )
 }

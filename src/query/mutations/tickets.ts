@@ -1,19 +1,24 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   archiveIssue,
+  createSavedView,
   createIssue,
   createIssueComment,
+  deleteSavedView,
   deleteIssue,
   updateCycleStatus,
   toggleIssueFavorite,
   updateIssueAssignee,
   updateIssueCycle,
+  updateIssueDueDate,
   updateIssueDescription,
   updateIssueLabels,
   updateIssuePriority,
   updateIssueStatus,
   updateIssueTitle,
+  updateSavedView,
 } from "@/server/functions/tickets"
+import type { IssueQueryFilters } from "@/components/tickets/types"
 import {
   markAllNotificationsAsRead,
   markNotificationAsRead,
@@ -29,10 +34,13 @@ export function useCreateIssueMutation() {
       description?: string
       status?: string
       priority?: string
+      dueDate?: string | null
     }) => createIssue({ data: input }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["issues"] })
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] })
+      queryClient.invalidateQueries({ queryKey: ["my-issues"] })
     },
   })
 }
@@ -61,6 +69,7 @@ export function useUpdateIssueStatusMutation() {
       queryClient.invalidateQueries({ queryKey: ["issue", variables.issueId] })
       queryClient.invalidateQueries({ queryKey: ["issue-activity", variables.issueId] })
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] })
     },
   })
 }
@@ -91,6 +100,7 @@ export function useUpdateIssueAssigneeMutation() {
       queryClient.invalidateQueries({ queryKey: ["issue", variables.issueId] })
       queryClient.invalidateQueries({ queryKey: ["issue-activity", variables.issueId] })
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
+      queryClient.invalidateQueries({ queryKey: ["my-issues"] })
     },
   })
 }
@@ -105,6 +115,19 @@ export function useUpdateIssueCycleMutation() {
       queryClient.invalidateQueries({ queryKey: ["issues"] })
       queryClient.invalidateQueries({ queryKey: ["issue", variables.issueId] })
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
+    },
+  })
+}
+
+export function useUpdateIssueDueDateMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: { issueId: string; dueDate: string | null }) =>
+      updateIssueDueDate({ data: input }),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["issues"] })
+      queryClient.invalidateQueries({ queryKey: ["issue", variables.issueId] })
     },
   })
 }
@@ -160,6 +183,7 @@ export function useUpdateCycleStatusMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cycles"] })
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
+      queryClient.invalidateQueries({ queryKey: ["active-cycles"] })
     },
   })
 }
@@ -213,6 +237,52 @@ export function useToggleIssueFavoriteMutation() {
     },
     onSettled: (_data, _error, variables) => {
       queryClient.invalidateQueries({ queryKey: ["issue-favorite", variables.issueId] })
+    },
+  })
+}
+
+export function useCreateSavedViewMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: {
+      teamId: string
+      name: string
+      presetFilter?: string
+      advancedFilters?: IssueQueryFilters["advancedFilters"]
+    }) => createSavedView({ data: input }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["saved-views"] })
+      queryClient.invalidateQueries({ queryKey: ["saved-view", data.id] })
+    },
+  })
+}
+
+export function useUpdateSavedViewMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: {
+      viewId: string
+      name?: string
+      presetFilter?: string | null
+      advancedFilters?: IssueQueryFilters["advancedFilters"] | null
+    }) => updateSavedView({ data: input }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["saved-views"] })
+      queryClient.invalidateQueries({ queryKey: ["saved-view", data.id] })
+    },
+  })
+}
+
+export function useDeleteSavedViewMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: { viewId: string }) => deleteSavedView({ data: input }),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["saved-views"] })
+      queryClient.removeQueries({ queryKey: ["saved-view", variables.viewId] })
     },
   })
 }

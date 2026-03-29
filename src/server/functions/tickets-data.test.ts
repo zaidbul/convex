@@ -2,19 +2,26 @@ import { mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { fileURLToPath } from "node:url"
-import { createClient } from "@libsql/client"
+import { createClient } from "@libsql/client/node"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 import { drizzle } from "drizzle-orm/libsql"
 import { migrate } from "drizzle-orm/libsql/migrator"
 import * as schema from "@/db/schema"
 import {
+  createSavedViewForViewer,
+  deleteSavedViewForViewer,
   getAccessibleTeamBySlug,
+  getIssueByIdForViewer,
+  getSavedViewForViewer,
   getWorkspaceForViewer,
   listCyclesForViewerTeam,
   listIssuesForViewerTeam,
+  listSavedViewsForViewer,
   listTeamsForViewer,
   syncViewerContext,
   type TicketsDatabase,
+  updateIssueDueDateForViewer,
+  updateSavedViewForViewer,
 } from "./tickets-data"
 
 const migrationsFolder = fileURLToPath(
@@ -186,6 +193,7 @@ async function seedWorkspaceGraph(db: TicketsDatabase) {
       status: "in-progress",
       priority: "high",
       priorityScore: 90,
+      dueDate: "2026-03-28",
       createdAt: timestamp,
       updatedAt: timestamp,
       completedAt: null,
@@ -206,6 +214,7 @@ async function seedWorkspaceGraph(db: TicketsDatabase) {
       status: "backlog",
       priority: "none",
       priorityScore: 0,
+      dueDate: null,
       createdAt: timestamp,
       updatedAt: timestamp,
       completedAt: null,
@@ -328,6 +337,7 @@ describe("ticket schema and data helpers", () => {
         status: "todo",
         priority: "low",
         priorityScore: 1,
+        dueDate: null,
         createdAt: timestamp,
         updatedAt: timestamp,
         completedAt: null,
@@ -387,6 +397,121 @@ describe("ticket schema and data helpers", () => {
     })
     expect(issues[0]?.assignees).toHaveLength(1)
     expect(issues[1]?.assignees).toEqual([])
+  })
+
+  test("supports due-date updates and advanced issue filters", async () => {
+    await seedWorkspaceGraph(testDb.db)
+    const viewer = { userId: "user_1", workspaceId: "org_1" as const }
+
+    await updateIssueDueDateForViewer(testDb.db, viewer, "issue_2", "2026-03-29")
+
+    const updatedIssue = await getIssueByIdForViewer(testDb.db, viewer, "issue_2")
+    expect(updatedIssue?.dueDate).toBe("2026-03-29")
+
+    const dueDateMatches = await listIssuesForViewerTeam(
+      testDb.db,
+      viewer,
+      "platform",
+      {
+        advancedFilters: {
+          logic: "and",
+          statuses: [],
+          priorities: [],
+          assigneeIds: [],
+          labelIds: [],
+          cycleIds: [],
+          dueFrom: "2026-03-28",
+          dueTo: "2026-03-29",
+        },
+      },
+    )
+
+    expect(dueDateMatches.map((issue) => issue.identifier)).toEqual(["PLT-1", "PLT-2"])
+
+    const orMatches = await listIssuesForViewerTeam(
+      testDb.db,
+      viewer,
+      "platform",
+      {
+        advancedFilters: {
+          logic: "or",
+          statuses: ["backlog"],
+          priorities: ["high"],
+          assigneeIds: [],
+          labelIds: [],
+          cycleIds: [],
+        },
+      },
+    )
+
+    expect(orMatches.map((issue) => issue.identifier)).toEqual(["PLT-1", "PLT-2"])
+
+    const labelMatches = await listIssuesForViewerTeam(
+      testDb.db,
+      viewer,
+      "platform",
+      {
+        advancedFilters: {
+          logic: "and",
+          statuses: [],
+          priorities: [],
+          assigneeIds: [],
+          labelIds: ["label_2"],
+          cycleIds: [],
+        },
+      },
+    )
+
+    expect(labelMatches.map((issue) => issue.identifier)).toEqual(["PLT-1"])
+  })
+
+  test("creates, updates, and scopes saved views to the owner", async () => {
+    await seedWorkspaceGraph(testDb.db)
+    const ownerContext = { userId: "user_1", workspaceId: "org_1" as const }
+    const otherContext = { userId: "user_2", workspaceId: "org_1" as const }
+
+    const created = await createSavedViewForViewer(testDb.db, ownerContext, {
+      teamId: "team_1",
+      name: "High priority backlog",
+      advancedFilters: {
+        logic: "and",
+        statuses: ["backlog"],
+        priorities: ["high"],
+        assigneeIds: [],
+        labelIds: [],
+        cycleIds: [],
+      },
+    })
+
+    expect(created.name).toBe("High priority backlog")
+    expect(created.advancedFilters?.statuses).toEqual(["backlog"])
+
+    const ownerViews = await listSavedViewsForViewer(testDb.db, ownerContext)
+    expect(ownerViews.map((view) => view.name)).toEqual(["High priority backlog"])
+
+    const otherViews = await listSavedViewsForViewer(testDb.db, otherContext)
+    expect(otherViews).toEqual([])
+
+    const loaded = await getSavedViewForViewer(testDb.db, ownerContext, created.id)
+    expect(loaded?.teamSlug).toBe("platform")
+
+    const updated = await updateSavedViewForViewer(
+      testDb.db,
+      ownerContext,
+      created.id,
+      {
+        name: "My active work",
+        presetFilter: "my-issues",
+        advancedFilters: null,
+      },
+    )
+
+    expect(updated.name).toBe("My active work")
+    expect(updated.presetFilter).toBe("my-issues")
+    expect(updated.advancedFilters).toBeUndefined()
+
+    await deleteSavedViewForViewer(testDb.db, ownerContext, created.id)
+    expect(await listSavedViewsForViewer(testDb.db, ownerContext)).toEqual([])
   })
 
   test("supports empty workspace, team, cycle, and issue states", async () => {
