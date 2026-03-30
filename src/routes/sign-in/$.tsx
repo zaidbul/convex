@@ -1,17 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { AuthenticateWithRedirectCallback } from "@clerk/tanstack-react-start"
+import { createFileRoute, redirect } from "@tanstack/react-router"
 
 export const Route = createFileRoute("/sign-in/$")({
-  component: SSOCallback,
+  beforeLoad: () => {
+    throw redirect({ to: "/$slug/tickets/dashboard", params: { slug: "acme-corp" } })
+  },
+  component: () => null,
 })
-
-function SSOCallback() {
-  return (
-    <div className="grid min-h-screen place-items-center bg-background">
-      <AuthenticateWithRedirectCallback
-        signInFallbackRedirectUrl="/org-select"
-        signUpFallbackRedirectUrl="/org-select"
-      />
-    </div>
-  )
-}
