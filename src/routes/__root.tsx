@@ -14,7 +14,6 @@ const TanStackRouterDevtools = import.meta.env.DEV
       }))
     )
   : () => null
-import { ClerkProvider } from "@clerk/tanstack-react-start"
 import { ThemeProvider } from "next-themes"
 import { QueryClientProvider, type QueryClient } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
@@ -86,18 +85,16 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <ClerkProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="light"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <RouteLoadingIndicator />
-            {children}
-            <Toaster />
-          </ThemeProvider>
-        </ClerkProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <RouteLoadingIndicator />
+          {children}
+          <Toaster />
+        </ThemeProvider>
         <Scripts />
       </body>
     </html>

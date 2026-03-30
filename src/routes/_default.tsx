@@ -78,16 +78,11 @@ function Navbar() {
         <div className="ml-auto flex items-center gap-2">
           <ThemeToggle />
           <Button
-            variant="ghost"
             size="sm"
-            className="hidden sm:inline-flex"
             nativeButton={false}
-            render={<Link to="/sign-in" />}
+            render={<Link to="/$slug/tickets/dashboard" params={{ slug: "acme-corp" }} />}
           >
-            Log In
-          </Button>
-          <Button size="sm" nativeButton={false} render={<Link to="/sign-up" />}>
-            Sign Up
+            Try Demo
           </Button>
 
           {/* Mobile hamburger */}
@@ -115,15 +110,11 @@ function Navbar() {
                 </div>
                 <div className="mt-8 flex flex-col gap-2">
                   <Button
-                    variant="ghost"
-                    className="w-full justify-start"
+                    className="w-full"
                     nativeButton={false}
-                    render={<Link to="/sign-in" />}
+                    render={<Link to="/$slug/tickets/dashboard" params={{ slug: "acme-corp" }} />}
                   >
-                    Log In
-                  </Button>
-                  <Button className="w-full" nativeButton={false} render={<Link to="/sign-up" />}>
-                    Sign Up
+                    Try Demo
                   </Button>
                 </div>
               </SheetBody>

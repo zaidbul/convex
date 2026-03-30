@@ -5,26 +5,13 @@ import React from "react"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 const navigateMock = vi.fn()
-const useAuthMock = vi.fn()
-const useUserMock = vi.fn()
-const useOrganizationMock = vi.fn()
-const useOrganizationListMock = vi.fn()
-const useClerkMock = vi.fn()
 const createTeamMutationMock = vi.fn()
 const toastSuccessMock = vi.fn()
 const toastErrorMock = vi.fn()
 
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => navigateMock,
-  useParams: () => ({ slug: "acme" }),
-}))
-
-vi.mock("@clerk/tanstack-react-start", () => ({
-  useAuth: (...args: unknown[]) => useAuthMock(...args),
-  useUser: (...args: unknown[]) => useUserMock(...args),
-  useOrganization: (...args: unknown[]) => useOrganizationMock(...args),
-  useOrganizationList: (...args: unknown[]) => useOrganizationListMock(...args),
-  useClerk: (...args: unknown[]) => useClerkMock(...args),
+  useParams: () => ({ slug: "acme-corp" }),
 }))
 
 vi.mock("sonner", () => ({
@@ -35,11 +22,9 @@ vi.mock("sonner", () => ({
 }))
 
 vi.mock("lucide-react", () => ({
-  ArrowLeftRight: () => <span>ArrowLeftRight</span>,
   Check: () => <span>Check</span>,
   ChevronDown: () => <span>ChevronDown</span>,
   Layers: () => <span>Layers</span>,
-  LogOut: () => <span>LogOut</span>,
   Plus: () => <span>Plus</span>,
 }))
 
@@ -132,80 +117,22 @@ function renderDropdown() {
 describe("WorkspaceDropdown", () => {
   beforeEach(() => {
     navigateMock.mockReset()
-    useAuthMock.mockReset()
-    useUserMock.mockReset()
-    useOrganizationMock.mockReset()
-    useOrganizationListMock.mockReset()
-    useClerkMock.mockReset()
     createTeamMutationMock.mockReset()
     toastSuccessMock.mockReset()
     toastErrorMock.mockReset()
-
-    useUserMock.mockReturnValue({
-      user: {
-        firstName: "Alice",
-        lastName: "Example",
-        fullName: "Alice Example",
-        imageUrl: null,
-        primaryEmailAddress: { emailAddress: "alice@example.com" },
-      },
-    })
-    useOrganizationMock.mockReturnValue({
-      organization: {
-        id: "org_1",
-        name: "Acme",
-        slug: "acme",
-      },
-    })
-    useOrganizationListMock.mockReturnValue({
-      userMemberships: {
-        data: [
-          {
-            organization: {
-              id: "org_1",
-              name: "Acme",
-              slug: "acme",
-            },
-          },
-        ],
-      },
-      setActive: vi.fn(),
-    })
-    useClerkMock.mockReturnValue({ signOut: vi.fn() })
-    useAuthMock.mockReturnValue({ orgRole: "org:admin" })
   })
 
   afterEach(() => {
     cleanup()
   })
 
-  test("shows team and workspace actions for admins", () => {
+  test("shows team actions and demo user info", () => {
     renderDropdown()
 
     expect(screen.getByText("Create team")).not.toBeNull()
     expect(screen.getByText("Manage teams")).not.toBeNull()
-    expect(screen.getByText("Switch workspace")).not.toBeNull()
-    expect(screen.getByText("Create another workspace")).not.toBeNull()
-  })
-
-  test("hides team creation for non-admins", () => {
-    useAuthMock.mockReturnValue({ orgRole: "org:member" })
-
-    renderDropdown()
-
-    expect(screen.queryByText("Create team")).toBeNull()
-    expect(screen.getByText("Manage teams")).not.toBeNull()
-  })
-
-  test("routes workspace creation through org-select intent=create", () => {
-    renderDropdown()
-
-    fireEvent.click(screen.getByText("Create another workspace"))
-
-    expect(navigateMock).toHaveBeenCalledWith({
-      to: "/org-select",
-      search: { intent: "create" },
-    })
+    expect(screen.getByText("Demo User")).not.toBeNull()
+    expect(screen.getByText("demo@acme-corp.com")).not.toBeNull()
   })
 
   test("quick-create navigates to the new team issues page", async () => {
@@ -230,7 +157,7 @@ describe("WorkspaceDropdown", () => {
       expect(navigateMock).toHaveBeenCalledWith({
         to: "/$slug/tickets/$teamSlug/issues",
         params: {
-          slug: "acme",
+          slug: "acme-corp",
           teamSlug: "platform",
         },
       })

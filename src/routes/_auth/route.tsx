@@ -1,15 +1,6 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router"
+import { createFileRoute, Outlet } from "@tanstack/react-router"
 
 export const Route = createFileRoute("/_auth")({
-  beforeLoad: ({ context }) => {
-    if (!context.session.userId) {
-      throw redirect({ to: "/sign-in" })
-    }
-
-    if (!context.session.orgSlug) {
-      throw redirect({ to: "/org-select", search: { intent: undefined } })
-    }
-  },
   component: AuthLayout,
 })
 

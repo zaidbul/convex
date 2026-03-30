@@ -1,6 +1,5 @@
 import { useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
-import { useUser } from "@clerk/tanstack-react-start"
 import { useTheme } from "next-themes"
 import { toast } from "sonner"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -8,31 +7,29 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { demoUser } from "@/lib/demo"
 
 export const Route = createFileRoute("/_auth/$slug/settings/profile")({
   component: ProfileSettingsPage,
 })
 
 function ProfileSettingsPage() {
-  const { user } = useUser()
+  const user = demoUser
   const { theme, setTheme } = useTheme()
 
-  const [firstName, setFirstName] = useState(user?.firstName ?? "")
-  const [lastName, setLastName] = useState(user?.lastName ?? "")
+  const [firstName, setFirstName] = useState(user.firstName)
+  const [lastName, setLastName] = useState(user.lastName)
   const [isSaving, setIsSaving] = useState(false)
 
   const isDirty =
-    firstName.trim() !== (user?.firstName ?? "") ||
-    lastName.trim() !== (user?.lastName ?? "")
+    firstName.trim() !== user.firstName ||
+    lastName.trim() !== user.lastName
 
   const handleSave = async () => {
-    if (!user) return
     setIsSaving(true)
     try {
-      await user.update({
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-      })
+      // Demo mode: simulate save
+      await new Promise((resolve) => setTimeout(resolve, 500))
       toast.success("Profile updated")
     } catch {
       toast.error("Failed to update profile")
@@ -42,8 +39,8 @@ function ProfileSettingsPage() {
   }
 
   const initials =
-    ((firstName || user?.firstName)?.[0] ?? "") +
-    ((lastName || user?.lastName)?.[0] ?? "")
+    (firstName?.[0] ?? "") +
+    (lastName?.[0] ?? "")
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -58,21 +55,21 @@ function ProfileSettingsPage() {
         <CardHeader>
           <CardTitle>Personal information</CardTitle>
           <CardDescription>
-            Your name and email are synced with your authentication provider.
+            Your name and email displayed across the app.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-4">
             <Avatar className="size-14">
-              <AvatarImage src={user?.imageUrl} />
+              <AvatarImage src={user.imageUrl ?? undefined} />
               <AvatarFallback className="text-lg">{initials}</AvatarFallback>
             </Avatar>
             <div className="min-w-0">
               <p className="text-sm font-medium text-foreground">
-                {user?.fullName ?? "—"}
+                {user.fullName}
               </p>
               <p className="text-xs text-muted-foreground">
-                {user?.primaryEmailAddress?.emailAddress}
+                {user.primaryEmailAddress.emailAddress}
               </p>
             </div>
           </div>
@@ -101,10 +98,7 @@ function ProfileSettingsPage() {
           <div className="space-y-2">
             <Label>Email</Label>
             <p className="text-sm text-muted-foreground">
-              {user?.primaryEmailAddress?.emailAddress ?? "—"}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Email is managed by your authentication provider.
+              {user.primaryEmailAddress.emailAddress}
             </p>
           </div>
 
