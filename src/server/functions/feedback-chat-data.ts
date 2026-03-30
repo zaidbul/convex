@@ -1,14 +1,10 @@
-import { and, asc, desc, eq } from "drizzle-orm"
-import * as schema from "@/db/schema"
 import type { TicketsDatabase, ViewerContext } from "./tickets-data"
 
-function nowIso(): string {
-  return new Date().toISOString()
+function daysAgo(days: number): string {
+  return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
 }
 
-import type { feedbackChatStatuses } from "@/db/schema"
-
-type FeedbackChatStatus = (typeof feedbackChatStatuses)[number]
+type FeedbackChatStatus = "active" | "ready" | "analysis_triggered" | "completed"
 
 export type FeedbackChatRecord = {
   id: string
@@ -42,125 +38,131 @@ export type FeedbackChatDetail = FeedbackChatRecord & {
   messages: FeedbackChatMessageRecord[]
 }
 
-export async function createFeedbackChatForViewer(
-  db: TicketsDatabase,
-  context: ViewerContext,
-  input: { title?: string }
-): Promise<{ id: string }> {
-  if (!context.workspaceId) {
-    throw new Error("No active workspace")
-  }
+// ── Mock Data ───────────────────────────────────────────────────────
 
-  const id = crypto.randomUUID()
-  const timestamp = nowIso()
-
-  await db.insert(schema.feedbackChats).values({
-    id,
-    workspaceId: context.workspaceId,
-    createdByUserId: context.userId,
-    title: input.title ?? null,
+const MOCK_CHATS: FeedbackChatRecord[] = [
+  {
+    id: "chat-001",
+    title: "Q1 Support Ticket Analysis",
+    status: "ready",
+    readinessScore: 72,
+    linkedImportIds: ["fb-import-001"],
+    createdAt: daysAgo(14),
+    updatedAt: daysAgo(13),
+  },
+  {
+    id: "chat-002",
+    title: "NPS Survey Review",
     status: "active",
-    readinessScore: 0,
-    linkedImportIds: [],
-    metadata: {},
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  })
+    readinessScore: 35,
+    linkedImportIds: ["fb-import-002"],
+    createdAt: daysAgo(7),
+    updatedAt: daysAgo(6),
+  },
+]
 
-  return { id }
+const MOCK_MESSAGES: Record<string, FeedbackChatMessageRecord[]> = {
+  "chat-001": [
+    {
+      id: "msg-001", chatId: "chat-001", role: "assistant",
+      content: "Hello! I'm ready to help you import and analyze feedback data. What feedback would you like to import today?",
+      toolCallsJson: null, toolResultJson: null, attachmentsJson: null, partsJson: null,
+      messageIndex: 0, createdAt: daysAgo(14),
+    },
+    {
+      id: "msg-002", chatId: "chat-001", role: "user",
+      content: "I have a CSV export from our support ticket system with customer complaints from Q1.",
+      toolCallsJson: null, toolResultJson: null,
+      attachmentsJson: [{ id: "att-001", fileName: "support-q1-export.csv", fileType: "text/csv", fileSize: 24680 }],
+      partsJson: null,
+      messageIndex: 1, createdAt: daysAgo(14),
+    },
+    {
+      id: "msg-003", chatId: "chat-001", role: "assistant",
+      content: "I've processed your CSV file and found 5 feedback items. Here's what I see:\n\n- **Search performance** — Multiple complaints about slow search (high severity)\n- **Keyboard shortcuts** — Users struggling to discover shortcuts\n- **Dashboard staleness** — Charts require manual refresh\n- **API access** — Enterprise customers requesting integrations\n- **Permissions** — Admins finding the permission model confusing\n\nTo help me classify these better, I have a few questions about the context.",
+      toolCallsJson: null, toolResultJson: null, attachmentsJson: null, partsJson: null,
+      messageIndex: 2, createdAt: daysAgo(14),
+    },
+    {
+      id: "msg-004", chatId: "chat-001", role: "user",
+      content: "These are from our enterprise tier customers, mostly teams of 20-50 people.",
+      toolCallsJson: null, toolResultJson: null, attachmentsJson: null, partsJson: null,
+      messageIndex: 3, createdAt: daysAgo(13),
+    },
+    {
+      id: "msg-005", chatId: "chat-001", role: "assistant",
+      content: "Great context! Enterprise teams of that size tend to hit scale issues first. The readiness score is now at 72% — you have enough context to run analysis. Would you like to proceed?",
+      toolCallsJson: null, toolResultJson: null, attachmentsJson: null, partsJson: null,
+      messageIndex: 4, createdAt: daysAgo(13),
+    },
+  ],
+  "chat-002": [
+    {
+      id: "msg-010", chatId: "chat-002", role: "assistant",
+      content: "Hello! I'm ready to help you import and analyze feedback data. What feedback would you like to import today?",
+      toolCallsJson: null, toolResultJson: null, attachmentsJson: null, partsJson: null,
+      messageIndex: 0, createdAt: daysAgo(7),
+    },
+    {
+      id: "msg-011", chatId: "chat-002", role: "user",
+      content: "Here are our NPS survey results from March.",
+      toolCallsJson: null, toolResultJson: null,
+      attachmentsJson: [{ id: "att-002", fileName: "nps-march-2026.json", fileType: "application/json", fileSize: 8420 }],
+      partsJson: null,
+      messageIndex: 1, createdAt: daysAgo(7),
+    },
+    {
+      id: "msg-012", chatId: "chat-002", role: "assistant",
+      content: "I've processed the NPS survey data and found 3 feedback items. The themes include positive feedback about issue creation speed, search relevance concerns, and a request for a mobile app.\n\nCould you tell me more about the respondent demographics?",
+      toolCallsJson: null, toolResultJson: null, attachmentsJson: null, partsJson: null,
+      messageIndex: 2, createdAt: daysAgo(6),
+    },
+  ],
+}
+
+// ── Exported Functions ──────────────────────────────────────────────
+
+export async function createFeedbackChatForViewer(
+  _db: TicketsDatabase,
+  _context: ViewerContext,
+  _input: { title?: string }
+): Promise<{ id: string }> {
+  return { id: `chat-${crypto.randomUUID().slice(0, 8)}` }
 }
 
 export async function getFeedbackChatForViewer(
-  db: TicketsDatabase,
-  context: ViewerContext,
+  _db: TicketsDatabase,
+  _context: ViewerContext,
   chatId: string
 ): Promise<FeedbackChatDetail | null> {
-  if (!context.workspaceId) return null
-
-  const chat = await db.query.feedbackChats.findFirst({
-    where: and(
-      eq(schema.feedbackChats.id, chatId),
-      eq(schema.feedbackChats.workspaceId, context.workspaceId)
-    ),
-  })
-
+  const chat = MOCK_CHATS.find((c) => c.id === chatId)
   if (!chat) return null
 
-  const messages = await db.query.feedbackChatMessages.findMany({
-    where: eq(schema.feedbackChatMessages.chatId, chatId),
-    orderBy: asc(schema.feedbackChatMessages.messageIndex),
-  })
-
   return {
-    id: chat.id,
-    title: chat.title,
-    status: chat.status as FeedbackChatStatus,
-    readinessScore: chat.readinessScore,
-    linkedImportIds: chat.linkedImportIds,
-    createdAt: chat.createdAt,
-    updatedAt: chat.updatedAt,
-    messages: messages.map((m) => ({
-      id: m.id,
-      chatId: m.chatId,
-      role: m.role,
-      content: m.content,
-      toolCallsJson: (m.toolCallsJson ?? null) as any[] | null,
-      toolResultJson: (m.toolResultJson ?? null) as any[] | null,
-      attachmentsJson: m.attachmentsJson,
-      partsJson: (m.partsJson ?? null) as any[] | null,
-      messageIndex: m.messageIndex,
-      createdAt: m.createdAt,
-    })),
+    ...chat,
+    messages: MOCK_MESSAGES[chatId] ?? [],
   }
 }
 
 export async function listFeedbackChatsForViewer(
-  db: TicketsDatabase,
-  context: ViewerContext
+  _db: TicketsDatabase,
+  _context: ViewerContext
 ): Promise<FeedbackChatRecord[]> {
-  if (!context.workspaceId) return []
-
-  const rows = await db.query.feedbackChats.findMany({
-    where: eq(schema.feedbackChats.workspaceId, context.workspaceId),
-    orderBy: desc(schema.feedbackChats.updatedAt),
-  })
-
-  return rows.map((row) => ({
-    id: row.id,
-    title: row.title,
-    status: row.status as FeedbackChatStatus,
-    readinessScore: row.readinessScore,
-    linkedImportIds: row.linkedImportIds,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-  }))
+  return MOCK_CHATS
 }
 
 export async function deleteFeedbackChatForViewer(
-  db: TicketsDatabase,
-  context: ViewerContext,
-  chatId: string
+  _db: TicketsDatabase,
+  _context: ViewerContext,
+  _chatId: string
 ): Promise<{ deleted: boolean }> {
-  if (!context.workspaceId) {
-    throw new Error("No active workspace")
-  }
-
-  const result = await db
-    .delete(schema.feedbackChats)
-    .where(
-      and(
-        eq(schema.feedbackChats.id, chatId),
-        eq(schema.feedbackChats.workspaceId, context.workspaceId)
-      )
-    )
-
-  return { deleted: (result.rowsAffected ?? 0) > 0 }
+  return { deleted: true }
 }
 
 export async function saveFeedbackChatMessage(
-  db: TicketsDatabase,
-  chatId: string,
-  message: {
+  _db: TicketsDatabase,
+  _chatId: string,
+  _message: {
     id: string
     role: "user" | "assistant" | "system"
     content: string
@@ -175,84 +177,36 @@ export async function saveFeedbackChatMessage(
     partsJson?: any[] | null
   }
 ): Promise<void> {
-  // Get next message index
-  const lastMessage = await db.query.feedbackChatMessages.findFirst({
-    where: eq(schema.feedbackChatMessages.chatId, chatId),
-    orderBy: desc(schema.feedbackChatMessages.messageIndex),
-  })
-  const nextIndex = (lastMessage?.messageIndex ?? -1) + 1
-
-  await db
-    .insert(schema.feedbackChatMessages)
-    .values({
-      id: message.id,
-      chatId,
-      role: message.role,
-      content: message.content,
-      toolCallsJson: message.toolCallsJson ?? null,
-      toolResultJson: message.toolResultJson ?? null,
-      attachmentsJson: message.attachmentsJson ?? null,
-      partsJson: message.partsJson ?? null,
-      messageIndex: nextIndex,
-      createdAt: nowIso(),
-    })
-    .onConflictDoNothing()
+  // no-op in demo mode
 }
 
 export async function updateFeedbackChatReadiness(
-  db: TicketsDatabase,
-  chatId: string,
-  score: number
+  _db: TicketsDatabase,
+  _chatId: string,
+  _score: number
 ): Promise<void> {
-  const status = score >= 50 ? "ready" : "active"
-
-  await db
-    .update(schema.feedbackChats)
-    .set({
-      readinessScore: score,
-      status,
-      updatedAt: nowIso(),
-    })
-    .where(eq(schema.feedbackChats.id, chatId))
+  // no-op in demo mode
 }
 
 export async function updateFeedbackChatStatus(
-  db: TicketsDatabase,
-  chatId: string,
-  status: "active" | "ready" | "analysis_triggered" | "completed"
+  _db: TicketsDatabase,
+  _chatId: string,
+  _status: "active" | "ready" | "analysis_triggered" | "completed"
 ): Promise<void> {
-  await db
-    .update(schema.feedbackChats)
-    .set({ status, updatedAt: nowIso() })
-    .where(eq(schema.feedbackChats.id, chatId))
+  // no-op in demo mode
 }
 
 export async function linkImportToChat(
-  db: TicketsDatabase,
-  chatId: string,
-  importId: string
+  _db: TicketsDatabase,
+  _chatId: string,
+  _importId: string
 ): Promise<void> {
-  const chat = await db.query.feedbackChats.findFirst({
-    where: eq(schema.feedbackChats.id, chatId),
-  })
-
-  if (!chat) return
-
-  const current = chat.linkedImportIds ?? []
-  if (!current.includes(importId)) {
-    await db
-      .update(schema.feedbackChats)
-      .set({
-        linkedImportIds: [...current, importId],
-        updatedAt: nowIso(),
-      })
-      .where(eq(schema.feedbackChats.id, chatId))
-  }
+  // no-op in demo mode
 }
 
 export async function saveFeedbackChatAttachment(
-  db: TicketsDatabase,
-  input: {
+  _db: TicketsDatabase,
+  _input: {
     id: string
     chatId: string
     messageId: string
@@ -262,8 +216,5 @@ export async function saveFeedbackChatAttachment(
     rawContent: string
   }
 ): Promise<void> {
-  await db.insert(schema.feedbackChatAttachments).values({
-    ...input,
-    createdAt: nowIso(),
-  })
+  // no-op in demo mode
 }

@@ -1,5 +1,3 @@
-import { and, asc, eq, inArray, sql } from "drizzle-orm"
-import * as schema from "@/db/schema"
 import type { ViewerContext, TicketsDatabase } from "./tickets-data"
 
 // ── Types ────────────────────────────────────────────────────────────
@@ -10,7 +8,7 @@ export type WorkspaceMember = {
   email: string
   avatarUrl: string | null
   initials: string
-  role: (typeof schema.workspaceMembershipRoles)[number]
+  role: "owner" | "admin" | "member" | "guest"
   joinedAt: string
 }
 
@@ -25,279 +23,87 @@ export type TeamWithMemberCount = {
   createdAt: string
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────
+// ── Mock Data ───────────────────────────────────────────────────────
 
-function slugify(value: string): string {
-  const slug = value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-  return slug || "team"
+function daysAgo(days: number): string {
+  return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
 }
 
-function requireWorkspace(context: ViewerContext): string {
-  if (!context.workspaceId) {
-    throw new Error("No active workspace")
-  }
-  return context.workspaceId
-}
+const MOCK_MEMBERS: WorkspaceMember[] = [
+  { userId: "demo-user-001", name: "Alex Chen", email: "alex@acme.corp", avatarUrl: null, initials: "AC", role: "owner", joinedAt: daysAgo(180) },
+  { userId: "demo-user-002", name: "Jordan Rivera", email: "jordan@acme.corp", avatarUrl: null, initials: "JR", role: "admin", joinedAt: daysAgo(150) },
+  { userId: "demo-user-003", name: "Sam Taylor", email: "sam@acme.corp", avatarUrl: null, initials: "ST", role: "member", joinedAt: daysAgo(120) },
+  { userId: "demo-user-004", name: "Morgan Lee", email: "morgan@acme.corp", avatarUrl: null, initials: "ML", role: "member", joinedAt: daysAgo(90) },
+]
 
-async function requireAdminOrOwner(
-  db: TicketsDatabase,
-  context: ViewerContext
-): Promise<void> {
-  const workspaceId = requireWorkspace(context)
-  const membership = await db.query.workspaceMemberships.findFirst({
-    where: and(
-      eq(schema.workspaceMemberships.workspaceId, workspaceId),
-      eq(schema.workspaceMemberships.userId, context.userId)
-    ),
-  })
-  if (!membership || (membership.role !== "owner" && membership.role !== "admin")) {
-    throw new Error("Forbidden: requires admin or owner role")
-  }
-}
+const MOCK_TEAMS_WITH_STATS: TeamWithMemberCount[] = [
+  { id: "team-eng-001", name: "Engineering", slug: "engineering", identifier: "ENG", color: "#6366f1", memberCount: 4, issueCount: 9, createdAt: daysAgo(180) },
+  { id: "team-des-001", name: "Design", slug: "design", identifier: "DES", color: "#ec4899", memberCount: 3, issueCount: 4, createdAt: daysAgo(150) },
+  { id: "team-prd-001", name: "Product", slug: "product", identifier: "PRD", color: "#f59e0b", memberCount: 2, issueCount: 4, createdAt: daysAgo(120) },
+]
 
-// ── Workspace Members ────────────────────────────────────────────────
+// ── Exported Functions ──────────────────────────────────────────────
 
 export async function listWorkspaceMembersForViewer(
-  db: TicketsDatabase,
-  context: ViewerContext
+  _db: TicketsDatabase,
+  _context: ViewerContext
 ): Promise<WorkspaceMember[]> {
-  const workspaceId = requireWorkspace(context)
-
-  const rows = await db
-    .select({
-      user: schema.users,
-      membership: schema.workspaceMemberships,
-    })
-    .from(schema.workspaceMemberships)
-    .innerJoin(schema.users, eq(schema.workspaceMemberships.userId, schema.users.id))
-    .where(eq(schema.workspaceMemberships.workspaceId, workspaceId))
-    .orderBy(asc(schema.users.name))
-
-  return rows.map((row) => ({
-    userId: row.user.id,
-    name: row.user.name,
-    email: row.user.email,
-    avatarUrl: row.user.avatarUrl,
-    initials: row.user.initials,
-    role: row.membership.role as WorkspaceMember["role"],
-    joinedAt: row.membership.createdAt,
-  }))
+  return MOCK_MEMBERS
 }
-
-// ── Workspace Name ───────────────────────────────────────────────────
 
 export async function updateWorkspaceNameForViewer(
-  db: TicketsDatabase,
-  context: ViewerContext,
-  name: string
+  _db: TicketsDatabase,
+  _context: ViewerContext,
+  _name: string
 ): Promise<void> {
-  const workspaceId = requireWorkspace(context)
-  await requireAdminOrOwner(db, context)
-
-  const timestamp = new Date().toISOString()
-  await db
-    .update(schema.workspaces)
-    .set({ name, updatedAt: timestamp })
-    .where(eq(schema.workspaces.id, workspaceId))
+  // no-op in demo mode
 }
 
-// ── Teams ────────────────────────────────────────────────────────────
-
 export async function listTeamsWithStatsForViewer(
-  db: TicketsDatabase,
-  context: ViewerContext
+  _db: TicketsDatabase,
+  _context: ViewerContext
 ): Promise<TeamWithMemberCount[]> {
-  const workspaceId = requireWorkspace(context)
-
-  const teams = await db
-    .select()
-    .from(schema.teams)
-    .where(eq(schema.teams.workspaceId, workspaceId))
-    .orderBy(asc(schema.teams.name))
-
-  if (teams.length === 0) return []
-
-  const teamIds = teams.map((t) => t.id)
-
-  const [memberCounts, issueCounts] = await Promise.all([
-    db
-      .select({
-        teamId: schema.teamMemberships.teamId,
-        count: sql<number>`count(*)`,
-      })
-      .from(schema.teamMemberships)
-      .where(inArray(schema.teamMemberships.teamId, teamIds))
-      .groupBy(schema.teamMemberships.teamId),
-    db
-      .select({
-        teamId: schema.issues.teamId,
-        count: sql<number>`count(*)`,
-      })
-      .from(schema.issues)
-      .where(
-        and(
-          inArray(schema.issues.teamId, teamIds),
-          sql`${schema.issues.deletedAt} IS NULL`
-        )
-      )
-      .groupBy(schema.issues.teamId),
-  ])
-
-  const memberMap = new Map(memberCounts.map((r) => [r.teamId, Number(r.count)]))
-  const issueMap = new Map(issueCounts.map((r) => [r.teamId, Number(r.count)]))
-
-  return teams.map((team) => ({
-    id: team.id,
-    name: team.name,
-    slug: team.slug,
-    identifier: team.identifier,
-    color: team.color,
-    memberCount: memberMap.get(team.id) ?? 0,
-    issueCount: issueMap.get(team.id) ?? 0,
-    createdAt: team.createdAt,
-  }))
+  return MOCK_TEAMS_WITH_STATS
 }
 
 export async function createTeamForViewer(
-  db: TicketsDatabase,
-  context: ViewerContext,
+  _db: TicketsDatabase,
+  _context: ViewerContext,
   input: { name: string; identifier: string; color: string }
 ): Promise<{ id: string; slug: string }> {
-  const workspaceId = requireWorkspace(context)
-  await requireAdminOrOwner(db, context)
-
-  const teamId = crypto.randomUUID()
-  const timestamp = new Date().toISOString()
-  const slug = slugify(input.name)
-
-  await db.insert(schema.teams).values({
-    id: teamId,
-    workspaceId,
-    name: input.name.trim(),
-    slug,
-    identifier: input.identifier.toUpperCase().trim(),
-    color: input.color,
-    nextIssueNumber: 1,
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  })
-
-  // Auto-add the creator as a team member
-  await db.insert(schema.teamMemberships).values({
-    teamId,
-    userId: context.userId,
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  })
-
-  return { id: teamId, slug }
+  const slug = input.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "team"
+  return { id: `team-${crypto.randomUUID().slice(0, 8)}`, slug }
 }
 
 export async function updateTeamForViewer(
-  db: TicketsDatabase,
-  context: ViewerContext,
-  input: { teamId: string; name: string; identifier: string; color: string }
+  _db: TicketsDatabase,
+  _context: ViewerContext,
+  _input: { teamId: string; name: string; identifier: string; color: string }
 ): Promise<void> {
-  const workspaceId = requireWorkspace(context)
-  await requireAdminOrOwner(db, context)
-
-  const timestamp = new Date().toISOString()
-  const slug = slugify(input.name)
-
-  await db
-    .update(schema.teams)
-    .set({
-      name: input.name.trim(),
-      slug,
-      identifier: input.identifier.toUpperCase().trim(),
-      color: input.color,
-      updatedAt: timestamp,
-    })
-    .where(
-      and(eq(schema.teams.id, input.teamId), eq(schema.teams.workspaceId, workspaceId))
-    )
+  // no-op in demo mode
 }
 
 export async function deleteTeamForViewer(
-  db: TicketsDatabase,
-  context: ViewerContext,
-  teamId: string
+  _db: TicketsDatabase,
+  _context: ViewerContext,
+  _teamId: string
 ): Promise<void> {
-  const workspaceId = requireWorkspace(context)
-  await requireAdminOrOwner(db, context)
-
-  await db
-    .delete(schema.teams)
-    .where(and(eq(schema.teams.id, teamId), eq(schema.teams.workspaceId, workspaceId)))
+  // no-op in demo mode
 }
 
-// ── Member Role ──────────────────────────────────────────────────────
-
 export async function updateMemberRoleForViewer(
-  db: TicketsDatabase,
-  context: ViewerContext,
-  targetUserId: string,
-  role: (typeof schema.workspaceMembershipRoles)[number]
+  _db: TicketsDatabase,
+  _context: ViewerContext,
+  _targetUserId: string,
+  _role: "owner" | "admin" | "member" | "guest"
 ): Promise<void> {
-  const workspaceId = requireWorkspace(context)
-  await requireAdminOrOwner(db, context)
-
-  if (targetUserId === context.userId) {
-    throw new Error("Cannot change your own role")
-  }
-
-  const timestamp = new Date().toISOString()
-  await db
-    .update(schema.workspaceMemberships)
-    .set({ role, updatedAt: timestamp })
-    .where(
-      and(
-        eq(schema.workspaceMemberships.workspaceId, workspaceId),
-        eq(schema.workspaceMemberships.userId, targetUserId)
-      )
-    )
+  // no-op in demo mode
 }
 
 export async function removeMemberForViewer(
-  db: TicketsDatabase,
-  context: ViewerContext,
-  targetUserId: string
+  _db: TicketsDatabase,
+  _context: ViewerContext,
+  _targetUserId: string
 ): Promise<void> {
-  const workspaceId = requireWorkspace(context)
-  await requireAdminOrOwner(db, context)
-
-  if (targetUserId === context.userId) {
-    throw new Error("Cannot remove yourself from the workspace")
-  }
-
-  // Remove from all teams in this workspace
-  const teamIds = await db
-    .select({ id: schema.teams.id })
-    .from(schema.teams)
-    .where(eq(schema.teams.workspaceId, workspaceId))
-
-  for (const { id: teamId } of teamIds) {
-    await db
-      .delete(schema.teamMemberships)
-      .where(
-        and(
-          eq(schema.teamMemberships.teamId, teamId),
-          eq(schema.teamMemberships.userId, targetUserId)
-        )
-      )
-  }
-
-  // Remove workspace membership
-  await db
-    .delete(schema.workspaceMemberships)
-    .where(
-      and(
-        eq(schema.workspaceMemberships.workspaceId, workspaceId),
-        eq(schema.workspaceMemberships.userId, targetUserId)
-      )
-    )
+  // no-op in demo mode
 }
