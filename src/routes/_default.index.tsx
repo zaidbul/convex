@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect, useRef, useCallback } from "react"
 import {
   Check,
   ChevronRight,
@@ -16,6 +16,8 @@ import {
   SignalHigh,
   SignalMedium,
   SignalLow,
+  FileText,
+  MessageSquare,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -24,6 +26,11 @@ import { cn } from "@/lib/utils"
 export const Route = createFileRoute("/_default/")({
   component: LandingPage,
 })
+
+const demoLinkProps = {
+  to: "/$slug/tickets/dashboard",
+  params: { slug: "acme-corp" },
+} as const
 
 /* ─────────────────────────────────────────────
    Section 1 — Hero
@@ -50,7 +57,7 @@ function HeroSection() {
             size="lg"
             className="px-8 shadow-glow"
             nativeButton={false}
-            render={<Link to="/sign-up" />}
+            render={<Link {...demoLinkProps} />}
           >
             Get started free
           </Button>
@@ -415,7 +422,7 @@ function WorkflowSection() {
               size="lg"
               className="px-8 shadow-glow"
               nativeButton={false}
-            render={<Link to="/sign-up" />}
+              render={<Link {...demoLinkProps} />}
             >
               Start building
             </Button>
@@ -784,10 +791,268 @@ function FinalCtaSection() {
             size="lg"
             className="px-8 shadow-glow"
             nativeButton={false}
-            render={<Link to="/sign-up" />}
+            render={<Link {...demoLinkProps} />}
           >
             Get started free
           </Button>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ─────────────────────────────────────────────
+   Animated Chat Demo
+   ───────────────────────────────────────────── */
+
+const clusterCards = [
+  { label: "Authentication Issues", count: 127 },
+  { label: "Mobile Performance", count: 89 },
+  { label: "API Documentation", count: 64 },
+]
+
+const assistantMessage =
+  'Based on 847 feedback entries, the top 3 pain points are:\n\n1. **Login failures** on mobile — 23% of complaints\n2. **Slow API response times** — affects 18% of users\n3. **Missing documentation** for new endpoints — 12% of requests'
+
+function useStreamText(text: string, active: boolean, speed = 20) {
+  const [displayed, setDisplayed] = useState("")
+  const [done, setDone] = useState(false)
+
+  useEffect(() => {
+    if (!active) return
+    setDisplayed("")
+    setDone(false)
+    let i = 0
+    const id = setInterval(() => {
+      i++
+      setDisplayed(text.slice(0, i))
+      if (i >= text.length) {
+        clearInterval(id)
+        setDone(true)
+      }
+    }, speed)
+    return () => clearInterval(id)
+  }, [active, text, speed])
+
+  return { displayed, done }
+}
+
+function AnimatedChatDemo() {
+  const ref = useRef<HTMLDivElement>(null)
+  const [phase, setPhase] = useState<0 | 1 | 2 | 3>(0)
+  const [progress, setProgress] = useState(0)
+  const [uploadDone, setUploadDone] = useState(false)
+  const [visibleClusters, setVisibleClusters] = useState(0)
+  const [streamAssistant, setStreamAssistant] = useState(false)
+  const started = useRef(false)
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([])
+
+  const { displayed: assistantText, done: assistantDone } = useStreamText(
+    assistantMessage,
+    streamAssistant,
+    18,
+  )
+
+  const startAnimation = useCallback(() => {
+    if (started.current) return
+    started.current = true
+
+    const schedule = (fn: () => void, ms: number) => {
+      timers.current.push(setTimeout(fn, ms))
+    }
+
+    setPhase(1)
+
+    let progressTicks = 0
+    const progressInterval = setInterval(() => {
+      progressTicks += 2
+      if (progressTicks >= 100) {
+        clearInterval(progressInterval)
+        setProgress(100)
+      } else {
+        setProgress(progressTicks)
+      }
+    }, 40)
+    timers.current.push(progressInterval as unknown as ReturnType<typeof setTimeout>)
+
+    schedule(() => setUploadDone(true), 2200)
+    schedule(() => setPhase(2), 3000)
+    schedule(() => setVisibleClusters(1), 4000)
+    schedule(() => setVisibleClusters(2), 4600)
+    schedule(() => setVisibleClusters(3), 5200)
+    schedule(() => setPhase(3), 7000)
+    schedule(() => setStreamAssistant(true), 8500)
+  }, [])
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          startAnimation()
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.3 },
+    )
+    observer.observe(el)
+    const savedTimers = timers.current
+    return () => {
+      observer.disconnect()
+      savedTimers.forEach(clearTimeout)
+    }
+  }, [startAnimation])
+
+  return (
+    <section className="bg-surface-lowest px-6 pb-12 pt-4">
+      <div ref={ref} className="mx-auto max-w-5xl">
+        <div className="overflow-hidden rounded-2xl bg-surface shadow-xl ring-1 ring-foreground/10">
+          {/* Header */}
+          <div className="flex items-center gap-2 border-b border-foreground/5 px-5 py-3">
+            <MessageSquare className="size-4 text-on-surface-variant/50" />
+            <span className="text-xs text-on-surface-variant/50">
+              Synthesize
+            </span>
+            <ChevronRight className="size-3 text-on-surface-variant/30" />
+            <span className="text-xs font-medium text-foreground">
+              Feedback Chat
+            </span>
+          </div>
+
+          {/* Chat area */}
+          <div className="min-h-[340px] space-y-4 p-5 sm:min-h-[380px] sm:p-6">
+            {/* Phase 1 — File upload card */}
+            {phase >= 1 && (
+              <div
+                className="max-w-sm"
+                style={{ animation: "demo-fade-in-up 0.4s ease-out both" }}
+              >
+                <div className="rounded-xl bg-surface-high p-4 ring-1 ring-foreground/5">
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                      <FileText className="size-4 text-primary" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-foreground">
+                        customer-feedback-q1.csv
+                      </p>
+                      <p className="text-xs text-on-surface-variant/50">
+                        24 KB
+                      </p>
+                    </div>
+                    {uploadDone && (
+                      <div
+                        className="flex size-6 shrink-0 items-center justify-center rounded-full bg-green-500/15"
+                        style={{
+                          animation: "demo-fade-in-up 0.3s ease-out both",
+                        }}
+                      >
+                        <Check className="size-3.5 text-green-600" />
+                      </div>
+                    )}
+                  </div>
+                  {!uploadDone && (
+                    <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-lowest/60">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all duration-100 ease-linear"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Phase 2 — Ingestion */}
+            {phase >= 2 && (
+              <div
+                className="space-y-3"
+                style={{
+                  animation: "demo-fade-in-up 0.4s ease-out both",
+                }}
+              >
+                <p className="text-sm text-on-surface-variant">
+                  <span
+                    className="inline-block bg-gradient-to-r from-on-surface-variant via-foreground to-on-surface-variant bg-[length:200%_100%]"
+                    style={{
+                      animation: visibleClusters < 3
+                        ? "demo-shimmer 2s linear infinite"
+                        : "none",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor:
+                        visibleClusters < 3 ? "transparent" : "inherit",
+                      backgroundClip: "text",
+                    }}
+                  >
+                    Analyzing 847 feedback entries...
+                  </span>
+                </p>
+
+                <div className="flex flex-wrap gap-2">
+                  {clusterCards.map((card, i) =>
+                    visibleClusters > i ? (
+                      <div
+                        key={card.label}
+                        className="rounded-lg bg-surface-high px-3 py-2 ring-1 ring-foreground/5"
+                        style={{
+                          animation: "demo-fade-in-up 0.35s ease-out both",
+                        }}
+                      >
+                        <p className="text-xs font-medium text-foreground">
+                          {card.label}
+                        </p>
+                        <p className="text-[11px] text-on-surface-variant/50">
+                          {card.count} signals
+                        </p>
+                      </div>
+                    ) : null,
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Phase 3 — Chat */}
+            {phase >= 3 && (
+              <div
+                className="flex justify-end"
+                style={{ animation: "demo-fade-in-up 0.4s ease-out both" }}
+              >
+                <div className="max-w-md rounded-xl bg-primary px-4 py-2.5 text-sm text-primary-foreground">
+                  What are the top pain points from this batch?
+                </div>
+              </div>
+            )}
+
+            {streamAssistant && (
+              <div
+                className="max-w-lg"
+                style={{ animation: "demo-fade-in-up 0.3s ease-out both" }}
+              >
+                <div className="rounded-xl bg-surface-high px-4 py-3 ring-1 ring-foreground/5">
+                  <div className="text-sm leading-relaxed text-foreground whitespace-pre-line">
+                    {assistantText.split("**").map((segment, i) =>
+                      i % 2 === 1 ? (
+                        <span key={i} className="font-semibold">
+                          {segment}
+                        </span>
+                      ) : (
+                        <span key={i}>{segment}</span>
+                      ),
+                    )}
+                    {!assistantDone && (
+                      <span
+                        className="ml-0.5 inline-block h-4 w-0.5 bg-foreground align-middle"
+                        style={{
+                          animation: "demo-cursor-blink 1s step-end infinite",
+                        }}
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </section>
@@ -802,6 +1067,7 @@ function LandingPage() {
   return (
     <>
       <HeroSection />
+      <AnimatedChatDemo />
       <SphereTransition />
       <ProductShowcaseSection />
       <FeaturesSection />
