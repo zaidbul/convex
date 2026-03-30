@@ -12,7 +12,6 @@ import {
   Settings,
   HelpCircle,
   ChevronRight,
-  MessageSquare,
   Lightbulb,
   Network,
   Radio,
@@ -100,7 +99,6 @@ export function TicketSidebar() {
                   <CollapsibleContent>
                     <SidebarMenuSub>
                       {[
-                        { label: "Chat", icon: MessageSquare, path: "chat" },
                         { label: "Dashboard", icon: LayoutDashboard, path: "dashboard" },
                         { label: "Suggestions", icon: Lightbulb, path: "suggestions" },
                         { label: "Clusters", icon: Network, path: "clusters" },
